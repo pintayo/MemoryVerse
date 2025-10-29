@@ -131,8 +131,8 @@ MemoryVerse/
 
 ### Prerequisites
 - Node.js 18 or higher
-- React Native development environment set up
-- iOS Simulator (for iOS) or Android Emulator (for Android)
+- **Expo Go app** on your iOS or Android device (download from App Store or Google Play)
+- OR iOS Simulator (macOS only) / Android Emulator for development
 
 ### Installation
 
@@ -147,24 +147,40 @@ cd MemoryVerse
 npm install
 ```
 
-3. For iOS (macOS only)
+3. Start the Expo development server
 ```bash
-cd ios
-pod install
-cd ..
-```
-
-4. Run the app
-```bash
-# For iOS
-npm run ios
-
-# For Android
-npm run android
-
-# Start Metro bundler separately
 npm start
 ```
+
+This will open Expo DevTools in your browser and show a QR code.
+
+4. Run the app
+
+**Option A: On your physical device (easiest)**
+- Install the "Expo Go" app from the App Store (iOS) or Google Play (Android)
+- Scan the QR code from the terminal or Expo DevTools
+- The app will load on your device
+
+**Option B: On iOS Simulator (macOS only)**
+```bash
+npm run ios
+```
+
+**Option C: On Android Emulator**
+```bash
+npm run android
+```
+
+**Option D: In web browser**
+```bash
+npm run web
+```
+
+### Quick Start Tips
+
+- **First time?** Just run `npm install` then `npm start` and scan the QR code with Expo Go
+- **Changes not showing?** Shake your device to reload or press `r` in the terminal
+- **Need to clear cache?** Press `Shift + C` in the terminal while Expo is running
 
 ## Key Components
 

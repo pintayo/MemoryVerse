@@ -1,6 +1,4 @@
 {
-  "name": "MemoryVerse",
-  "displayName": "MemoryVerse",
   "expo": {
     "name": "MemoryVerse",
     "slug": "memoryverse",
@@ -26,6 +24,12 @@
         "backgroundColor": "#F5F0E8"
       },
       "package": "com.memoryverse.app"
-    }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }
