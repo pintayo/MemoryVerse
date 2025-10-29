@@ -1,0 +1,288 @@
+import { supabase } from '../lib/supabase';
+import { Verse, UserVerseProgress, PracticeSession } from '../types/database';
+
+/**
+ * Verse Service
+ * Handles Bible verse operations
+ */
+export const verseService = {
+  /**
+   * Get all verses
+   */
+  async getAllVerses(translation: string = 'NIV'): Promise<Verse[]> {
+    const { data, error } = await supabase
+      .from('verses')
+      .select('*')
+      .eq('translation', translation)
+      .order('book', { ascending: true })
+      .order('chapter', { ascending: true })
+      .order('verse_number', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get verse by ID
+   */
+  async getVerseById(verseId: string): Promise<Verse | null> {
+    const { data, error } = await supabase
+      .from('verses')
+      .select('*')
+      .eq('id', verseId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Get verses by category
+   */
+  async getVersesByCategory(category: string, translation: string = 'NIV'): Promise<Verse[]> {
+    const { data, error } = await supabase
+      .from('verses')
+      .select('*')
+      .eq('category', category)
+      .eq('translation', translation)
+      .order('difficulty', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get verses by difficulty
+   */
+  async getVersesByDifficulty(difficulty: number, translation: string = 'NIV'): Promise<Verse[]> {
+    const { data, error } = await supabase
+      .from('verses')
+      .select('*')
+      .eq('difficulty', difficulty)
+      .eq('translation', translation);
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * Get random verse
+   */
+  async getRandomVerse(translation: string = 'NIV'): Promise<Verse | null> {
+    const { data, error } = await supabase
+      .from('verses')
+      .select('*')
+      .eq('translation', translation)
+      .limit(100); // Get a pool of verses
+
+    if (error) throw error;
+    if (!data || data.length === 0) return null;
+
+    // Pick random verse from the pool
+    const randomIndex = Math.floor(Math.random() * data.length);
+    return data[randomIndex];
+  },
+
+  /**
+   * Get today's verse for a user (personalized based on their progress)
+   */
+  async getTodaysVerse(userId: string, translation: string = 'NIV'): Promise<Verse | null> {
+    // Get user's current progress
+    const { data: progressData, error: progressError } = await supabase
+      .from('user_verse_progress')
+      .select('verse_id')
+      .eq('user_id', userId);
+
+    if (progressError) throw progressError;
+
+    const learnedVerseIds = progressData?.map(p => p.verse_id) || [];
+
+    // Get a verse the user hasn't learned yet
+    let query = supabase
+      .from('verses')
+      .select('*')
+      .eq('translation', translation);
+
+    if (learnedVerseIds.length > 0) {
+      query = query.not('id', 'in', `(${learnedVerseIds.join(',')})`);
+    }
+
+    const { data, error } = await query.limit(1);
+
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
+  },
+
+  /**
+   * Get user's verse progress
+   */
+  async getUserVerseProgress(userId: string, verseId: string): Promise<UserVerseProgress | null> {
+    const { data, error } = await supabase
+      .from('user_verse_progress')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('verse_id', verseId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
+    return data;
+  },
+
+  /**
+   * Create or update user verse progress
+   */
+  async upsertUserVerseProgress(
+    userId: string,
+    verseId: string,
+    updates: Partial<UserVerseProgress>
+  ): Promise<UserVerseProgress> {
+    const { data, error } = await supabase
+      .from('user_verse_progress')
+      .upsert({
+        user_id: userId,
+        verse_id: verseId,
+        ...updates,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Record a practice session
+   */
+  async recordPracticeSession(
+    userId: string,
+    verseId: string,
+    sessionData: {
+      session_type: 'read' | 'recall' | 'recite';
+      user_answer?: string;
+      is_correct: boolean;
+      accuracy_percentage: number;
+      time_spent_seconds?: number;
+      hints_used?: number;
+      xp_earned?: number;
+    }
+  ): Promise<PracticeSession> {
+    const { data, error } = await supabase
+      .from('practice_sessions')
+      .insert({
+        user_id: userId,
+        verse_id: verseId,
+        ...sessionData,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Update user verse progress
+    const currentProgress = await this.getUserVerseProgress(userId, verseId);
+    const newAttempts = (currentProgress?.attempts || 0) + 1;
+    const newAccuracy = currentProgress
+      ? (currentProgress.accuracy_score * currentProgress.attempts + sessionData.accuracy_percentage) / newAttempts
+      : sessionData.accuracy_percentage;
+
+    // Determine status based on accuracy
+    let status: 'learning' | 'reviewing' | 'mastered' = 'learning';
+    if (newAccuracy >= 95 && newAttempts >= 3) {
+      status = 'mastered';
+    } else if (newAccuracy >= 70) {
+      status = 'reviewing';
+    }
+
+    await this.upsertUserVerseProgress(userId, verseId, {
+      accuracy_score: newAccuracy,
+      attempts: newAttempts,
+      status,
+      last_practiced_at: new Date().toISOString(),
+      ...(status === 'mastered' ? { mastered_at: new Date().toISOString() } : {}),
+    });
+
+    return data;
+  },
+
+  /**
+   * Get verses due for review (spaced repetition)
+   */
+  async getVersesForReview(userId: string, limit: number = 5): Promise<Verse[]> {
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('user_verse_progress')
+      .select('verse_id, verses(*)')
+      .eq('user_id', userId)
+      .eq('status', 'reviewing')
+      .lte('next_review_at', now)
+      .order('next_review_at', { ascending: true })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return data?.map(item => item.verses).filter(Boolean) as Verse[] || [];
+  },
+
+  /**
+   * Get user's mastered verses
+   */
+  async getMasteredVerses(userId: string): Promise<Verse[]> {
+    const { data, error } = await supabase
+      .from('user_verse_progress')
+      .select('verse_id, verses(*)')
+      .eq('user_id', userId)
+      .eq('status', 'mastered')
+      .order('mastered_at', { ascending: false });
+
+    if (error) throw error;
+
+    return data?.map(item => item.verses).filter(Boolean) as Verse[] || [];
+  },
+
+  /**
+   * Check user answer accuracy
+   * Returns accuracy percentage and detailed feedback
+   */
+  checkAnswer(correctText: string, userAnswer: string): {
+    isCorrect: boolean;
+    accuracy: number;
+    mistakes: string[];
+  } {
+    // Normalize both texts
+    const normalizeText = (text: string) =>
+      text
+        .toLowerCase()
+        .replace(/[^\w\s]/g, '') // Remove punctuation
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+
+    const correctNormalized = normalizeText(correctText);
+    const userNormalized = normalizeText(userAnswer);
+
+    // Split into words
+    const correctWords = correctNormalized.split(' ');
+    const userWords = userNormalized.split(' ');
+
+    // Calculate word-level accuracy
+    let correctWordCount = 0;
+    const mistakes: string[] = [];
+
+    correctWords.forEach((word, index) => {
+      if (userWords[index] === word) {
+        correctWordCount++;
+      } else {
+        mistakes.push(word);
+      }
+    });
+
+    const accuracy = (correctWordCount / correctWords.length) * 100;
+    const isCorrect = accuracy >= 90; // 90% threshold for "correct"
+
+    return {
+      isCorrect,
+      accuracy: Math.round(accuracy * 100) / 100,
+      mistakes,
+    };
+  },
+};
