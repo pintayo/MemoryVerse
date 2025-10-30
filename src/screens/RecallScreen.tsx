@@ -7,12 +7,15 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { verseService } from '../services/verseService';
+import { profileService } from '../services/profileService';
 import { Verse } from '../types/database';
+import { useAuth } from '../contexts/AuthContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
 
 const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const { verseId } = route.params;
+  const { user } = useAuth();
 
   const [verse, setVerse] = useState<Verse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +25,7 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [hintsUsed, setHintsUsed] = useState(0);
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
@@ -102,12 +106,34 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
     checkAnswer("For I know the plans I have for you");
   };
 
-  const checkAnswer = (answer: string) => {
-    if (!verse) return;
+  const checkAnswer = async (answer: string) => {
+    if (!verse || !user?.id) return;
 
     // Use verseService to check answer accuracy
     const result = verseService.checkAnswer(verse.text, answer);
     setFeedback(result.isCorrect ? 'correct' : 'incorrect');
+
+    // Record practice session
+    try {
+      const xpEarned = result.isCorrect ? Math.max(10, Math.floor(result.accuracy * 20)) : 0;
+
+      await verseService.recordPracticeSession(user.id, verse.id, {
+        session_type: 'recall',
+        user_answer: answer,
+        is_correct: result.isCorrect,
+        accuracy_percentage: result.accuracy * 100,
+        hints_used: hintsUsed,
+        xp_earned: xpEarned,
+      });
+
+      // Award XP if correct
+      if (result.isCorrect && xpEarned > 0) {
+        await profileService.addXP(user.id, xpEarned);
+      }
+    } catch (error) {
+      console.error('[RecallScreen] Error recording practice session:', error);
+      // Continue with UI feedback even if recording fails
+    }
 
     // Animate feedback
     Animated.sequence([
@@ -202,7 +228,13 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
             {verseReference}
           </VerseReference>
           {!showHint && !showAnswer && (
-            <TouchableOpacity onPress={() => setShowHint(true)} style={styles.hintButton}>
+            <TouchableOpacity
+              onPress={() => {
+                setShowHint(true);
+                setHintsUsed(hintsUsed + 1);
+              }}
+              style={styles.hintButton}
+            >
               <Text style={styles.hintButtonText}>Show Hint</Text>
             </TouchableOpacity>
           )}
