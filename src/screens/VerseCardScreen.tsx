@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, VerseText, VerseReference } from '../components';
 import { theme } from '../theme';
+import { verseService } from '../services/verseService';
+import { Verse } from '../types/database';
 
 interface VerseCardScreenProps {
   navigation: any;
@@ -13,29 +15,45 @@ const { width } = Dimensions.get('window');
 const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const [showContext, setShowContext] = useState(false);
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Animation values for page turn effect
   const pageFlipAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Sample verses data
-  const verses = [
-    {
-      text: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.",
-      reference: "Proverbs 3:5-6",
-      context: "This passage reminds us to rely on God's wisdom rather than our limited human understanding. When we acknowledge Him in all our decisions, He promises to guide our way.",
-    },
-    {
-      text: "I can do all things through Christ who strengthens me.",
-      reference: "Philippians 4:13",
-      context: "Paul wrote these words while imprisoned, reminding us that true strength comes from Christ, enabling us to face any circumstance with His power.",
-    },
-    {
-      text: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
-      reference: "John 3:16",
-      context: "The most famous verse in Scripture, summarizing the entire gospel message: God's love, Jesus' sacrifice, and the gift of eternal life through faith.",
-    },
-  ];
+  // Load verses on mount
+  useEffect(() => {
+    loadVerses();
+  }, []);
+
+  const loadVerses = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Load 5 random verses for the card deck
+      const loadedVerses: Verse[] = [];
+      for (let i = 0; i < 5; i++) {
+        const verse = await verseService.getRandomVerse('KJV');
+        if (verse) {
+          loadedVerses.push(verse);
+        }
+      }
+
+      if (loadedVerses.length > 0) {
+        setVerses(loadedVerses);
+      } else {
+        setError('No verses found. Please import Bible data.');
+      }
+    } catch (err) {
+      console.error('[VerseCardScreen] Error loading verses:', err);
+      setError('Failed to load verses. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const currentVerse = verses[currentVerseIndex];
 
@@ -106,6 +124,41 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
     outputRange: [0, -20],
   });
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={[styles.content, styles.centerContent]}>
+          <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
+          <Text style={styles.loadingText}>Loading verses...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state
+  if (error || verses.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={[styles.content, styles.centerContent]}>
+          <Text style={styles.errorText}>{error || 'No verses available'}</Text>
+          <Button
+            title="Try Again"
+            onPress={loadVerses}
+            variant="gold"
+            style={styles.retryButton}
+          />
+          <Button
+            title="Go Back"
+            onPress={() => navigation.goBack()}
+            variant="secondary"
+            style={styles.retryButton}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -124,46 +177,58 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Verse card with page turn animation */}
-        <Animated.View
-          style={[
-            styles.cardContainer,
-            {
-              opacity: fadeAnim,
-              transform: [
-                { perspective: 1000 },
-                { rotateY: pageRotation },
-                { translateX: pageTranslateX },
-              ],
-            },
-          ]}
-        >
-          <Card variant="parchment" elevated outlined style={styles.verseCard}>
-            {/* Decorative top border */}
-            <View style={styles.decorativeBorder} />
+        {currentVerse && (
+          <Animated.View
+            style={[
+              styles.cardContainer,
+              {
+                opacity: fadeAnim,
+                transform: [
+                  { perspective: 1000 },
+                  { rotateY: pageRotation },
+                  { translateX: pageTranslateX },
+                ],
+              },
+            ]}
+          >
+            <Card variant="parchment" elevated outlined style={styles.verseCard}>
+              {/* Decorative top border */}
+              <View style={styles.decorativeBorder} />
 
-            {/* Verse text */}
-            <View style={styles.verseContainer}>
-              <VerseText size="large" style={styles.verse}>
-                {currentVerse.text}
-              </VerseText>
-              <VerseReference style={styles.reference}>
-                {currentVerse.reference}
-              </VerseReference>
-            </View>
-
-            {/* Context section */}
-            {showContext && (
-              <View style={styles.contextContainer}>
-                <View style={styles.contextDivider} />
-                <Text style={styles.contextLabel}>Context</Text>
-                <Text style={styles.contextText}>{currentVerse.context}</Text>
+              {/* Verse text */}
+              <View style={styles.verseContainer}>
+                <VerseText size="large" style={styles.verse}>
+                  {currentVerse.text}
+                </VerseText>
+                <VerseReference style={styles.reference}>
+                  {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
+                </VerseReference>
               </View>
-            )}
 
-            {/* Decorative bottom border */}
-            <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
-          </Card>
-        </Animated.View>
+              {/* Context section */}
+              {showContext && currentVerse.context && (
+                <View style={styles.contextContainer}>
+                  <View style={styles.contextDivider} />
+                  <Text style={styles.contextLabel}>Context</Text>
+                  <Text style={styles.contextText}>{currentVerse.context}</Text>
+                </View>
+              )}
+
+              {showContext && !currentVerse.context && (
+                <View style={styles.contextContainer}>
+                  <View style={styles.contextDivider} />
+                  <Text style={styles.contextLabel}>Context</Text>
+                  <Text style={styles.contextPlaceholder}>
+                    Context not available yet. Tap "Learn More" to generate AI-powered context for this verse.
+                  </Text>
+                </View>
+              )}
+
+              {/* Decorative bottom border */}
+              <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
+            </Card>
+          </Animated.View>
+        )}
 
         {/* Action buttons */}
         <View style={styles.buttonsContainer}>
@@ -173,6 +238,15 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
             variant="gold"
             style={styles.contextButton}
           />
+
+          {currentVerse?.id && (
+            <Button
+              title="Learn More"
+              onPress={() => navigation.navigate('Understand', { verseId: currentVerse.id })}
+              variant="secondary"
+              style={styles.contextButton}
+            />
+          )}
 
           <View style={styles.navigationButtons}>
             {currentVerseIndex > 0 && (
@@ -205,6 +279,26 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: theme.spacing.screen.horizontal,
     paddingTop: theme.spacing.lg,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: theme.spacing.lg,
+  },
+  loadingText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  errorText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.semantic.error,
+    textAlign: 'center',
+    fontFamily: theme.typography.fonts.ui.default,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  retryButton: {
+    marginTop: theme.spacing.sm,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -280,6 +374,13 @@ const styles = StyleSheet.create({
     lineHeight: theme.typography.context.lineHeight,
     letterSpacing: theme.typography.context.letterSpacing,
     color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  contextPlaceholder: {
+    fontSize: theme.typography.context.fontSize,
+    lineHeight: theme.typography.context.lineHeight,
+    color: theme.colors.text.tertiary,
+    fontStyle: 'italic',
     fontFamily: theme.typography.fonts.ui.default,
   },
   buttonsContainer: {

@@ -1,23 +1,51 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
 import { theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
+import { verseService } from '../services/verseService';
+import { Verse } from '../types/database';
 
 interface HomeScreenProps {
   navigation: any;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const [streak, setStreak] = useState(7);
-  const [xp, setXp] = useState(450);
+  const [streak, setStreak] = useState(0);
+  const [xp, setXp] = useState(0);
   const [isCelebrating, setIsCelebrating] = useState(false);
+  const [todayVerse, setTodayVerse] = useState<Verse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Sample verse data
-  const todayVerse = {
-    text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.",
-    reference: "Jeremiah 29:11",
+  // Load today's verse on mount
+  useEffect(() => {
+    loadTodayVerse();
+  }, []);
+
+  const loadTodayVerse = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Get a random verse for now (can be personalized later)
+      const verse = await verseService.getRandomVerse('KJV');
+
+      if (verse) {
+        setTodayVerse(verse);
+        // TODO: Load user profile data for streak and XP
+        setStreak(7); // Placeholder
+        setXp(450); // Placeholder
+      } else {
+        setError('No verses found. Please import Bible data.');
+      }
+    } catch (err) {
+      console.error('[HomeScreen] Error loading verse:', err);
+      setError('Failed to load verse. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCompanionPress = () => {
@@ -31,28 +59,44 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Read',
       icon: 'book',
       description: 'Read today\'s verse',
-      onPress: () => navigation.navigate('VerseCard'),
+      onPress: () => {
+        if (todayVerse) {
+          navigation.navigate('VerseCard');
+        }
+      },
     },
     {
       id: 'understand',
       title: 'Understand',
       icon: 'lightbulb',
       description: 'Learn the context',
-      onPress: () => navigation.navigate('VerseCard'),
+      onPress: () => {
+        if (todayVerse?.id) {
+          navigation.navigate('Understand', { verseId: todayVerse.id });
+        }
+      },
     },
     {
       id: 'recall',
       title: 'Recall',
       icon: 'brain',
       description: 'Fill in the blanks',
-      onPress: () => navigation.navigate('Recall'),
+      onPress: () => {
+        if (todayVerse) {
+          navigation.navigate('Recall');
+        }
+      },
     },
     {
       id: 'recite',
       title: 'Recite',
       icon: 'mic',
       description: 'Speak it aloud',
-      onPress: () => navigation.navigate('Recite'),
+      onPress: () => {
+        if (todayVerse) {
+          navigation.navigate('Recite');
+        }
+      },
     },
   ];
 
@@ -105,12 +149,32 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         {/* Today's Verse Card */}
         <Card variant="cream" outlined style={styles.verseCard}>
           <Text style={styles.verseLabel}>Today's Verse</Text>
-          <VerseText size="large" style={styles.verseText}>
-            {todayVerse.text}
-          </VerseText>
-          <VerseReference style={styles.verseReference}>
-            {todayVerse.reference}
-          </VerseReference>
+
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
+              <Text style={styles.loadingText}>Loading verse...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={loadTodayVerse}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : todayVerse ? (
+            <>
+              <VerseText size="large" style={styles.verseText}>
+                {todayVerse.text}
+              </VerseText>
+              <VerseReference style={styles.verseReference}>
+                {`${todayVerse.book} ${todayVerse.chapter}:${todayVerse.verse_number}`}
+              </VerseReference>
+            </>
+          ) : null}
         </Card>
 
         {/* Action Buttons */}
@@ -272,6 +336,7 @@ const styles = StyleSheet.create({
   verseCard: {
     marginBottom: theme.spacing.xl,
     paddingVertical: theme.spacing.xl,
+    minHeight: 200,
   },
   verseLabel: {
     fontSize: theme.typography.ui.caption.fontSize,
@@ -289,6 +354,43 @@ const styles = StyleSheet.create({
   },
   verseReference: {
     marginTop: theme.spacing.sm,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  loadingText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  errorText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.semantic.error,
+    textAlign: 'center',
+    fontFamily: theme.typography.fonts.ui.default,
+    paddingHorizontal: theme.spacing.md,
+  },
+  retryButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.sm,
+  },
+  retryButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.onDark,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   actionsContainer: {
     marginBottom: theme.spacing.xl,

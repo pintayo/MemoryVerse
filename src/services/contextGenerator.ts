@@ -1,7 +1,7 @@
 /**
  * AI Context Generator Service
  * Generates spiritual context and explanations for Bible verses using AI
- * Supports both OpenAI and Anthropic (Claude) APIs
+ * Supports OpenAI, Anthropic (Claude), and Perplexity APIs
  */
 
 import { config } from '../config/env';
@@ -186,6 +186,53 @@ async function generateContextWithAnthropic(verse: Verse): Promise<string> {
 }
 
 /**
+ * Call Perplexity API to generate context
+ */
+async function generateContextWithPerplexity(verse: Verse): Promise<string> {
+  const apiKey = config.ai.perplexity.apiKey;
+  if (!apiKey) {
+    throw new Error('Perplexity API key not configured');
+  }
+
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.ai.perplexity.model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a biblical scholar who provides concise, encouraging spiritual context for Bible verses to aid memorization.',
+        },
+        {
+          role: 'user',
+          content: generatePrompt(verse),
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 200,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Perplexity API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  const context = data.choices?.[0]?.message?.content?.trim();
+
+  if (!context) {
+    throw new Error('No context generated from Perplexity');
+  }
+
+  return context;
+}
+
+/**
  * Generate context for a single verse with retry logic
  */
 export async function generateContext(
@@ -206,6 +253,8 @@ export async function generateContext(
       let context: string;
       if (config.ai.provider === 'openai') {
         context = await generateContextWithOpenAI(verse);
+      } else if (config.ai.provider === 'perplexity') {
+        context = await generateContextWithPerplexity(verse);
       } else {
         context = await generateContextWithAnthropic(verse);
       }

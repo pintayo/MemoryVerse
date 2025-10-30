@@ -16,7 +16,7 @@ export const config = {
 
   // AI Context Generation
   ai: {
-    provider: (process.env.EXPO_PUBLIC_AI_PROVIDER || env.EXPO_PUBLIC_AI_PROVIDER || 'anthropic') as 'openai' | 'anthropic',
+    provider: (process.env.EXPO_PUBLIC_AI_PROVIDER || env.EXPO_PUBLIC_AI_PROVIDER || 'anthropic') as 'openai' | 'anthropic' | 'perplexity',
 
     openai: {
       apiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY || env.EXPO_PUBLIC_OPENAI_API_KEY || '',
@@ -26,6 +26,11 @@ export const config = {
     anthropic: {
       apiKey: process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '',
       model: process.env.EXPO_PUBLIC_ANTHROPIC_MODEL || env.EXPO_PUBLIC_ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
+    },
+
+    perplexity: {
+      apiKey: process.env.EXPO_PUBLIC_PERPLEXITY_API_KEY || env.EXPO_PUBLIC_PERPLEXITY_API_KEY || '',
+      model: process.env.EXPO_PUBLIC_PERPLEXITY_MODEL || env.EXPO_PUBLIC_PERPLEXITY_MODEL || 'llama-3.1-sonar-small-128k-online',
     },
 
     // Rate limiting
@@ -49,6 +54,9 @@ export function validateConfig(): { isValid: boolean; missingKeys: string[] } {
   }
   if (config.ai.provider === 'anthropic' && !config.ai.anthropic.apiKey) {
     missingKeys.push('EXPO_PUBLIC_ANTHROPIC_API_KEY');
+  }
+  if (config.ai.provider === 'perplexity' && !config.ai.perplexity.apiKey) {
+    missingKeys.push('EXPO_PUBLIC_PERPLEXITY_API_KEY');
   }
 
   return {
