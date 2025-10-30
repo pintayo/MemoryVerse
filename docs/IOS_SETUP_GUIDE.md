@@ -189,13 +189,24 @@ open -a Simulator
 xcrun simctl boot "iPhone 15 Pro"
 ```
 
-### "Cannot find module 'react-native-worklets/plugin'"
+### "React Native version is not compatible with Reanimated"
 
-This means react-native-worklets is missing. Install it:
+This means there's a version mismatch. The project uses:
+- React Native 0.75.4
+- React Native Reanimated 3.15.1 (compatible with RN 0.75.x)
+
+To fix:
 ```bash
-npm install react-native-worklets@^0.5.2 --legacy-peer-deps
-npx expo prebuild --clean
+# Clean and reinstall everything
+rm -rf node_modules package-lock.json ios
+npm install --legacy-peer-deps
+npx expo prebuild --clean --platform ios
 cd ios && pod install && cd ..
+```
+
+Or just run the fix script:
+```bash
+./fix-ios-dependencies.sh
 ```
 
 ### "Command PhaseScriptExecution failed"

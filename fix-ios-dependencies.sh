@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Quick Fix for iOS Dependency Issues
-# Run this if you're getting "Cannot find module 'react-native-worklets/plugin'" error
+# Run this if you're getting React Native Reanimated compatibility errors
 
 set -e
 
@@ -14,20 +14,26 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-# Step 1: Install missing dependency
-echo "1️⃣  Installing react-native-worklets..."
-npm install react-native-worklets@^0.5.2 --legacy-peer-deps
-echo -e "${GREEN}✅ react-native-worklets installed${NC}"
+# Step 1: Clean existing installation
+echo "1️⃣  Cleaning existing installation..."
+rm -rf node_modules package-lock.json ios
+echo -e "${GREEN}✅ Cleaned${NC}"
 echo ""
 
-# Step 2: Clean and regenerate iOS project
-echo "2️⃣  Regenerating iOS project with Expo Prebuild..."
+# Step 2: Install dependencies with correct versions
+echo "2️⃣  Installing dependencies..."
+npm install --legacy-peer-deps
+echo -e "${GREEN}✅ Dependencies installed${NC}"
+echo ""
+
+# Step 3: Clean and regenerate iOS project
+echo "3️⃣  Regenerating iOS project with Expo Prebuild..."
 npx expo prebuild --clean --platform ios
 echo -e "${GREEN}✅ iOS project regenerated${NC}"
 echo ""
 
-# Step 3: Install CocoaPods dependencies
-echo "3️⃣  Installing iOS dependencies (CocoaPods)..."
+# Step 4: Install CocoaPods dependencies
+echo "4️⃣  Installing iOS dependencies (CocoaPods)..."
 cd ios
 pod install
 cd ..
