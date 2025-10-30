@@ -3,6 +3,7 @@ export type RootStackParamList = {
   VerseCard: undefined;
   Recall: undefined;
   Recite: undefined;
+  Understand: { verseId: string };
 };
 
 export type BottomTabParamList = {

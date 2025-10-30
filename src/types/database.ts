@@ -73,6 +73,9 @@ export interface Database {
           translation: string;
           category: string | null;
           difficulty: number;
+          context: string | null;
+          context_generated_by_ai: boolean;
+          context_generated_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -84,6 +87,9 @@ export interface Database {
           translation: string;
           category?: string | null;
           difficulty?: number;
+          context?: string | null;
+          context_generated_by_ai?: boolean;
+          context_generated_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -94,6 +100,9 @@ export interface Database {
           translation?: string;
           category?: string | null;
           difficulty?: number;
+          context?: string | null;
+          context_generated_by_ai?: boolean;
+          context_generated_at?: string | null;
         };
       };
       user_verse_progress: {

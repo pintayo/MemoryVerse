@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Verse, UserVerseProgress, PracticeSession } from '../types/database';
+import { getOrGenerateContext } from './contextGenerator';
 
 /**
  * Verse Service
@@ -284,5 +285,91 @@ export const verseService = {
       accuracy: Math.round(accuracy * 100) / 100,
       mistakes,
     };
+  },
+
+  /**
+   * Get verse with context (generates on-demand if missing)
+   */
+  async getVerseWithContext(verseId: string): Promise<{
+    verse: Verse | null;
+    context: string | null;
+    contextGenerated: boolean;
+    error?: string;
+  }> {
+    try {
+      // Fetch verse
+      const verse = await this.getVerseById(verseId);
+
+      if (!verse) {
+        return {
+          verse: null,
+          context: null,
+          contextGenerated: false,
+          error: 'Verse not found',
+        };
+      }
+
+      // Get or generate context
+      const contextResult = await getOrGenerateContext(verseId);
+
+      return {
+        verse,
+        context: contextResult.context,
+        contextGenerated: contextResult.isGenerated,
+        error: contextResult.error,
+      };
+    } catch (error) {
+      console.error('[VerseService] Error in getVerseWithContext:', error);
+      return {
+        verse: null,
+        context: null,
+        contextGenerated: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  },
+
+  /**
+   * Update verse context manually
+   */
+  async updateVerseContext(
+    verseId: string,
+    context: string,
+    isAiGenerated: boolean = false
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('verses')
+        .update({
+          context,
+          context_generated_by_ai: isAiGenerated,
+          context_generated_at: new Date().toISOString(),
+        })
+        .eq('id', verseId);
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error) {
+      console.error('[VerseService] Error updating context:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  },
+
+  /**
+   * Get verses that need context generation
+   */
+  async getVersesNeedingContext(limit: number = 100): Promise<Verse[]> {
+    const { data, error } = await supabase
+      .from('verses')
+      .select('*')
+      .or('context.is.null,context.eq.')
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
   },
 };

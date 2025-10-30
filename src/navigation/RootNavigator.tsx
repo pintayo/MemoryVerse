@@ -2,6 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import BottomTabNavigator from './BottomTabNavigator';
 import { VerseCardScreen, RecallScreen } from '../screens';
+import { UnderstandScreen } from '../screens/UnderstandScreen';
 import { theme } from '../theme';
 import { RootStackParamList } from './types';
 
@@ -54,6 +55,13 @@ const RootNavigator = () => {
         options={{
           title: 'Recite Verse',
           headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="Understand"
+        component={UnderstandScreen}
+        options={{
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

@@ -128,6 +128,99 @@ To modify categories or difficulty calculation:
 - Safe to run multiple times
 - Duplicates are automatically skipped
 
+## AI Context Generation
+
+### generate-contexts.ts
+
+Generates AI-powered spiritual context for Bible verses using OpenAI or Anthropic (Claude).
+
+#### Setup
+
+1. **Apply database migration:**
+   ```sql
+   -- Run in Supabase SQL Editor
+   supabase/migrations/002_add_context_columns.sql
+   ```
+
+2. **Configure API key in `.env`:**
+   ```bash
+   # Choose provider
+   EXPO_PUBLIC_AI_PROVIDER=anthropic  # or 'openai'
+
+   # Add your API key
+   EXPO_PUBLIC_ANTHROPIC_API_KEY=sk-ant-...
+   # OR
+   EXPO_PUBLIC_OPENAI_API_KEY=sk-...
+   ```
+
+3. **Get API keys:**
+   - OpenAI: https://platform.openai.com/api-keys
+   - Anthropic: https://console.anthropic.com/settings/keys
+
+#### Usage
+
+```bash
+# Generate context for 100 verses
+npx ts-node scripts/generate-contexts.ts --limit 100
+
+# Use OpenAI instead of Claude
+npx ts-node scripts/generate-contexts.ts --limit 100 --provider openai
+
+# Show statistics only
+npx ts-node scripts/generate-contexts.ts --stats
+
+# Show help
+npx ts-node scripts/generate-contexts.ts --help
+```
+
+#### Options
+
+- `--limit, -l <number>` - Max verses to process (default: 100)
+- `--provider, -p <string>` - AI provider: 'openai' or 'anthropic' (default: anthropic)
+- `--stats, -s` - Show statistics only
+- `--help, -h` - Show help
+
+#### Cost Estimates
+
+**gpt-4o-mini (Recommended):**
+- ~$0.0003 per verse
+- 1,000 verses: ~$0.30
+- 31,000 verses (full KJV): ~$9
+
+**claude-3-5-sonnet:**
+- ~$0.0033 per verse
+- 1,000 verses: ~$3.30
+- 31,000 verses (full KJV): ~$102
+
+#### Time Estimates (50 RPM limit)
+
+- 100 verses: ~2 minutes
+- 500 verses: ~10 minutes
+- 1,000 verses: ~20 minutes
+- 5,000 verses: ~100 minutes
+
+#### Features
+
+- ✅ On-demand context generation in-app
+- ✅ Batch processing for pre-population
+- ✅ Rate limiting (50 requests/min default)
+- ✅ Automatic retry with exponential backoff
+- ✅ Progress tracking
+- ✅ Error handling and logging
+- ✅ Statistics reporting
+
+#### Example Output
+
+**Verse:** John 3:16
+**Generated Context:**
+> "This is the most famous verse in Scripture, summarizing the entire gospel message. It reveals God's immense love that motivated Him to sacrifice His Son, offering eternal life to all who believe. Remember this verse as the foundation of your faith—God's love, Christ's sacrifice, and the gift of salvation."
+
+#### Documentation
+
+For detailed information:
+- **Full guide:** `docs/CONTEXT_GENERATION.md`
+- **Quick start:** `docs/QUICK_START_CONTEXT.md`
+
 ## Asset Generation
 
 ### generate-assets.js
@@ -153,4 +246,5 @@ Creates:
 
 - Check the main README.md for project setup
 - Supabase setup: `supabase/README.md`
+- AI Context: `docs/CONTEXT_GENERATION.md`
 - Create an issue on GitHub
