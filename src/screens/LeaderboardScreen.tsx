@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../components';
 import { theme } from '../theme';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import { useAuth } from '../contexts/AuthContext';
+import { profileService } from '../services/profileService';
+import { Profile } from '../types/database';
 
 interface LeaderboardScreenProps {
   navigation: any;
@@ -18,39 +21,62 @@ interface LeaderboardEntry {
   streak: number;
   xp: number;
   isCurrentUser?: boolean;
+  userId: string;
 }
 
 const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState<TabType>('week');
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userRank, setUserRank] = useState<number | null>(null);
+  const { user, profile } = useAuth();
 
-  // Sample leaderboard data
-  const weeklyLeaderboard: LeaderboardEntry[] = [
-    { rank: 1, name: 'Sarah Johnson', avatar: '👩', streak: 28, xp: 2450 },
-    { rank: 2, name: 'David Chen', avatar: '👨', streak: 21, xp: 2100 },
-    { rank: 3, name: 'Mary Williams', avatar: '👩', streak: 19, xp: 1950 },
-    { rank: 4, name: 'James Brown', avatar: '👨', streak: 17, xp: 1800 },
-    { rank: 5, name: 'You', avatar: '😊', streak: 15, xp: 1650, isCurrentUser: true },
-    { rank: 6, name: 'Emma Davis', avatar: '👩', streak: 14, xp: 1500 },
-    { rank: 7, name: 'Michael Lee', avatar: '👨', streak: 12, xp: 1400 },
-    { rank: 8, name: 'Lisa Garcia', avatar: '👩', streak: 11, xp: 1300 },
-    { rank: 9, name: 'Robert Taylor', avatar: '👨', streak: 10, xp: 1200 },
-    { rank: 10, name: 'Jennifer White', avatar: '👩', streak: 9, xp: 1100 },
-  ];
+  // Load leaderboard data
+  useEffect(() => {
+    loadLeaderboard();
+  }, [activeTab]);
 
-  const allTimeLeaderboard: LeaderboardEntry[] = [
-    { rank: 1, name: 'David Chen', avatar: '👨', streak: 365, xp: 15000 },
-    { rank: 2, name: 'Sarah Johnson', avatar: '👩', streak: 280, xp: 12500 },
-    { rank: 3, name: 'Mary Williams', avatar: '👩', streak: 250, xp: 11000 },
-    { rank: 4, name: 'James Brown', avatar: '👨', streak: 200, xp: 9500 },
-    { rank: 5, name: 'Emma Davis', avatar: '👩', streak: 180, xp: 8800 },
-    { rank: 6, name: 'Michael Lee', avatar: '👨', streak: 150, xp: 7900 },
-    { rank: 7, name: 'You', avatar: '😊', streak: 120, xp: 6500, isCurrentUser: true },
-    { rank: 8, name: 'Lisa Garcia', avatar: '👩', streak: 100, xp: 5800 },
-    { rank: 9, name: 'Robert Taylor', avatar: '👨', streak: 95, xp: 5200 },
-    { rank: 10, name: 'Jennifer White', avatar: '👩', streak: 85, xp: 4900 },
-  ];
+  const loadLeaderboard = async () => {
+    try {
+      setIsLoading(true);
 
-  const currentLeaderboard = activeTab === 'week' ? weeklyLeaderboard : allTimeLeaderboard;
+      // Get leaderboard data
+      const result = await profileService.getLeaderboard(50, activeTab);
+
+      if (result.data) {
+        // Map profiles to leaderboard entries
+        const entries: LeaderboardEntry[] = result.data.map((p, index) => ({
+          rank: index + 1,
+          name: p.full_name || 'User',
+          avatar: p.avatar || '😊',
+          streak: p.current_streak || 0,
+          xp: p.total_xp || 0,
+          isCurrentUser: p.id === user?.id,
+          userId: p.id,
+        }));
+
+        setLeaderboard(entries);
+
+        // Find current user's rank
+        const userEntry = entries.find(e => e.userId === user?.id);
+        if (userEntry) {
+          setUserRank(userEntry.rank);
+        } else if (user?.id) {
+          // User not in top 50, get their actual rank
+          const rankResult = await profileService.getUserRank(user.id);
+          if (rankResult.data) {
+            setUserRank(rankResult.data.rank);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[LeaderboardScreen] Error loading leaderboard:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const currentLeaderboard = leaderboard;
 
   const renderRankBadge = (rank: number) => {
     const isTop3 = rank <= 3;
@@ -157,6 +183,14 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ navigation }) => 
       {/* Header with tabs */}
       <View style={styles.header}>
         <Text style={styles.title}>Leaderboard</Text>
+
+        {/* Show user rank if not in top list */}
+        {userRank && userRank > currentLeaderboard.length && (
+          <Text style={styles.userRankText}>
+            Your Rank: #{userRank}
+          </Text>
+        )}
+
         <View style={styles.tabsContainer}>
           <TouchableOpacity
             style={[
@@ -191,51 +225,67 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ navigation }) => 
         </View>
       </View>
 
-      {/* Leaderboard list */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Illuminated manuscript header decoration */}
-        <View style={styles.manuscriptHeader}>
-          <Svg width="100%" height="40" viewBox="0 0 300 40">
-            <Path
-              d="M10 20 L50 20 M250 20 L290 20"
-              stroke={theme.colors.secondary.lightGold}
-              strokeWidth="1.5"
-            />
-            <Circle
-              cx="150"
-              cy="20"
-              r="15"
-              stroke={theme.colors.secondary.lightGold}
-              strokeWidth="2"
-              fill="none"
-            />
-            <Path
-              d="M145 15 L150 25 L155 15"
-              stroke={theme.colors.success.celebratoryGold}
-              strokeWidth="2"
-              fill="none"
-            />
-          </Svg>
+      {/* Loading state */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
+          <Text style={styles.loadingText}>Loading rankings...</Text>
         </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Illuminated manuscript header decoration */}
+          <View style={styles.manuscriptHeader}>
+            <Svg width="100%" height="40" viewBox="0 0 300 40">
+              <Path
+                d="M10 20 L50 20 M250 20 L290 20"
+                stroke={theme.colors.secondary.lightGold}
+                strokeWidth="1.5"
+              />
+              <Circle
+                cx="150"
+                cy="20"
+                r="15"
+                stroke={theme.colors.secondary.lightGold}
+                strokeWidth="2"
+                fill="none"
+              />
+              <Path
+                d="M145 15 L150 25 L155 15"
+                stroke={theme.colors.success.celebratoryGold}
+                strokeWidth="2"
+                fill="none"
+              />
+            </Svg>
+          </View>
 
-        {currentLeaderboard.map(renderLeaderboardEntry)}
+          {currentLeaderboard.length > 0 ? (
+            currentLeaderboard.map(renderLeaderboardEntry)
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No rankings yet.</Text>
+              <Text style={styles.emptySubtext}>Start practicing to appear on the leaderboard!</Text>
+            </View>
+          )}
 
-        {/* Bottom decoration */}
-        <View style={styles.manuscriptFooter}>
-          <Svg width="100%" height="30" viewBox="0 0 300 30">
-            <Path
-              d="M20 15 Q150 5 280 15"
-              stroke={theme.colors.secondary.lightGold}
-              strokeWidth="1.5"
-              fill="none"
-            />
-          </Svg>
-        </View>
-      </ScrollView>
+          {/* Bottom decoration */}
+          {currentLeaderboard.length > 0 && (
+            <View style={styles.manuscriptFooter}>
+              <Svg width="100%" height="30" viewBox="0 0 300 30">
+                <Path
+                  d="M20 15 Q150 5 280 15"
+                  stroke={theme.colors.secondary.lightGold}
+                  strokeWidth="1.5"
+                  fill="none"
+                />
+              </Svg>
+            </View>
+          )}
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -425,6 +475,42 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.bodySmall.fontSize,
     color: theme.colors.text.tertiary,
     fontFamily: theme.typography.fonts.ui.default,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl,
+  },
+  loadingText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginTop: theme.spacing.md,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl * 2,
+  },
+  emptyText: {
+    fontSize: theme.typography.ui.heading.fontSize,
+    fontWeight: theme.typography.ui.heading.fontWeight,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+  },
+  emptySubtext: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+  },
+  userRankText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+    textAlign: 'center',
   },
 });
 

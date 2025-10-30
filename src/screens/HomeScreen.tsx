@@ -6,18 +6,23 @@ import { theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HomeScreenProps {
   navigation: any;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const [streak, setStreak] = useState(0);
-  const [xp, setXp] = useState(0);
+  const { user, profile } = useAuth();
   const [isCelebrating, setIsCelebrating] = useState(false);
   const [todayVerse, setTodayVerse] = useState<Verse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Get real stats from profile
+  const streak = profile?.current_streak || 0;
+  const xp = profile?.total_xp || 0;
+  const versesLearned = profile?.verses_memorized || 0;
 
   // Load today's verse on mount
   useEffect(() => {
@@ -34,9 +39,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
       if (verse) {
         setTodayVerse(verse);
-        // TODO: Load user profile data for streak and XP
-        setStreak(7); // Placeholder
-        setXp(450); // Placeholder
       } else {
         setError('No verses found. Please import Bible data.');
       }
@@ -249,11 +251,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         {/* Daily Progress */}
         <View style={styles.progressSection}>
-          <Text style={styles.progressTitle}>Daily Progress</Text>
+          <Text style={styles.progressTitle}>Your Progress</Text>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '60%' }]} />
+            <View style={[styles.progressFill, { width: `${Math.min((versesLearned / 10) * 100, 100)}%` }]} />
           </View>
-          <Text style={styles.progressText}>3 of 5 verses completed</Text>
+          <Text style={styles.progressText}>{versesLearned} verses memorized</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

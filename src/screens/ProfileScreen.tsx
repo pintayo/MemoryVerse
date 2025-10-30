@@ -1,9 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Button } from '../components';
 import { theme } from '../theme';
 import Svg, { Path, Circle, Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { useAuth } from '../contexts/AuthContext';
+import { achievementService } from '../services/achievementService';
+import { Achievement } from '../types/database';
 
 interface ProfileScreenProps {
   navigation: any;
@@ -19,70 +22,137 @@ interface Badge {
 }
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
-  // User stats
-  const userStats = {
-    name: 'Your Name',
-    avatar: '😊',
-    totalStreak: 15,
-    longestStreak: 28,
-    totalXP: 1650,
-    versesLearned: 42,
-    perfectRecitals: 35,
-    level: 7,
-    nextLevelXP: 2000,
+  const { user, profile, signOut } = useAuth();
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // Load achievements on mount
+  useEffect(() => {
+    loadAchievements();
+  }, [user?.id]);
+
+  const loadAchievements = async () => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const result = await achievementService.getUserAchievements(user.id);
+      if (result.data) {
+        setAchievements(result.data);
+      }
+    } catch (error) {
+      console.error('[ProfileScreen] Error loading achievements:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Badges data
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsSigningOut(true);
+              await signOut();
+            } catch (error) {
+              console.error('[ProfileScreen] Error signing out:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+              setIsSigningOut(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Calculate user stats from profile
+  const totalStreak = profile?.current_streak || 0;
+  const longestStreak = profile?.longest_streak || 0;
+  const totalXP = profile?.total_xp || 0;
+  const versesLearned = profile?.verses_memorized || 0;
+  const level = Math.floor(totalXP / 200) + 1; // 200 XP per level
+  const nextLevelXP = level * 200;
+  const progressPercentage = ((totalXP % 200) / 200) * 100;
+
+  // Map database achievements to badge format
+  const earnedBadgeTypes = new Set(achievements.map(a => a.badge_type));
+
   const badges: Badge[] = [
     {
-      id: 'first-verse',
-      name: 'First Steps',
-      description: 'Memorize your first verse',
-      earned: true,
-      earnedDate: '2 weeks ago',
+      id: 'streak',
+      name: achievements.find(a => a.badge_type === 'streak')?.name || 'First Steps',
+      description: achievements.find(a => a.badge_type === 'streak')?.description || 'Complete your first day',
+      earned: earnedBadgeTypes.has('streak'),
+      earnedDate: achievements.find(a => a.badge_type === 'streak')?.earned_at
+        ? formatDate(new Date(achievements.find(a => a.badge_type === 'streak')!.earned_at!))
+        : undefined,
+      icon: 'flame',
+    },
+    {
+      id: 'verses',
+      name: achievements.find(a => a.badge_type === 'verses')?.name || 'Memory Builder',
+      description: achievements.find(a => a.badge_type === 'verses')?.description || 'Memorize 10 verses',
+      earned: earnedBadgeTypes.has('verses'),
+      earnedDate: achievements.find(a => a.badge_type === 'verses')?.earned_at
+        ? formatDate(new Date(achievements.find(a => a.badge_type === 'verses')!.earned_at!))
+        : undefined,
       icon: 'book',
     },
     {
-      id: 'week-streak',
-      name: 'Faithful Week',
-      description: '7-day streak',
-      earned: true,
-      earnedDate: '1 week ago',
-      icon: 'flame',
+      id: 'practice',
+      name: achievements.find(a => a.badge_type === 'practice')?.name || 'Consistent Learner',
+      description: achievements.find(a => a.badge_type === 'practice')?.description || 'Practice 3 days in a row',
+      earned: earnedBadgeTypes.has('practice'),
+      earnedDate: achievements.find(a => a.badge_type === 'practice')?.earned_at
+        ? formatDate(new Date(achievements.find(a => a.badge_type === 'practice')!.earned_at!))
+        : undefined,
+      icon: 'star',
     },
     {
       id: 'month-streak',
       name: 'Devoted Month',
       description: '30-day streak',
-      earned: false,
+      earned: totalStreak >= 30,
       icon: 'calendar',
-    },
-    {
-      id: 'perfect-recital',
-      name: 'Word Perfect',
-      description: 'Perfect recital of 10 verses',
-      earned: true,
-      earnedDate: '3 days ago',
-      icon: 'star',
     },
     {
       id: 'early-bird',
       name: 'Early Bird',
       description: 'Study before 7 AM, 5 times',
-      earned: true,
-      earnedDate: '1 day ago',
+      earned: false, // TODO: Track early morning practices
       icon: 'sunrise',
     },
     {
       id: 'century',
       name: 'Century Club',
       description: 'Memorize 100 verses',
-      earned: false,
+      earned: versesLearned >= 100,
       icon: 'trophy',
     },
   ];
 
-  const progressPercentage = (userStats.totalXP / userStats.nextLevelXP) * 100;
+  // Helper function to format dates
+  function formatDate(date: Date): string {
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  }
 
   const renderBadge = (badge: Badge) => {
     return (
@@ -201,6 +271,18 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -212,11 +294,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <Card variant="cream" elevated outlined style={styles.profileCard}>
           <View style={styles.profileHeader}>
             <View style={styles.avatarLarge}>
-              <Text style={styles.avatarLargeText}>{userStats.avatar}</Text>
+              <Text style={styles.avatarLargeText}>{profile?.avatar || '😊'}</Text>
             </View>
-            <Text style={styles.userName}>{userStats.name}</Text>
+            <Text style={styles.userName}>{profile?.full_name || 'User'}</Text>
             <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>Level {userStats.level}</Text>
+              <Text style={styles.levelText}>Level {level}</Text>
             </View>
           </View>
 
@@ -225,7 +307,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             <View style={styles.progressHeader}>
               <Text style={styles.progressLabel}>Experience</Text>
               <Text style={styles.progressValue}>
-                {userStats.totalXP} / {userStats.nextLevelXP} XP
+                {totalXP} / {nextLevelXP} XP
               </Text>
             </View>
             <View style={styles.progressBar}>
@@ -247,7 +329,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 fill={theme.colors.secondary.warmTerracotta}
               />
             </Svg>
-            <Text style={styles.statValue}>{userStats.totalStreak}</Text>
+            <Text style={styles.statValue}>{totalStreak}</Text>
             <Text style={styles.statLabel}>Day Streak</Text>
           </Card>
 
@@ -258,7 +340,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 fill={theme.colors.success.mutedOlive}
               />
             </Svg>
-            <Text style={styles.statValue}>{userStats.versesLearned}</Text>
+            <Text style={styles.statValue}>{versesLearned}</Text>
             <Text style={styles.statLabel}>Verses</Text>
           </Card>
 
@@ -269,8 +351,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 fill={theme.colors.success.celebratoryGold}
               />
             </Svg>
-            <Text style={styles.statValue}>{userStats.perfectRecitals}</Text>
-            <Text style={styles.statLabel}>Perfect</Text>
+            <Text style={styles.statValue}>{achievements.length}</Text>
+            <Text style={styles.statLabel}>Badges</Text>
           </Card>
 
           <Card variant="parchment" style={styles.statCard}>
@@ -280,7 +362,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 fill={theme.colors.secondary.lightGold}
               />
             </Svg>
-            <Text style={styles.statValue}>{userStats.longestStreak}</Text>
+            <Text style={styles.statValue}>{longestStreak}</Text>
             <Text style={styles.statLabel}>Best Streak</Text>
           </Card>
         </View>
@@ -293,13 +375,22 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Settings button */}
-        <Button
-          title="Edit Profile"
-          onPress={() => {}}
-          variant="secondary"
-          style={styles.editButton}
-        />
+        {/* Action buttons */}
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Edit Profile"
+            onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon!')}
+            variant="secondary"
+            style={styles.actionButton}
+          />
+          <Button
+            title={isSigningOut ? "Signing Out..." : "Sign Out"}
+            onPress={handleSignOut}
+            variant="primary"
+            style={styles.actionButton}
+            disabled={isSigningOut}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -469,8 +560,23 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
     fontFamily: theme.typography.fonts.ui.default,
   },
-  editButton: {
-    marginTop: theme.spacing.lg,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginTop: theme.spacing.md,
+  },
+  buttonContainer: {
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.xl,
+  },
+  actionButton: {
+    width: '100%',
   },
 });
 
