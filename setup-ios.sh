@@ -107,15 +107,23 @@ npm install --legacy-peer-deps
 echo -e "${GREEN}✅ Node dependencies installed${NC}"
 echo ""
 
+# Generate native iOS project
+echo "📱 Generating iOS project with Expo Prebuild..."
+npx expo prebuild --clean --platform ios
+echo -e "${GREEN}✅ iOS project generated${NC}"
+echo ""
+
 # Install iOS dependencies (CocoaPods)
-echo "📱 Installing iOS dependencies (CocoaPods)..."
+echo "📲 Installing iOS dependencies (CocoaPods)..."
 if [ -d "ios" ]; then
     cd ios
     pod install
     cd ..
     echo -e "${GREEN}✅ iOS dependencies installed${NC}"
 else
-    echo -e "${YELLOW}⚠️  No ios folder found - will be created on first run${NC}"
+    echo -e "${RED}❌ iOS folder not found after prebuild${NC}"
+    echo "   Please check the output above for errors"
+    exit 1
 fi
 echo ""
 

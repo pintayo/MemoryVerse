@@ -53,7 +53,20 @@ cd /home/user/MemoryVerse
 npm install --legacy-peer-deps
 ```
 
-### Step 2: Install iOS Dependencies
+### Step 2: Generate iOS Project with Expo Prebuild
+
+```bash
+# Generate native iOS project from Expo configuration
+npx expo prebuild --clean --platform ios
+```
+
+This will:
+- Generate the `ios/` directory
+- Create the Xcode project
+- Configure native modules
+- Set up app.json settings
+
+### Step 3: Install iOS Dependencies
 
 ```bash
 # Navigate to iOS folder and install CocoaPods dependencies
@@ -64,7 +77,7 @@ cd ..
 
 **Note:** If you see any warnings about pod versions, you can usually ignore them for development.
 
-### Step 3: Set Up Environment Variables
+### Step 4: Set Up Environment Variables
 
 Create a `.env` file in the root directory with your API keys:
 
@@ -176,6 +189,15 @@ open -a Simulator
 xcrun simctl boot "iPhone 15 Pro"
 ```
 
+### "Cannot find module 'react-native-worklets/plugin'"
+
+This means react-native-worklets is missing. Install it:
+```bash
+npm install react-native-worklets@^0.5.2 --legacy-peer-deps
+npx expo prebuild --clean
+cd ios && pod install && cd ..
+```
+
 ### "Command PhaseScriptExecution failed"
 
 This usually means pods need to be reinstalled:
@@ -184,6 +206,14 @@ cd ios
 rm -rf Pods Podfile.lock
 pod install --repo-update
 cd ..
+```
+
+### "No ios folder found"
+
+You need to generate the iOS project first:
+```bash
+npx expo prebuild --clean --platform ios
+cd ios && pod install && cd ..
 ```
 
 ### "Unable to boot device in current state: Booted"
@@ -246,6 +276,9 @@ npx expo start
 # Start with cache cleared
 npx expo start --clear
 
+# Generate iOS project (first time or after major changes)
+npx expo prebuild --clean --platform ios
+
 # Run on iOS simulator
 npx expo run:ios
 
@@ -259,6 +292,7 @@ lsof -i :19000
 # Reset everything
 npx expo start --clear
 rm -rf node_modules && npm install --legacy-peer-deps
+npx expo prebuild --clean
 cd ios && pod install && cd ..
 ```
 
