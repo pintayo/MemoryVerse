@@ -1,31 +1,62 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, Input, VerseReference } from '../components';
 import { theme } from '../theme';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/types';
+import { verseService } from '../services/verseService';
+import { Verse } from '../types/database';
 
-interface RecallScreenProps {
-  navigation: any;
-}
+type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
 
-const RecallScreen: React.FC<RecallScreenProps> = ({ navigation }) => {
+const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { verseId } = route.params;
+
+  const [verse, setVerse] = useState<Verse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [userInput, setUserInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
   const feedbackAnim = useRef(new Animated.Value(0)).current;
   const waveAnim = useRef(new Animated.Value(0)).current;
 
-  // Sample verse data
-  const verse = {
-    text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.",
-    reference: "Jeremiah 29:11",
-    hint: "For I know the _____ I have for you...",
-    blankWords: ["plans", "prosper", "hope", "future"],
+  // Load verse on mount
+  useEffect(() => {
+    loadVerse();
+  }, [verseId]);
+
+  const loadVerse = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Load the specified verse or get a random one
+      let loadedVerse: Verse | null;
+      if (verseId) {
+        loadedVerse = await verseService.getVerseById(verseId);
+      } else {
+        loadedVerse = await verseService.getRandomVerse('KJV');
+      }
+
+      if (loadedVerse) {
+        setVerse(loadedVerse);
+      } else {
+        setError('Verse not found. Please try again.');
+      }
+    } catch (err) {
+      console.error('[RecallScreen] Error loading verse:', err);
+      setError('Failed to load verse. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Microphone recording animation
@@ -72,9 +103,11 @@ const RecallScreen: React.FC<RecallScreenProps> = ({ navigation }) => {
   };
 
   const checkAnswer = (answer: string) => {
-    // Simple check - in real app, use fuzzy matching
-    const isCorrect = answer.toLowerCase().includes('plans') && answer.toLowerCase().includes('prosper');
-    setFeedback(isCorrect ? 'correct' : 'incorrect');
+    if (!verse) return;
+
+    // Use verseService to check answer accuracy
+    const result = verseService.checkAnswer(verse.text, answer);
+    setFeedback(result.isCorrect ? 'correct' : 'incorrect');
 
     // Animate feedback
     Animated.sequence([
@@ -90,7 +123,7 @@ const RecallScreen: React.FC<RecallScreenProps> = ({ navigation }) => {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      if (isCorrect) {
+      if (result.isCorrect) {
         // Navigate to next screen or back
         setTimeout(() => navigation.goBack(), 500);
       }
@@ -109,6 +142,44 @@ const RecallScreen: React.FC<RecallScreenProps> = ({ navigation }) => {
     }
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={[styles.scrollContent, styles.centerContent]}>
+          <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
+          <Text style={styles.loadingText}>Loading verse...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state
+  if (error || !verse) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={[styles.scrollContent, styles.centerContent]}>
+          <Text style={styles.errorText}>{error || 'Verse not found'}</Text>
+          <Button
+            title="Try Again"
+            onPress={loadVerse}
+            variant="gold"
+            style={styles.retryButton}
+          />
+          <Button
+            title="Go Back"
+            onPress={() => navigation.goBack()}
+            variant="secondary"
+            style={styles.retryButton}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const verseReference = `${verse.book} ${verse.chapter}:${verse.verse_number}`;
+  const hintText = verse.text.substring(0, Math.min(30, verse.text.length)) + '...';
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -118,27 +189,27 @@ const RecallScreen: React.FC<RecallScreenProps> = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Recall the Verse</Text>
+          <Text style={styles.title}>Practice the Verse</Text>
           <Text style={styles.subtitle}>Type or speak what you remember</Text>
         </View>
 
         {/* Blurred verse preview */}
         <Card variant="warm" style={styles.versePreviewCard}>
           <Text style={styles.blurredVerse} numberOfLines={3}>
-            {verse.text}
+            {showAnswer ? verse.text : '******************************************'}
           </Text>
           <VerseReference style={styles.reference}>
-            {verse.reference}
+            {verseReference}
           </VerseReference>
-          {!showHint && (
+          {!showHint && !showAnswer && (
             <TouchableOpacity onPress={() => setShowHint(true)} style={styles.hintButton}>
               <Text style={styles.hintButtonText}>Show Hint</Text>
             </TouchableOpacity>
           )}
-          {showHint && (
+          {showHint && !showAnswer && (
             <View style={styles.hintContainer}>
               <Text style={styles.hintLabel}>Hint:</Text>
-              <Text style={styles.hintText}>{verse.hint}</Text>
+              <Text style={styles.hintText}>{hintText}</Text>
             </View>
           )}
         </Card>
@@ -257,14 +328,22 @@ const RecallScreen: React.FC<RecallScreenProps> = ({ navigation }) => {
           </Animated.View>
         )}
 
-        {/* Submit button */}
-        <Button
-          title="Check Answer"
-          onPress={handleSubmit}
-          variant="olive"
-          disabled={!userInput.trim() || isRecording}
-          style={styles.submitButton}
-        />
+        {/* Action buttons */}
+        <View style={styles.buttonRow}>
+          <Button
+            title={showAnswer ? "Hide Answer" : "Give Answer"}
+            onPress={() => setShowAnswer(!showAnswer)}
+            variant="secondary"
+            style={styles.giveAnswerButton}
+          />
+          <Button
+            title="Check Answer"
+            onPress={handleSubmit}
+            variant="olive"
+            disabled={!userInput.trim() || isRecording || showAnswer}
+            style={styles.submitButton}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -426,8 +505,38 @@ const styles = StyleSheet.create({
   feedbackTextIncorrect: {
     color: theme.colors.text.primary,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  giveAnswerButton: {
+    flex: 1,
+  },
   submitButton: {
-    marginTop: theme.spacing.lg,
+    flex: 1,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: theme.spacing.lg,
+  },
+  loadingText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginTop: theme.spacing.md,
+  },
+  errorText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.error.main,
+    textAlign: 'center',
+    fontFamily: theme.typography.fonts.ui.default,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  retryButton: {
+    marginTop: theme.spacing.sm,
   },
 });
 

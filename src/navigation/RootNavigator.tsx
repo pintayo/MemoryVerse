@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import BottomTabNavigator from './BottomTabNavigator';
 import { VerseCardScreen, RecallScreen } from '../screens';
 import { UnderstandScreen } from '../screens/UnderstandScreen';
+import PrayScreen from '../screens/PrayScreen';
 import { theme } from '../theme';
 import { RootStackParamList } from './types';
 
@@ -45,15 +46,15 @@ const RootNavigator = () => {
         name="Recall"
         component={RecallScreen}
         options={{
-          title: 'Recall Verse',
+          title: 'Practice Verse',
           headerBackTitle: 'Back',
         }}
       />
       <Stack.Screen
-        name="Recite"
-        component={RecallScreen}
+        name="Pray"
+        component={PrayScreen}
         options={{
-          title: 'Recite Verse',
+          title: 'Prayer Training',
           headerBackTitle: 'Back',
         }}
       />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
 import { theme } from '../theme';
@@ -51,6 +51,38 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const handleCompanionPress = () => {
     setIsCelebrating(true);
     setTimeout(() => setIsCelebrating(false), 2000);
+
+    // Show encouragement or tips based on streak
+    const messages = [
+      {
+        title: "Keep Going! 🌟",
+        message: `You're on a ${streak}-day streak! Remember: "Thy word have I hid in mine heart, that I might not sin against thee." - Psalm 119:11`
+      },
+      {
+        title: "Scripture Tip 💡",
+        message: "Try practicing your verses at the same time each day. Consistency builds strong memory and spiritual discipline!"
+      },
+      {
+        title: "You're Amazing! ✨",
+        message: `${xp} XP earned so far! Every verse you memorize is a treasure stored in your heart.`
+      },
+      {
+        title: "Prayer Time 🙏",
+        message: "After memorizing, try praying the verse back to God. It deepens understanding and makes the Word come alive!"
+      },
+      {
+        title: "Share the Word 📖",
+        message: "Challenge: Share a verse you've learned with someone today. Teaching others helps solidify your own memory!"
+      }
+    ];
+
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+    Alert.alert(
+      randomMessage.title,
+      randomMessage.message,
+      [{ text: "Amen!", style: "default" }]
+    );
   };
 
   const actionButtons = [
@@ -77,24 +109,24 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       },
     },
     {
-      id: 'recall',
-      title: 'Recall',
+      id: 'practice',
+      title: 'Practice',
       icon: 'brain',
-      description: 'Fill in the blanks',
+      description: 'Recall & recite verses',
       onPress: () => {
-        if (todayVerse) {
-          navigation.navigate('Recall');
+        if (todayVerse?.id) {
+          navigation.navigate('Recall', { verseId: todayVerse.id });
         }
       },
     },
     {
-      id: 'recite',
-      title: 'Recite',
-      icon: 'mic',
-      description: 'Speak it aloud',
+      id: 'pray',
+      title: 'Pray',
+      icon: 'heart',
+      description: 'Prayer training',
       onPress: () => {
-        if (todayVerse) {
-          navigation.navigate('Recite');
+        if (todayVerse?.id) {
+          navigation.navigate('Pray', { verseId: todayVerse.id });
         }
       },
     },
@@ -233,8 +265,8 @@ const getActionColor = (id: string): string => {
   const colors: { [key: string]: string } = {
     read: theme.colors.secondary.softClay,
     understand: theme.colors.secondary.lightGold,
-    recall: theme.colors.success.mutedOlive,
-    recite: theme.colors.secondary.warmTerracotta,
+    practice: theme.colors.success.mutedOlive,
+    pray: theme.colors.secondary.warmTerracotta,
   };
   return colors[id] || theme.colors.secondary.softClay;
 };
@@ -275,6 +307,15 @@ const renderActionIcon = (iconName: string) => {
         <Svg width="24" height="24" viewBox="0 0 24 24">
           <Path
             d="M12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14ZM17.91 11C17.91 14.39 15.2 17.18 11.91 17.49V21H10.91V17.49C7.62 17.18 4.91 14.39 4.91 11H6.91C6.91 13.76 9.15 16 11.91 16C14.67 16 16.91 13.76 16.91 11H17.91Z"
+            fill={iconColor}
+          />
+        </Svg>
+      );
+    case 'heart':
+      return (
+        <Svg width="24" height="24" viewBox="0 0 24 24">
+          <Path
+            d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z"
             fill={iconColor}
           />
         </Svg>
