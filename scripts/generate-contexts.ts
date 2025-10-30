@@ -6,11 +6,11 @@
  * This script should be run server-side to pre-populate context for all verses.
  *
  * Usage:
- *   npx ts-node scripts/generate-contexts.ts [--limit 100] [--provider anthropic]
+ *   npx ts-node scripts/generate-contexts.ts [--limit 100] [--provider perplexity]
  *
  * Options:
  *   --limit <number>     Maximum number of verses to process (default: 100)
- *   --provider <string>  AI provider to use: 'openai' or 'anthropic' (default: anthropic)
+ *   --provider <string>  AI provider to use: 'perplexity', 'openai', or 'anthropic' (default: perplexity)
  *   --stats              Show statistics only, don't generate
  *   --help               Show this help message
  */
@@ -22,13 +22,13 @@ import { batchGenerateContexts, getContextStats } from '../src/services/contextG
 // Parse command-line arguments
 function parseArgs(): {
   limit: number;
-  provider: 'openai' | 'anthropic';
+  provider: 'openai' | 'anthropic' | 'perplexity';
   statsOnly: boolean;
   help: boolean;
 } {
   const args = process.argv.slice(2);
   let limit = 100;
-  let provider: 'openai' | 'anthropic' = 'anthropic';
+  let provider: 'openai' | 'anthropic' | 'perplexity' = 'perplexity';
   let statsOnly = false;
   let help = false;
 
@@ -47,11 +47,11 @@ function parseArgs(): {
       }
     } else if (arg === '--provider' || arg === '-p') {
       const providerArg = args[++i];
-      if (providerArg !== 'openai' && providerArg !== 'anthropic') {
-        console.error('❌ Error: --provider must be "openai" or "anthropic"');
+      if (providerArg !== 'openai' && providerArg !== 'anthropic' && providerArg !== 'perplexity') {
+        console.error('❌ Error: --provider must be "openai", "anthropic", or "perplexity"');
         process.exit(1);
       }
-      provider = providerArg;
+      provider = providerArg as 'openai' | 'anthropic' | 'perplexity';
     }
   }
 
@@ -70,13 +70,19 @@ Usage:
 
 Options:
   --limit, -l <number>      Max verses to process (default: 100)
-  --provider, -p <string>   AI provider: 'openai' or 'anthropic' (default: anthropic)
+  --provider, -p <string>   AI provider: 'perplexity', 'openai', or 'anthropic' (default: perplexity)
   --stats, -s               Show statistics only, don't generate
   --help, -h                Show this help message
 
 Examples:
-  # Generate context for 50 verses using Claude
-  npx ts-node scripts/generate-contexts.ts --limit 50 --provider anthropic
+  # Generate context for 50 verses using Perplexity (default)
+  npx ts-node scripts/generate-contexts.ts --limit 50
+
+  # Generate context for 50 verses using Perplexity (explicit)
+  npx ts-node scripts/generate-contexts.ts --limit 50 --provider perplexity
+
+  # Generate context for 100 verses using Claude
+  npx ts-node scripts/generate-contexts.ts --limit 100 --provider anthropic
 
   # Generate context for 200 verses using GPT-4
   npx ts-node scripts/generate-contexts.ts --limit 200 --provider openai
@@ -87,6 +93,7 @@ Examples:
 Environment Variables:
   EXPO_PUBLIC_SUPABASE_URL          Supabase project URL
   EXPO_PUBLIC_SUPABASE_ANON_KEY     Supabase anonymous key
+  EXPO_PUBLIC_PERPLEXITY_API_KEY    Perplexity API key (if using Perplexity)
   EXPO_PUBLIC_OPENAI_API_KEY        OpenAI API key (if using OpenAI)
   EXPO_PUBLIC_ANTHROPIC_API_KEY     Anthropic API key (if using Claude)
 
@@ -144,6 +151,12 @@ async function main() {
     process.exit(1);
   }
 
+  if (provider === 'perplexity' && !config.ai.perplexity.apiKey) {
+    console.error('❌ Error: Perplexity API key missing');
+    console.error('   Please set EXPO_PUBLIC_PERPLEXITY_API_KEY in your .env file');
+    process.exit(1);
+  }
+
   if (provider === 'openai' && !config.ai.openai.apiKey) {
     console.error('❌ Error: OpenAI API key missing');
     console.error('   Please set EXPO_PUBLIC_OPENAI_API_KEY in your .env file');
@@ -167,7 +180,11 @@ async function main() {
   // Confirm before proceeding
   console.log(`⚙️  Configuration:`);
   console.log(`   Provider:       ${provider}`);
-  console.log(`   Model:          ${provider === 'openai' ? config.ai.openai.model : config.ai.anthropic.model}`);
+  let model = '';
+  if (provider === 'perplexity') model = config.ai.perplexity.model;
+  else if (provider === 'openai') model = config.ai.openai.model;
+  else if (provider === 'anthropic') model = config.ai.anthropic.model;
+  console.log(`   Model:          ${model}`);
   console.log(`   Batch limit:    ${limit} verses`);
   console.log(`   Rate limit:     ${config.ai.rateLimitRPM} requests/min`);
   console.log('');

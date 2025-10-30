@@ -5,7 +5,7 @@ Get AI-powered context for Bible verses up and running in 5 minutes.
 ## Prerequisites
 
 - Supabase project configured
-- OpenAI or Anthropic API key
+- Perplexity, OpenAI, or Anthropic API key
 - Node.js installed
 
 ## Step 1: Database Migration (2 minutes)
@@ -27,16 +27,19 @@ ALTER TABLE public.verses
 
 Edit `.env`:
 ```bash
-# Choose one provider
-EXPO_PUBLIC_AI_PROVIDER=anthropic
+# Choose one provider (perplexity recommended)
+EXPO_PUBLIC_AI_PROVIDER=perplexity
 
 # Add your API key
+EXPO_PUBLIC_PERPLEXITY_API_KEY=pplx-your-key-here
+# OR
 EXPO_PUBLIC_ANTHROPIC_API_KEY=sk-ant-your-key-here
 # OR
 EXPO_PUBLIC_OPENAI_API_KEY=sk-your-key-here
 ```
 
 **Get API Keys:**
+- Perplexity: https://www.perplexity.ai/settings/api (Recommended)
 - OpenAI: https://platform.openai.com/api-keys
 - Anthropic: https://console.anthropic.com/settings/keys
 
@@ -71,16 +74,23 @@ You now have AI-powered context generation working. 🎉
 # Show statistics
 npx ts-node scripts/generate-contexts.ts --stats
 
-# Generate 500 verses
-npx ts-node scripts/generate-contexts.ts --limit 500
+# Generate 100 verses with Perplexity (default)
+npx ts-node scripts/generate-contexts.ts --limit 100
 
-# Use OpenAI
+# Generate 500 verses with Perplexity
+npx ts-node scripts/generate-contexts.ts --limit 500 --provider perplexity
+
+# Use OpenAI instead
 npx ts-node scripts/generate-contexts.ts --provider openai
+
+# Use Anthropic instead
+npx ts-node scripts/generate-contexts.ts --provider anthropic
 ```
 
 ### Costs
 
-- **gpt-4o-mini:** ~$0.0003/verse (~$0.30 per 1000 verses) ✅ Recommended
+- **Perplexity (sonar-pro):** ~$0.001/verse (~$1.00 per 1000 verses) ✅ Recommended
+- **gpt-4o-mini:** ~$0.0003/verse (~$0.30 per 1000 verses) ✅ Cheapest
 - **claude-3-5-sonnet:** ~$0.0033/verse (~$3.30 per 1000 verses)
 
 ### Need Help?
