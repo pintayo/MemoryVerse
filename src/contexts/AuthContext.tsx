@@ -54,12 +54,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const initializeAuth = async () => {
       try {
         // Get current session
-        const sessionResult = await authService.getSession();
+        const currentSession = await authService.getSession();
 
         if (!mounted) return;
 
-        if (sessionResult.data?.session) {
-          const currentSession = sessionResult.data.session;
+        if (currentSession) {
           setSession(currentSession);
           setUser(currentSession.user);
 
