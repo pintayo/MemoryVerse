@@ -18,8 +18,9 @@ echo "This will install versions compatible with Expo SDK 54:"
 echo "  - React 19.1.0 (was 18.2.0)"
 echo "  - React Native 0.81.5 (was 0.75.4)"
 echo "  - React Native Reanimated 4.1.1 (was 3.15.1)"
+echo "  - React Native Worklets 0.5.2 (required by Reanimated 4.x)"
 echo ""
-echo "This fixes the 'Bridgeless mode' error with Expo Go."
+echo "This fixes the 'Bridgeless mode' and 'worklets' errors with Expo Go."
 echo ""
 
 # Step 1: Clean everything
