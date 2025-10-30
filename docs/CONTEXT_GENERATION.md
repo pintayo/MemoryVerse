@@ -4,7 +4,7 @@ This document describes the AI-powered context generation feature for MemoryVers
 
 ## Overview
 
-The context generation system uses AI (OpenAI GPT-4 or Anthropic Claude) to automatically generate concise, encouraging spiritual explanations for Bible verses. These explanations help users:
+The context generation system uses AI (OpenAI, Anthropic Claude, or Perplexity) to automatically generate concise, encouraging spiritual explanations for Bible verses. These explanations help users:
 
 1. **Understand the meaning** - Clarifies the spiritual significance
 2. **Memorize better** - Provides context that aids retention
@@ -17,7 +17,7 @@ The context generation system uses AI (OpenAI GPT-4 or Anthropic Claude) to auto
 - ✅ **On-demand generation** - Context is generated when a user views a verse in the Understand screen
 - ✅ **Caching** - Generated context is stored in Supabase for instant future access
 - ✅ **Batch generation** - Server-side script to pre-populate context for all verses
-- ✅ **Multiple AI providers** - Supports both OpenAI and Anthropic (Claude)
+- ✅ **Multiple AI providers** - Supports OpenAI, Anthropic (Claude), and Perplexity
 - ✅ **Rate limiting** - Respects API rate limits to control costs
 - ✅ **Error handling** - Graceful fallbacks and retry logic
 - ✅ **Progress tracking** - Visual feedback during batch operations
@@ -73,7 +73,7 @@ getContextStats(): Promise<{total, withContext, withoutContext, aiGenerated}>
 **Key Features:**
 - Rate limiting (default 50 requests/minute)
 - Exponential backoff retry logic (3 attempts)
-- Support for both OpenAI and Anthropic APIs
+- Support for OpenAI, Anthropic, and Perplexity APIs
 - Progress callbacks for batch operations
 - Comprehensive error handling
 
@@ -119,7 +119,7 @@ Environment variables in `.env`:
 
 ```bash
 # AI Provider (choose one)
-EXPO_PUBLIC_AI_PROVIDER=anthropic  # or 'openai'
+EXPO_PUBLIC_AI_PROVIDER=anthropic  # or 'openai' or 'perplexity'
 
 # OpenAI Configuration
 EXPO_PUBLIC_OPENAI_API_KEY=sk-...
@@ -128,6 +128,10 @@ EXPO_PUBLIC_OPENAI_MODEL=gpt-4o-mini
 # Anthropic Configuration
 EXPO_PUBLIC_ANTHROPIC_API_KEY=sk-ant-...
 EXPO_PUBLIC_ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+
+# Perplexity Configuration
+EXPO_PUBLIC_PERPLEXITY_API_KEY=pplx-...
+EXPO_PUBLIC_PERPLEXITY_MODEL=llama-3.1-sonar-small-128k-online
 
 # Rate Limiting
 EXPO_PUBLIC_AI_RATE_LIMIT_RPM=50
@@ -140,10 +144,11 @@ EXPO_PUBLIC_AI_RETRY_DELAY_MS=1000
 ```typescript
 import { config } from './src/config/env';
 
-config.ai.provider        // 'openai' or 'anthropic'
-config.ai.openai.apiKey   // OpenAI key
-config.ai.anthropic.apiKey // Anthropic key
-config.ai.rateLimitRPM    // Rate limit
+config.ai.provider          // 'openai', 'anthropic', or 'perplexity'
+config.ai.openai.apiKey     // OpenAI key
+config.ai.anthropic.apiKey  // Anthropic key
+config.ai.perplexity.apiKey // Perplexity key
+config.ai.rateLimitRPM      // Rate limit
 ```
 
 ## Setup Instructions
@@ -188,6 +193,11 @@ EXPO_PUBLIC_ANTHROPIC_API_KEY=your_actual_key_here
 
 **Anthropic (Claude):**
 1. Go to https://console.anthropic.com/settings/keys
+2. Create new API key
+3. Copy and paste into `.env`
+
+**Perplexity:**
+1. Go to https://www.perplexity.ai/settings/api
 2. Create new API key
 3. Copy and paste into `.env`
 
@@ -302,7 +312,15 @@ console.log(`${stats.withContext}/${stats.total} verses have context`);
 - **1000 verses:** ~$3.30
 - **31,000 verses (full KJV):** ~$102.30
 
-**Recommendation:** Use gpt-4o-mini for cost-effective batch generation.
+### Perplexity Pricing (Llama 3.1 Sonar Small)
+
+- **Input:** $0.20 per 1M tokens (~$0.0002 per request)
+- **Output:** $0.20 per 1M tokens (~$0.00004 per response)
+- **Total per verse:** ~$0.00024
+- **1000 verses:** ~$0.24
+- **31,000 verses (full KJV):** ~$7.44
+
+**Recommendation:** Use **Perplexity (llama-3.1-sonar-small)** or **gpt-4o-mini** for cost-effective batch generation. Perplexity offers the lowest cost while maintaining good quality.
 
 ## Rate Limiting
 
