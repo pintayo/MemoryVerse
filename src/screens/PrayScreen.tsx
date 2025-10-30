@@ -175,7 +175,7 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
             <Text style={styles.guidanceToggleText}>Show Prayer Guide</Text>
           </TouchableOpacity>
         ) : (
-          <Card variant="primary" style={styles.guidanceCard}>
+          <Card variant="parchment" style={styles.guidanceCard}>
             <TouchableOpacity
               onPress={() => setShowGuidance(false)}
               style={styles.guidanceHeader}
