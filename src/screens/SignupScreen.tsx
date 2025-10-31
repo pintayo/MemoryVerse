@@ -80,13 +80,6 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation, onSignupSuccess
         fullName: fullName.trim()
       });
 
-      if (result.user) {
-        // Success! Navigate or show success
-        Alert.alert('Success', 'Account created successfully!', [
-          { text: 'OK', onPress: () => navigation.navigate('Login') }
-        ]);
-      }
-
       if (!result.user) {
         Alert.alert('Error', 'Account created but user data is missing');
         return;
