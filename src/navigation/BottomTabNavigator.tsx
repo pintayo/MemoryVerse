@@ -1,9 +1,24 @@
+console.log('[BottomTabNavigator] Module loading...');
+
 import React from 'react';
+console.log('[BottomTabNavigator] React imported');
+
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+console.log('[BottomTabNavigator] createBottomTabNavigator imported');
+
 import { HomeScreen, LeaderboardScreen, ProfileScreen } from '../screens';
+console.log('[BottomTabNavigator] Screens imported');
+
 import { theme } from '../theme';
+console.log('[BottomTabNavigator] theme imported');
+
 import Svg, { Path } from 'react-native-svg';
+console.log('[BottomTabNavigator] SVG imported');
+
 import { BottomTabParamList } from './types';
+console.log('[BottomTabNavigator] types imported');
+
+console.log('[BottomTabNavigator] All imports complete');
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
