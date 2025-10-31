@@ -11,12 +11,18 @@ export const achievementService = {
    * Get user's achievements
    */
   async getUserAchievements(userId: string): Promise<Achievement[]> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('achievements')
       .select('*')
       .eq('user_id', userId)
       .order('earned_at', { ascending: false });
 
+    if (!result) {
+      console.warn('[achievementService] getUserAchievements returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data || [];
   },
@@ -31,19 +37,24 @@ export const achievementService = {
     description: string
   ): Promise<Achievement> {
     // Check if user already has this badge
-    const { data: existing } = await supabase
+    const existingResult = await supabase
       .from('achievements')
       .select('*')
       .eq('user_id', userId)
       .eq('badge_type', badgeType)
       .single();
 
-    if (existing) {
-      return existing;
+    if (!existingResult) {
+      console.warn('[achievementService] awardAchievement check returned undefined');
+    } else {
+      const { data: existing } = existingResult;
+      if (existing) {
+        return existing;
+      }
     }
 
     // Award new badge
-    const { data, error } = await supabase
+    const result = await supabase
       .from('achievements')
       .insert({
         user_id: userId,
@@ -54,6 +65,12 @@ export const achievementService = {
       .select()
       .single();
 
+    if (!result) {
+      console.warn('[achievementService] awardAchievement insert returned undefined');
+      throw new Error('Failed to award achievement');
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },
@@ -70,18 +87,23 @@ export const achievementService = {
 
     // First verse
     if (!earnedBadgeTypes.has('first-verse')) {
-      const { count } = await supabase
+      const countResult = await supabase
         .from('user_verse_progress')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
-      if (count && count >= 1) {
-        await this.awardAchievement(
-          userId,
-          'first-verse',
-          'First Steps',
-          'Memorize your first verse'
-        );
+      if (!countResult) {
+        console.warn('[achievementService] checkAndAwardAchievements first-verse count returned undefined');
+      } else {
+        const { count } = countResult;
+        if (count && count >= 1) {
+          await this.awardAchievement(
+            userId,
+            'first-verse',
+            'First Steps',
+            'Memorize your first verse'
+          );
+        }
       }
     }
 
@@ -107,37 +129,47 @@ export const achievementService = {
 
     // Perfect recital (10 verses with 100% accuracy)
     if (!earnedBadgeTypes.has('perfect-recital')) {
-      const { count } = await supabase
+      const countResult = await supabase
         .from('practice_sessions')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('accuracy_percentage', 100);
 
-      if (count && count >= 10) {
-        await this.awardAchievement(
-          userId,
-          'perfect-recital',
-          'Word Perfect',
-          'Perfect recital of 10 verses'
-        );
+      if (!countResult) {
+        console.warn('[achievementService] checkAndAwardAchievements perfect-recital count returned undefined');
+      } else {
+        const { count } = countResult;
+        if (count && count >= 10) {
+          await this.awardAchievement(
+            userId,
+            'perfect-recital',
+            'Word Perfect',
+            'Perfect recital of 10 verses'
+          );
+        }
       }
     }
 
     // Century club (100 verses mastered)
     if (!earnedBadgeTypes.has('century')) {
-      const { count } = await supabase
+      const countResult = await supabase
         .from('user_verse_progress')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('status', 'mastered');
 
-      if (count && count >= 100) {
-        await this.awardAchievement(
-          userId,
-          'century',
-          'Century Club',
-          'Memorize 100 verses'
-        );
+      if (!countResult) {
+        console.warn('[achievementService] checkAndAwardAchievements century count returned undefined');
+      } else {
+        const { count } = countResult;
+        if (count && count >= 100) {
+          await this.awardAchievement(
+            userId,
+            'century',
+            'Century Club',
+            'Memorize 100 verses'
+          );
+        }
       }
     }
   },
@@ -152,7 +184,7 @@ export const achievementService = {
   ): Promise<DailyStreak> {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-    const { data, error } = await supabase
+    const result = await supabase
       .from('daily_streaks')
       .upsert({
         user_id: userId,
@@ -163,6 +195,12 @@ export const achievementService = {
       .select()
       .single();
 
+    if (!result) {
+      console.warn('[achievementService] recordDailyPractice returned undefined');
+      throw new Error('Failed to record daily practice');
+    }
+
+    const { data, error } = result;
     if (error) throw error;
 
     // Update user streak
@@ -179,13 +217,19 @@ export const achievementService = {
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
-    const { data, error } = await supabase
+    const result = await supabase
       .from('daily_streaks')
       .select('date')
       .eq('user_id', userId)
       .gte('date', ninetyDaysAgo.toISOString().split('T')[0])
       .order('date', { ascending: false });
 
+    if (!result) {
+      console.warn('[achievementService] updateStreak returned undefined');
+      return;
+    }
+
+    const { data, error } = result;
     if (error) throw error;
 
     if (!data || data.length === 0) {
@@ -232,13 +276,19 @@ export const achievementService = {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const { data, error } = await supabase
+    const result = await supabase
       .from('daily_streaks')
       .select('*')
       .eq('user_id', userId)
       .gte('date', startDate.toISOString().split('T')[0])
       .order('date', { ascending: true });
 
+    if (!result) {
+      console.warn('[achievementService] getStreakHistory returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data || [];
   },

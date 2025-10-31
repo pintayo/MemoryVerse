@@ -11,7 +11,7 @@ export const verseService = {
    * Get all verses
    */
   async getAllVerses(translation: string = 'NIV'): Promise<Verse[]> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('verses')
       .select('*')
       .eq('translation', translation)
@@ -19,6 +19,12 @@ export const verseService = {
       .order('chapter', { ascending: true })
       .order('verse_number', { ascending: true });
 
+    if (!result) {
+      console.warn('[verseService] getAllVerses returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data || [];
   },
@@ -27,12 +33,18 @@ export const verseService = {
    * Get verse by ID
    */
   async getVerseById(verseId: string): Promise<Verse | null> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('verses')
       .select('*')
       .eq('id', verseId)
       .single();
 
+    if (!result) {
+      console.warn('[verseService] getVerseById returned undefined for verse:', verseId);
+      return null;
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },
@@ -41,13 +53,19 @@ export const verseService = {
    * Get verses by category
    */
   async getVersesByCategory(category: string, translation: string = 'NIV'): Promise<Verse[]> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('verses')
       .select('*')
       .eq('category', category)
       .eq('translation', translation)
       .order('difficulty', { ascending: true });
 
+    if (!result) {
+      console.warn('[verseService] getVersesByCategory returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data || [];
   },
@@ -56,12 +74,18 @@ export const verseService = {
    * Get verses by difficulty
    */
   async getVersesByDifficulty(difficulty: number, translation: string = 'NIV'): Promise<Verse[]> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('verses')
       .select('*')
       .eq('difficulty', difficulty)
       .eq('translation', translation);
 
+    if (!result) {
+      console.warn('[verseService] getVersesByDifficulty returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data || [];
   },
@@ -70,12 +94,18 @@ export const verseService = {
    * Get random verse
    */
   async getRandomVerse(translation: string = 'NIV'): Promise<Verse | null> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('verses')
       .select('*')
       .eq('translation', translation)
       .limit(100); // Get a pool of verses
 
+    if (!result) {
+      console.warn('[verseService] getRandomVerse returned undefined');
+      return null;
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     if (!data || data.length === 0) return null;
 
@@ -89,11 +119,17 @@ export const verseService = {
    */
   async getTodaysVerse(userId: string, translation: string = 'NIV'): Promise<Verse | null> {
     // Get user's current progress
-    const { data: progressData, error: progressError } = await supabase
+    const progressResult = await supabase
       .from('user_verse_progress')
       .select('verse_id')
       .eq('user_id', userId);
 
+    if (!progressResult) {
+      console.warn('[verseService] getTodaysVerse progress query returned undefined');
+      return null;
+    }
+
+    const { data: progressData, error: progressError } = progressResult;
     if (progressError) throw progressError;
 
     const learnedVerseIds = progressData?.map(p => p.verse_id) || [];
@@ -108,8 +144,14 @@ export const verseService = {
       query = query.not('id', 'in', `(${learnedVerseIds.join(',')})`);
     }
 
-    const { data, error } = await query.limit(1);
+    const result = await query.limit(1);
 
+    if (!result) {
+      console.warn('[verseService] getTodaysVerse query returned undefined');
+      return null;
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data && data.length > 0 ? data[0] : null;
   },
@@ -118,13 +160,19 @@ export const verseService = {
    * Get user's verse progress
    */
   async getUserVerseProgress(userId: string, verseId: string): Promise<UserVerseProgress | null> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('user_verse_progress')
       .select('*')
       .eq('user_id', userId)
       .eq('verse_id', verseId)
       .single();
 
+    if (!result) {
+      console.warn('[verseService] getUserVerseProgress returned undefined');
+      return null;
+    }
+
+    const { data, error } = result;
     if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
     return data;
   },
@@ -137,7 +185,7 @@ export const verseService = {
     verseId: string,
     updates: Partial<UserVerseProgress>
   ): Promise<UserVerseProgress> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('user_verse_progress')
       .upsert({
         user_id: userId,
@@ -147,6 +195,12 @@ export const verseService = {
       .select()
       .single();
 
+    if (!result) {
+      console.warn('[verseService] upsertUserVerseProgress returned undefined');
+      throw new Error('Failed to upsert user verse progress');
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },
@@ -167,7 +221,7 @@ export const verseService = {
       xp_earned?: number;
     }
   ): Promise<PracticeSession> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('practice_sessions')
       .insert({
         user_id: userId,
@@ -177,6 +231,12 @@ export const verseService = {
       .select()
       .single();
 
+    if (!result) {
+      console.warn('[verseService] recordPracticeSession returned undefined');
+      throw new Error('Failed to record practice session');
+    }
+
+    const { data, error } = result;
     if (error) throw error;
 
     // Update user verse progress
@@ -211,7 +271,7 @@ export const verseService = {
   async getVersesForReview(userId: string, limit: number = 5): Promise<Verse[]> {
     const now = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const result = await supabase
       .from('user_verse_progress')
       .select('verse_id, verses(*)')
       .eq('user_id', userId)
@@ -220,6 +280,12 @@ export const verseService = {
       .order('next_review_at', { ascending: true })
       .limit(limit);
 
+    if (!result) {
+      console.warn('[verseService] getVersesForReview returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
 
     return data?.map(item => item.verses).filter(Boolean) as Verse[] || [];
@@ -229,13 +295,19 @@ export const verseService = {
    * Get user's mastered verses
    */
   async getMasteredVerses(userId: string): Promise<Verse[]> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('user_verse_progress')
       .select('verse_id, verses(*)')
       .eq('user_id', userId)
       .eq('status', 'mastered')
       .order('mastered_at', { ascending: false });
 
+    if (!result) {
+      console.warn('[verseService] getMasteredVerses returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
 
     return data?.map(item => item.verses).filter(Boolean) as Verse[] || [];
@@ -338,7 +410,7 @@ export const verseService = {
     isAiGenerated: boolean = false
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const result = await supabase
         .from('verses')
         .update({
           context,
@@ -347,6 +419,15 @@ export const verseService = {
         })
         .eq('id', verseId);
 
+      if (!result) {
+        console.warn('[verseService] updateVerseContext returned undefined');
+        return {
+          success: false,
+          error: 'Update query returned undefined',
+        };
+      }
+
+      const { error } = result;
       if (error) throw error;
 
       return { success: true };
@@ -363,12 +444,18 @@ export const verseService = {
    * Get verses that need context generation
    */
   async getVersesNeedingContext(limit: number = 100): Promise<Verse[]> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('verses')
       .select('*')
       .or('context.is.null,context.eq.')
       .limit(limit);
 
+    if (!result) {
+      console.warn('[verseService] getVersesNeedingContext returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data || [];
   },

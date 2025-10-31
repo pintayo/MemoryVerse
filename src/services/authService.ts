@@ -21,7 +21,7 @@ export const authService = {
    * Sign up a new user
    */
   async signUp({ email, password, fullName }: SignUpData) {
-    const { data, error } = await supabase.auth.signUp({
+    const result = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -31,6 +31,12 @@ export const authService = {
       },
     });
 
+    if (!result) {
+      console.warn('[authService] signUp returned undefined');
+      throw new Error('Sign up failed');
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },
@@ -39,11 +45,17 @@ export const authService = {
    * Sign in an existing user
    */
   async signIn({ email, password }: SignInData) {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const result = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    if (!result) {
+      console.warn('[authService] signIn returned undefined');
+      throw new Error('Sign in failed');
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },
@@ -52,7 +64,12 @@ export const authService = {
    * Sign out the current user
    */
   async signOut() {
-    const { error } = await supabase.auth.signOut();
+    const result = await supabase.auth.signOut();
+    if (!result) {
+      console.warn('[authService] signOut returned undefined');
+      return;
+    }
+    const { error } = result;
     if (error) throw error;
   },
 
@@ -105,7 +122,12 @@ export const authService = {
    * Reset password
    */
   async resetPassword(email: string) {
-    const { data, error} = await supabase.auth.resetPasswordForEmail(email);
+    const result = await supabase.auth.resetPasswordForEmail(email);
+    if (!result) {
+      console.warn('[authService] resetPassword returned undefined');
+      throw new Error('Reset password failed');
+    }
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },
@@ -114,9 +136,14 @@ export const authService = {
    * Update user password
    */
   async updatePassword(newPassword: string) {
-    const { data, error } = await supabase.auth.updateUser({
+    const result = await supabase.auth.updateUser({
       password: newPassword,
     });
+    if (!result) {
+      console.warn('[authService] updatePassword returned undefined');
+      throw new Error('Update password failed');
+    }
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },

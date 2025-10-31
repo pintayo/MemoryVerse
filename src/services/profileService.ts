@@ -35,13 +35,19 @@ export const profileService = {
    * Update user profile
    */
   async updateProfile(userId: string, updates: Partial<Profile>) {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('profiles')
       .update(updates)
       .eq('id', userId)
       .select()
       .single();
 
+    if (!result) {
+      console.warn('[profileService] updateProfile returned undefined for user:', userId);
+      return null;
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },
@@ -108,8 +114,14 @@ export const profileService = {
       .order('total_xp', { ascending: false })
       .limit(limit);
 
-    const { data, error } = await query;
+    const result = await query;
 
+    if (!result) {
+      console.warn('[profileService] getLeaderboard returned undefined');
+      return [];
+    }
+
+    const { data, error } = result;
     if (error) throw error;
     return data;
   },
@@ -118,22 +130,34 @@ export const profileService = {
    * Get user rank on leaderboard
    */
   async getUserRank(userId: string): Promise<number> {
-    const { data, error } = await supabase
+    const result = await supabase
       .from('profiles')
       .select('total_xp')
       .eq('id', userId)
       .single();
 
+    if (!result) {
+      console.warn('[profileService] getUserRank returned undefined for user:', userId);
+      return 0;
+    }
+
+    const { data, error } = result;
     if (error) throw error;
 
     const userXP = data?.total_xp || 0;
 
     // Count how many users have more XP
-    const { count, error: countError } = await supabase
+    const countResult = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .gt('total_xp', userXP);
 
+    if (!countResult) {
+      console.warn('[profileService] getUserRank count query returned undefined');
+      return 1;
+    }
+
+    const { count, error: countError } = countResult;
     if (countError) throw countError;
 
     return (count || 0) + 1;
