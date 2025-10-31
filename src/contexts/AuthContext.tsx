@@ -28,11 +28,27 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+console.log('[AuthContext] About to define AuthProvider component...');
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  console.log('[AuthProvider] Component function called - rendering started');
+
+  const [user, setUser] = useState<User | null>(() => {
+    console.log('[AuthProvider] Initializing user state');
+    return null;
+  });
+  const [profile, setProfile] = useState<Profile | null>(() => {
+    console.log('[AuthProvider] Initializing profile state');
+    return null;
+  });
+  const [session, setSession] = useState<Session | null>(() => {
+    console.log('[AuthProvider] Initializing session state');
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    console.log('[AuthProvider] Initializing isLoading state');
+    return true;
+  });
 
   // Load profile data when user changes
   const loadProfile = async (userId: string) => {

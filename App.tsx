@@ -11,13 +11,18 @@ import SignupScreen from './src/screens/SignupScreen';
 import { ErrorBoundary } from './src/components';
 import { theme } from './src/theme';
 
+console.log('[App.tsx] Setting up global error handlers...');
+
 // Global error handlers to catch module-level errors
 ErrorUtils.setGlobalHandler((error, isFatal) => {
-  console.error('[Global Error Handler]', { isFatal, error });
+  console.error('[Global Error Handler] CAUGHT ERROR!');
+  console.error('[Global Error] isFatal:', isFatal);
   console.error('[Global Error] Name:', error.name);
   console.error('[Global Error] Message:', error.message);
   console.error('[Global Error] Stack:', error.stack);
 });
+
+console.log('[App.tsx] Global error handler set up successfully');
 
 // Catch unhandled promise rejections
 const originalHandler = global.Promise.prototype.catch;
@@ -29,10 +34,16 @@ global.Promise.prototype.catch = function (onRejected) {
   });
 };
 
+console.log('[App.tsx] Promise rejection handler set up');
+
 const Stack = createStackNavigator();
 
+console.log('[App.tsx] About to define AppNavigator...');
+
 const AppNavigator = () => {
+  console.log('[AppNavigator] Component rendering...');
   const { isAuthenticated, isLoading } = useAuth();
+  console.log('[AppNavigator] useAuth called, isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -65,7 +76,10 @@ const AppNavigator = () => {
   return <RootNavigator />;
 };
 
+console.log('[App.tsx] About to define App component...');
+
 const App = () => {
+  console.log('[App] Root component rendering...');
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -84,6 +98,8 @@ const App = () => {
     </ErrorBoundary>
   );
 };
+
+console.log('[App.tsx] App component defined successfully');
 
 const styles = StyleSheet.create({
   loadingContainer: {
