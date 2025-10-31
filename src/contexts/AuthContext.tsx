@@ -1,16 +1,9 @@
-console.log('[AuthContext] Module loading...');
-
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-
-console.log('[AuthContext] Importing authService...');
 import { authService } from '../services/authService';
-console.log('[AuthContext] Importing profileService...');
 import { profileService } from '../services/profileService';
-console.log('[AuthContext] Importing database types...');
 import { Profile } from '../types/database';
-
-console.log('[AuthContext] All imports complete');
+import { logger } from '../utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -28,42 +21,25 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-console.log('[AuthContext] About to define AuthProvider component...');
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  console.log('[AuthProvider] Component function called - rendering started');
-
-  const [user, setUser] = useState<User | null>(() => {
-    console.log('[AuthProvider] Initializing user state');
-    return null;
-  });
-  const [profile, setProfile] = useState<Profile | null>(() => {
-    console.log('[AuthProvider] Initializing profile state');
-    return null;
-  });
-  const [session, setSession] = useState<Session | null>(() => {
-    console.log('[AuthProvider] Initializing session state');
-    return null;
-  });
-  const [isLoading, setIsLoading] = useState(() => {
-    console.log('[AuthProvider] Initializing isLoading state');
-    return true;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load profile data when user changes
   const loadProfile = async (userId: string) => {
     try {
-      console.log('[AuthContext] Loading profile for user:', userId);
+      logger.log('[AuthContext] Loading profile for user:', userId);
       const profile = await profileService.getProfile(userId);
-      console.log('[AuthContext] Profile result:', profile ? 'success' : 'null');
       if (profile) {
         setProfile(profile);
-        console.log('[AuthContext] Profile loaded successfully');
+        logger.log('[AuthContext] Profile loaded successfully');
       } else {
-        console.warn('[AuthContext] No profile found for user:', userId);
+        logger.warn('[AuthContext] No profile found for user:', userId);
       }
     } catch (error) {
-      console.error('[AuthContext] Error loading profile:', error);
+      logger.error('[AuthContext] Error loading profile:', error);
     }
   };
 
@@ -80,10 +56,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
-        console.log('[AuthContext] Starting auth initialization...');
-        // Get current session
+        logger.log('[AuthContext] Starting auth initialization...');
         const currentSession = await authService.getSession();
-        console.log('[AuthContext] Session retrieved:', currentSession ? 'exists' : 'null');
+        logger.log('[AuthContext] Session retrieved:', currentSession ? 'exists' : 'null');
 
         if (!mounted) return;
 
@@ -91,13 +66,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setSession(currentSession);
           setUser(currentSession.user);
 
-          // Load profile data
           if (currentSession.user.id) {
             await loadProfile(currentSession.user.id);
           }
         }
       } catch (error) {
-        console.error('[AuthContext] Error initializing auth:', error);
+        logger.error('[AuthContext] Error initializing auth:', error);
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -109,7 +83,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Listen for auth changes
     const { data: authListener } = authService.onAuthStateChange((event, currentSession) => {
-      console.log('[AuthContext] Auth state changed:', event);
+      logger.log('[AuthContext] Auth state changed:', event);
 
       if (!mounted) return;
 
@@ -117,10 +91,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(currentSession?.user ?? null);
 
       if (currentSession?.user) {
-        // User signed in - load profile
         loadProfile(currentSession.user.id);
       } else {
-        // User signed out - clear profile
         setProfile(null);
       }
     });
@@ -139,7 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setProfile(null);
       setSession(null);
     } catch (error) {
-      console.error('[AuthContext] Error signing out:', error);
+      logger.error('[AuthContext] Error signing out:', error);
       throw error;
     }
   };
@@ -157,8 +129,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-console.log('[AuthContext] AuthProvider component defined successfully');
-
 // Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
@@ -168,8 +138,4 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
-console.log('[AuthContext] useAuth hook defined successfully');
-
 export default AuthContext;
-
-console.log('[AuthContext] Module export complete');
