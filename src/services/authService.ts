@@ -115,7 +115,17 @@ export const authService = {
    * Listen to auth state changes
    */
   onAuthStateChange(callback: (event: string, session: any) => void) {
-    return supabase.auth.onAuthStateChange(callback);
+    try {
+      const result = supabase.auth.onAuthStateChange(callback);
+      if (!result) {
+        console.warn('[authService] onAuthStateChange returned undefined');
+        return { data: { subscription: { unsubscribe: () => {} } } };
+      }
+      return result;
+    } catch (error) {
+      console.error('[authService] Error setting up auth state listener:', error);
+      return { data: { subscription: { unsubscribe: () => {} } } };
+    }
   },
 
   /**

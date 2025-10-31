@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
+import { ErrorBoundary } from './src/components';
 import { theme } from './src/theme';
 
 const Stack = createStackNavigator();
@@ -48,19 +49,21 @@ const AppNavigator = () => {
 
 const App = () => {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <AuthProvider>
-          <NavigationContainer>
-            <StatusBar
-              barStyle="dark-content"
-              backgroundColor={theme.colors.background.offWhiteParchment}
-            />
-            <AppNavigator />
-          </NavigationContainer>
-        </AuthProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <AuthProvider>
+            <NavigationContainer>
+              <StatusBar
+                barStyle="dark-content"
+                backgroundColor={theme.colors.background.offWhiteParchment}
+              />
+              <AppNavigator />
+            </NavigationContainer>
+          </AuthProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 };
 

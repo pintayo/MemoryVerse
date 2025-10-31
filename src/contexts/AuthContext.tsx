@@ -56,8 +56,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
+        console.log('[AuthContext] Starting auth initialization...');
         // Get current session
         const currentSession = await authService.getSession();
+        console.log('[AuthContext] Session retrieved:', currentSession ? 'exists' : 'null');
 
         if (!mounted) return;
 
