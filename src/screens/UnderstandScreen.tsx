@@ -1,3 +1,5 @@
+console.log('[UnderstandScreen] Module loading...');
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -22,6 +24,8 @@ import { VerseReference } from '../components/VerseReference';
 import { BibleCompanion } from '../components/BibleCompanion';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
+
+console.log('[UnderstandScreen] All imports complete');
 
 type RootStackParamList = {
   Understand: { verseId: string };

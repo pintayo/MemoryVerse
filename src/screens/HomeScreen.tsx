@@ -1,3 +1,5 @@
+console.log('[HomeScreen] Module loading...');
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +9,8 @@ import Svg, { Path } from 'react-native-svg';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
+
+console.log('[HomeScreen] All imports complete');
 
 interface HomeScreenProps {
   navigation: any;
