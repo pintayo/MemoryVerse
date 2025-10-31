@@ -11,6 +11,24 @@ import SignupScreen from './src/screens/SignupScreen';
 import { ErrorBoundary } from './src/components';
 import { theme } from './src/theme';
 
+// Global error handlers to catch module-level errors
+ErrorUtils.setGlobalHandler((error, isFatal) => {
+  console.error('[Global Error Handler]', { isFatal, error });
+  console.error('[Global Error] Name:', error.name);
+  console.error('[Global Error] Message:', error.message);
+  console.error('[Global Error] Stack:', error.stack);
+});
+
+// Catch unhandled promise rejections
+const originalHandler = global.Promise.prototype.catch;
+global.Promise.prototype.catch = function (onRejected) {
+  return originalHandler.call(this, (error) => {
+    console.error('[Unhandled Promise Rejection]', error);
+    if (onRejected) return onRejected(error);
+    throw error;
+  });
+};
+
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {

@@ -1,5 +1,9 @@
+console.log('[profileService] Module loading...');
+
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types/database';
+
+console.log('[profileService] Module loaded');
 
 /**
  * Profile Service

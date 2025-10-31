@@ -1,5 +1,9 @@
+console.log('[authService] Module loading...');
+
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types/database';
+
+console.log('[authService] Module loaded, supabase client:', typeof supabase);
 
 export interface SignUpData {
   email: string;

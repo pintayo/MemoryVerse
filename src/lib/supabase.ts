@@ -55,13 +55,24 @@ const ExpoSecureStoreAdapter = {
   },
 };
 
+console.log('[Supabase] Creating client with config...');
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: ExpoSecureStoreAdapter as any,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // Disable auto-detection to prevent early storage access
+    storageKey: 'memoryverse-auth-token',
+  },
+  global: {
+    headers: {
+      'x-client-info': 'memoryverse-app',
+    },
   },
 });
 
-console.log('[Supabase] Client initialized successfully');
+console.log('[Supabase] Client created successfully');
+console.log('[Supabase] Client auth object:', typeof supabase.auth);
+console.log('[Supabase] Initialization complete');

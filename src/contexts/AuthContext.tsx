@@ -1,8 +1,16 @@
+console.log('[AuthContext] Module loading...');
+
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+
+console.log('[AuthContext] Importing authService...');
 import { authService } from '../services/authService';
+console.log('[AuthContext] Importing profileService...');
 import { profileService } from '../services/profileService';
+console.log('[AuthContext] Importing database types...');
 import { Profile } from '../types/database';
+
+console.log('[AuthContext] All imports complete');
 
 interface AuthContextType {
   user: User | null;
