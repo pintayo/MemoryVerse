@@ -60,18 +60,38 @@ export const authService = {
    * Get the current user session
    */
   async getSession() {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return data.session;
+    try {
+      const result = await supabase.auth.getSession();
+      if (!result) {
+        console.warn('[authService] getSession returned undefined');
+        return null;
+      }
+      const { data, error } = result;
+      if (error) throw error;
+      return data?.session ?? null;
+    } catch (error) {
+      console.error('[authService] Error getting session:', error);
+      throw error;
+    }
   },
 
   /**
    * Get the current user
    */
   async getUser() {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return data.user;
+    try {
+      const result = await supabase.auth.getUser();
+      if (!result) {
+        console.warn('[authService] getUser returned undefined');
+        return null;
+      }
+      const { data, error } = result;
+      if (error) throw error;
+      return data?.user ?? null;
+    } catch (error) {
+      console.error('[authService] Error getting user:', error);
+      throw error;
+    }
   },
 
   /**

@@ -24,10 +24,16 @@ rm -rf node_modules package-lock.json ios android
 echo -e "${GREEN}✅ Cleaned${NC}"
 echo ""
 
-# Step 2: Use Expo install for automatic version resolution
-echo "2️⃣  Installing dependencies with Expo's auto-resolution..."
+# Step 2: Install base dependencies first
+echo "2️⃣  Installing base dependencies..."
+npm install --legacy-peer-deps
+echo -e "${GREEN}✅ Base dependencies installed${NC}"
+echo ""
+
+# Step 3: Use Expo install for automatic version resolution
+echo "3️⃣  Fixing versions with Expo's auto-resolution..."
 npx expo install --fix
-echo -e "${GREEN}✅ Dependencies installed${NC}"
+echo -e "${GREEN}✅ All dependencies resolved${NC}"
 echo ""
 
 echo -e "${GREEN}🎉 Setup complete!${NC}"
