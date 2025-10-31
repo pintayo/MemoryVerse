@@ -1,6 +1,15 @@
+console.log('[achievementService] Module loading...');
+
 import { supabase } from '../lib/supabase';
+console.log('[achievementService] supabase imported');
+
 import { Achievement, DailyStreak } from '../types/database';
+console.log('[achievementService] types imported');
+
 import { profileService } from './profileService';
+console.log('[achievementService] profileService imported');
+
+console.log('[achievementService] About to define achievementService object...');
 
 /**
  * Achievement & Streak Service
@@ -293,3 +302,6 @@ export const achievementService = {
     return data || [];
   },
 };
+
+console.log('[achievementService] achievementService object defined successfully');
+console.log('[achievementService] Module loaded!');

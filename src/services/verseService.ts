@@ -12,6 +12,8 @@ console.log('[verseService] Importing contextGenerator...');
 import { getOrGenerateContext } from './contextGenerator';
 console.log('[verseService] contextGenerator imported');
 
+console.log('[verseService] About to define verseService object...');
+
 /**
  * Verse Service
  * Handles Bible verse operations
@@ -470,3 +472,6 @@ export const verseService = {
     return data || [];
   },
 };
+
+console.log('[verseService] verseService object defined successfully');
+console.log('[verseService] Module loaded!');
