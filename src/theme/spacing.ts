@@ -3,6 +3,8 @@
  * Generous breathing space for clarity and reverence
  */
 
+console.log('[theme/spacing] Loading spacing module...');
+
 export const spacing = {
   // Base spacing unit (8px)
   unit: 8,
@@ -49,4 +51,8 @@ export const spacing = {
   },
 };
 
+console.log('[theme/spacing] spacing object created successfully');
+
 export default spacing;
+
+console.log('[theme/spacing] Spacing module loaded successfully!');

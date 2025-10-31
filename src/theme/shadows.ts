@@ -3,6 +3,8 @@
  * Subtle shadows and gentle glows for depth without being flat or skeuomorphic
  */
 
+console.log('[theme/shadows] Loading shadows module...');
+
 export const shadows = {
   // Subtle elevation shadows
   sm: {
@@ -77,4 +79,8 @@ export const shadows = {
   },
 };
 
+console.log('[theme/shadows] shadows object created successfully');
+
 export default shadows;
+
+console.log('[theme/shadows] Shadows module loaded successfully!');

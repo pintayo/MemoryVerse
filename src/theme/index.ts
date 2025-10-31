@@ -3,10 +3,25 @@
  * Biblical-themed design inspired by historical fabrics and ancient manuscripts
  */
 
+console.log('[theme/index] Starting theme module...');
+
+console.log('[theme/index] Importing colors...');
 import colors from './colors';
+console.log('[theme/index] colors imported successfully');
+
+console.log('[theme/index] Importing typography...');
 import typography from './typography';
+console.log('[theme/index] typography imported successfully');
+
+console.log('[theme/index] Importing spacing...');
 import spacing from './spacing';
+console.log('[theme/index] spacing imported successfully');
+
+console.log('[theme/index] Importing shadows...');
 import shadows from './shadows';
+console.log('[theme/index] shadows imported successfully');
+
+console.log('[theme/index] Creating theme object...');
 
 export const theme = {
   colors,
@@ -55,5 +70,10 @@ export const theme = {
   },
 };
 
+console.log('[theme/index] theme object created successfully');
+
+console.log('[theme/index] Exporting theme modules...');
 export { colors, typography, spacing, shadows };
 export default theme;
+
+console.log('[theme/index] Theme module loaded successfully!');

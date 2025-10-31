@@ -3,6 +3,8 @@
  * Warm biblical tones inspired by historical fabrics and ancient manuscripts
  */
 
+console.log('[theme/colors] Loading colors module...');
+
 export const colors = {
   // Primary Colors - Sandy beige, parchment cream, oatmeal, muted stone
   primary: {
@@ -91,4 +93,8 @@ export const colors = {
   },
 };
 
+console.log('[theme/colors] colors object created successfully');
+
 export default colors;
+
+console.log('[theme/colors] Colors module loaded successfully!');
