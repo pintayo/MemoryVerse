@@ -157,6 +157,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+console.log('[AuthContext] AuthProvider component defined successfully');
+
 // Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
@@ -166,4 +168,8 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
+console.log('[AuthContext] useAuth hook defined successfully');
+
 export default AuthContext;
+
+console.log('[AuthContext] Module export complete');
