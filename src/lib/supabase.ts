@@ -60,8 +60,8 @@ console.log('[Supabase] Creating client with config...');
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: ExpoSecureStoreAdapter as any,
-    autoRefreshToken: true,
-    persistSession: true,
+    autoRefreshToken: false,  // TEMPORARY: Disable to test
+    persistSession: false,    // TEMPORARY: Disable to test
     detectSessionInUrl: false,
     // Disable auto-detection to prevent early storage access
     storageKey: 'memoryverse-auth-token',
