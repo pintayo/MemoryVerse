@@ -43,7 +43,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       setError(null);
 
       // Get a random verse for now (can be personalized later)
-      const verse = await verseService.getRandomVerse('KJV');
+      const verse = await verseService.getRandomVerse('NIV');
 
       if (verse) {
         setTodayVerse(verse);

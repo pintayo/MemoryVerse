@@ -36,7 +36,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
       // Load 5 random verses for the card deck
       const loadedVerses: Verse[] = [];
       for (let i = 0; i < 5; i++) {
-        const verse = await verseService.getRandomVerse('KJV');
+        const verse = await verseService.getRandomVerse('NIV');
         if (verse) {
           loadedVerses.push(verse);
         }

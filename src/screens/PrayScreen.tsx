@@ -39,7 +39,7 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
       if (verseId) {
         loadedVerse = await verseService.getVerseById(verseId);
       } else {
-        loadedVerse = await verseService.getRandomVerse('KJV');
+        loadedVerse = await verseService.getRandomVerse('NIV');
       }
 
       if (loadedVerse) {
