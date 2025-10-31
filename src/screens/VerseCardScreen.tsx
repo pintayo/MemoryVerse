@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: theme.typography.ui.body.fontSize,
-    color: theme.colors.semantic.error,
+    color: theme.colors.error.main,
     textAlign: 'center',
     fontFamily: theme.typography.fonts.ui.default,
     paddingHorizontal: theme.spacing.xl,

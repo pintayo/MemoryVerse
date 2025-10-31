@@ -120,7 +120,7 @@ export function UnderstandScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={64} color={colors.semantic.error} />
+          <Ionicons name="alert-circle" size={64} color={colors.error.main} />
           <Text style={styles.errorText}>{error || 'Verse not found'}</Text>
           <TouchableOpacity
             style={styles.retryButton}
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     fontFamily: typography.secondary.regular,
-    color: colors.semantic.error,
+    color: colors.error.main,
     textAlign: 'center',
   },
   retryButton: {
