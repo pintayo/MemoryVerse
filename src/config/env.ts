@@ -36,7 +36,7 @@ export const config = {
 
     perplexity: {
       apiKey: process.env.EXPO_PUBLIC_PERPLEXITY_API_KEY || env.EXPO_PUBLIC_PERPLEXITY_API_KEY || '',
-      model: process.env.EXPO_PUBLIC_PERPLEXITY_MODEL || env.EXPO_PUBLIC_PERPLEXITY_MODEL || 'llama-3.1-sonar-small-128k-online',
+      model: process.env.EXPO_PUBLIC_PERPLEXITY_MODEL || env.EXPO_PUBLIC_PERPLEXITY_MODEL || 'llama-3.1-sonar-small-128k-chat',
     },
 
     // Rate limiting

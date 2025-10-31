@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, VerseText, VerseReference } from '../components';
 import { theme } from '../theme';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
+import { getOrGenerateContext } from '../services/contextGenerator';
 
 interface VerseCardScreenProps {
   navigation: any;
@@ -18,6 +19,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
   const [verses, setVerses] = useState<Verse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingContext, setIsGeneratingContext] = useState(false);
 
   // Animation values for page turn effect
   const pageFlipAnim = useRef(new Animated.Value(0)).current;
@@ -109,8 +111,39 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
     }
   };
 
-  const toggleContext = () => {
-    setShowContext(!showContext);
+  const toggleContext = async () => {
+    const newShowContext = !showContext;
+    setShowContext(newShowContext);
+
+    // If showing context and no context exists, generate it automatically
+    if (newShowContext && currentVerse && currentVerse.id && !currentVerse.context) {
+      try {
+        setIsGeneratingContext(true);
+        console.log('[VerseCardScreen] Auto-generating context for verse:', currentVerse.id);
+
+        const result = await getOrGenerateContext(currentVerse.id);
+
+        if (result.context) {
+          // Update the verse in the verses array with the new context
+          const updatedVerses = [...verses];
+          updatedVerses[currentVerseIndex] = {
+            ...currentVerse,
+            context: result.context,
+            context_generated_by_ai: true,
+          };
+          setVerses(updatedVerses);
+          console.log('[VerseCardScreen] Context generated and updated successfully');
+        } else if (result.error) {
+          console.error('[VerseCardScreen] Failed to generate context:', result.error);
+          // Don't show error to user - they'll just see the placeholder
+        }
+      } catch (err) {
+        console.error('[VerseCardScreen] Error generating context:', err);
+        // Silent fail - user experience isn't disrupted
+      } finally {
+        setIsGeneratingContext(false);
+      }
+    }
   };
 
   // Interpolate page flip rotation
@@ -195,34 +228,50 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
               {/* Decorative top border */}
               <View style={styles.decorativeBorder} />
 
-              {/* Verse text */}
-              <View style={styles.verseContainer}>
-                <VerseText size="large" style={styles.verse}>
-                  {currentVerse.text}
-                </VerseText>
-                <VerseReference style={styles.reference}>
-                  {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
-                </VerseReference>
-              </View>
-
-              {/* Context section */}
-              {showContext && currentVerse.context && (
-                <View style={styles.contextContainer}>
-                  <View style={styles.contextDivider} />
-                  <Text style={styles.contextLabel}>Context</Text>
-                  <Text style={styles.contextText}>{currentVerse.context}</Text>
+              {/* Scrollable verse content */}
+              <ScrollView
+                style={styles.verseScrollView}
+                contentContainerStyle={styles.verseScrollContent}
+                showsVerticalScrollIndicator={true}
+              >
+                {/* Verse text */}
+                <View style={styles.verseContainer}>
+                  <VerseText size="large" style={styles.verse}>
+                    {currentVerse.text}
+                  </VerseText>
+                  <VerseReference style={styles.reference}>
+                    {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
+                  </VerseReference>
                 </View>
-              )}
 
-              {showContext && !currentVerse.context && (
-                <View style={styles.contextContainer}>
-                  <View style={styles.contextDivider} />
-                  <Text style={styles.contextLabel}>Context</Text>
-                  <Text style={styles.contextPlaceholder}>
-                    Context not available yet. Tap "Learn More" to generate AI-powered context for this verse.
-                  </Text>
-                </View>
-              )}
+                {/* Context section */}
+                {showContext && currentVerse.context && (
+                  <View style={styles.contextContainer}>
+                    <View style={styles.contextDivider} />
+                    <Text style={styles.contextLabel}>Context</Text>
+                    <Text style={styles.contextText}>{currentVerse.context}</Text>
+                  </View>
+                )}
+
+                {showContext && !currentVerse.context && (
+                  <View style={styles.contextContainer}>
+                    <View style={styles.contextDivider} />
+                    <Text style={styles.contextLabel}>Context</Text>
+                    {isGeneratingContext ? (
+                      <View style={styles.contextLoadingContainer}>
+                        <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
+                        <Text style={styles.contextPlaceholder}>
+                          Generating spiritual context...
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.contextPlaceholder}>
+                        Click "Show Context" to generate AI-powered context for this verse.
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </ScrollView>
 
               {/* Decorative bottom border */}
               <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
@@ -327,7 +376,14 @@ const styles = StyleSheet.create({
   verseCard: {
     flex: 1,
     paddingVertical: theme.spacing.xxl,
+  },
+  verseScrollView: {
+    flex: 1,
+  },
+  verseScrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingHorizontal: theme.spacing.md,
   },
   decorativeBorder: {
     height: 2,
@@ -339,8 +395,6 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xl,
   },
   verseContainer: {
-    flex: 1,
-    justifyContent: 'center',
     paddingVertical: theme.spacing.xl,
   },
   verse: {
@@ -382,6 +436,11 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     fontStyle: 'italic',
     fontFamily: theme.typography.fonts.ui.default,
+  },
+  contextLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
   buttonsContainer: {
     paddingBottom: theme.spacing.lg,

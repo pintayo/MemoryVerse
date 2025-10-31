@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Button } from '../components';
 import { theme } from '../theme';
 import Svg, { Path, Circle, Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useAuth } from '../contexts/AuthContext';
 import { achievementService } from '../services/achievementService';
+import { profileService } from '../services/profileService';
 import { Achievement } from '../types/database';
 
 interface ProfileScreenProps {
@@ -22,10 +23,22 @@ interface Badge {
 }
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editedName, setEditedName] = useState(profile?.full_name || '');
+  const [editedAvatar, setEditedAvatar] = useState(profile?.avatar_url || '😊');
+
+  // Update edited values when profile changes
+  useEffect(() => {
+    if (profile) {
+      setEditedName(profile.full_name || '');
+      setEditedAvatar(profile.avatar_url || '😊');
+    }
+  }, [profile]);
 
   // Load achievements on mount
   useEffect(() => {
@@ -74,6 +87,53 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       ]
     );
   };
+
+  const handleEditProfile = () => {
+    setIsEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    // Reset to original values
+    setEditedName(profile?.full_name || '');
+    setEditedAvatar(profile?.avatar || '😊');
+    setIsEditMode(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user?.id) {
+      Alert.alert('Error', 'User not found. Please try again.');
+      return;
+    }
+
+    if (!editedName.trim()) {
+      Alert.alert('Validation Error', 'Name cannot be empty.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await profileService.updateProfile(user.id, {
+        full_name: editedName.trim(),
+        avatar_url: editedAvatar,
+      });
+
+      // Refresh profile from AuthContext
+      if (refreshProfile) {
+        await refreshProfile();
+      }
+
+      setIsEditMode(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (error) {
+      console.error('[ProfileScreen] Error updating profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Common emoji avatars for selection
+  const avatarOptions = ['😊', '😃', '🙂', '😇', '🤗', '😎', '🥰', '🙏', '✨', '🌟', '⭐', '💫'];
 
   // Calculate user stats from profile
   const totalStreak = profile?.current_streak || 0;
@@ -292,15 +352,56 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       >
         {/* Profile header */}
         <Card variant="cream" elevated outlined style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarLarge}>
-              <Text style={styles.avatarLargeText}>{profile?.avatar || '😊'}</Text>
+          {isEditMode ? (
+            /* Edit Mode */
+            <View style={styles.profileHeader}>
+              <Text style={styles.editSectionTitle}>Edit Profile</Text>
+
+              {/* Avatar Selection */}
+              <Text style={styles.editLabel}>Select Avatar</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.avatarScroll}
+                contentContainerStyle={styles.avatarScrollContent}
+              >
+                {avatarOptions.map((emoji) => (
+                  <TouchableOpacity
+                    key={emoji}
+                    style={[
+                      styles.avatarOption,
+                      editedAvatar === emoji && styles.avatarOptionSelected,
+                    ]}
+                    onPress={() => setEditedAvatar(emoji)}
+                  >
+                    <Text style={styles.avatarOptionText}>{emoji}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Name Input */}
+              <Text style={styles.editLabel}>Full Name</Text>
+              <TextInput
+                style={styles.textInput}
+                value={editedName}
+                onChangeText={setEditedName}
+                placeholder="Enter your name"
+                placeholderTextColor={theme.colors.text.tertiary}
+                maxLength={50}
+              />
             </View>
-            <Text style={styles.userName}>{profile?.full_name || 'User'}</Text>
-            <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>Level {level}</Text>
+          ) : (
+            /* View Mode */
+            <View style={styles.profileHeader}>
+              <View style={styles.avatarLarge}>
+                <Text style={styles.avatarLargeText}>{profile?.avatar_url || '😊'}</Text>
+              </View>
+              <Text style={styles.userName}>{profile?.full_name || 'User'}</Text>
+              <View style={styles.levelBadge}>
+                <Text style={styles.levelText}>Level {level}</Text>
+              </View>
             </View>
-          </View>
+          )}
 
           {/* XP Progress */}
           <View style={styles.progressSection}>
@@ -377,19 +478,40 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
         {/* Action buttons */}
         <View style={styles.buttonContainer}>
-          <Button
-            title="Edit Profile"
-            onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon!')}
-            variant="secondary"
-            style={styles.actionButton}
-          />
-          <Button
-            title={isSigningOut ? "Signing Out..." : "Sign Out"}
-            onPress={handleSignOut}
-            variant="primary"
-            style={styles.actionButton}
-            disabled={isSigningOut}
-          />
+          {isEditMode ? (
+            <>
+              <Button
+                title={isSaving ? "Saving..." : "Save Changes"}
+                onPress={handleSaveProfile}
+                variant="gold"
+                style={styles.actionButton}
+                disabled={isSaving}
+              />
+              <Button
+                title="Cancel"
+                onPress={handleCancelEdit}
+                variant="secondary"
+                style={styles.actionButton}
+                disabled={isSaving}
+              />
+            </>
+          ) : (
+            <>
+              <Button
+                title="Edit Profile"
+                onPress={handleEditProfile}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
+                title={isSigningOut ? "Signing Out..." : "Sign Out"}
+                onPress={handleSignOut}
+                variant="primary"
+                style={styles.actionButton}
+                disabled={isSigningOut}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -577,6 +699,59 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     width: '100%',
+  },
+  editSectionTitle: {
+    fontSize: theme.typography.ui.heading.fontSize,
+    lineHeight: theme.typography.ui.heading.lineHeight,
+    fontWeight: theme.typography.ui.heading.fontWeight,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.lg,
+    textAlign: 'center',
+  },
+  editLabel: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+  },
+  avatarScroll: {
+    marginBottom: theme.spacing.md,
+  },
+  avatarScrollContent: {
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+  },
+  avatarOption: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: theme.colors.background.lightCream,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  avatarOptionSelected: {
+    borderColor: theme.colors.secondary.lightGold,
+    backgroundColor: theme.colors.background.warmParchment,
+  },
+  avatarOptionText: {
+    fontSize: 28,
+  },
+  textInput: {
+    height: 48,
+    backgroundColor: theme.colors.background.lightCream,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    borderWidth: 1,
+    borderColor: theme.colors.primary.oatmeal,
+    marginBottom: theme.spacing.md,
   },
 });
 

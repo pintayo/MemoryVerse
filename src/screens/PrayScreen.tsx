@@ -264,9 +264,9 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
           {isRecording && (
             <View style={styles.waveformContainer}>
               {[...Array(15)].map((_, i) => {
-                const height = waveAnim.interpolate({
+                const scaleY = waveAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [12, Math.random() * 50 + 15],
+                  outputRange: [0.3, Math.random() * 1.5 + 0.5],
                 });
                 return (
                   <Animated.View
@@ -274,7 +274,7 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
                     style={[
                       styles.waveBar,
                       {
-                        height,
+                        transform: [{ scaleY }],
                       },
                     ]}
                   />
@@ -446,6 +446,7 @@ const styles = StyleSheet.create({
   },
   waveBar: {
     width: 4,
+    height: 40,
     backgroundColor: theme.colors.secondary.warmTerracotta,
     borderRadius: 2,
     opacity: 0.7,

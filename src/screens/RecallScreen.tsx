@@ -392,10 +392,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: theme.spacing.screen.horizontal,
     paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xxl,
+    paddingBottom: theme.spacing.xl,
   },
   header: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   title: {
     fontSize: theme.typography.ui.title.fontSize,
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.ui.default,
   },
   versePreviewCard: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   blurredVerse: {
     fontFamily: theme.typography.fonts.scripture.default,
@@ -458,18 +458,18 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   inputSection: {
-    marginBottom: theme.spacing.xl,
-  },
-  inputContainer: {
     marginBottom: theme.spacing.lg,
   },
+  inputContainer: {
+    marginBottom: theme.spacing.md,
+  },
   textInput: {
-    height: 120,
+    height: 100,
     textAlignVertical: 'top',
   },
   micSection: {
     alignItems: 'center',
-    marginTop: theme.spacing.lg,
+    marginTop: theme.spacing.md,
   },
   orText: {
     fontSize: theme.typography.ui.bodySmall.fontSize,
@@ -502,8 +502,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 60,
-    marginTop: theme.spacing.lg,
+    height: 50,
+    marginTop: theme.spacing.md,
     gap: theme.spacing.xs,
   },
   waveBar: {
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     gap: theme.spacing.sm,
   },
   feedbackCorrect: {
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    marginTop: theme.spacing.md,
   },
   giveAnswerButton: {
     flex: 1,

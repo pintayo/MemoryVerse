@@ -144,7 +144,7 @@ BEGIN
         NEW.id,
         NEW.email,
         NEW.raw_user_meta_data->>'full_name',
-        NEW.raw_user_meta_data->>'avatar_url'
+        COALESCE(NEW.raw_user_meta_data->>'avatar_url', '😊')
     );
     RETURN NEW;
 END;
