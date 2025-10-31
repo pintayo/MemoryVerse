@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontFamily: typography.primary.semibold,
+    fontFamily: typography.fonts.scripture.default,
     color: colors.primary.mutedStone,
   },
   placeholder: {
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    fontFamily: typography.secondary.regular,
+    fontFamily: typography.fonts.ui.default,
     color: colors.primary.mutedStone,
   },
   errorContainer: {
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    fontFamily: typography.secondary.regular,
+    fontFamily: typography.fonts.ui.default,
     color: colors.error.main,
     textAlign: 'center',
   },
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: 16,
-    fontFamily: typography.secondary.semibold,
+    fontFamily: typography.fonts.ui.default,
     color: colors.text.onDark,
   },
   companionContainer: {
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    fontFamily: typography.secondary.medium,
+    fontFamily: typography.fonts.ui.default,
     color: colors.accent.gold,
     textTransform: 'capitalize',
   },
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   },
   contextTitle: {
     fontSize: 18,
-    fontFamily: typography.secondary.semibold,
+    fontFamily: typography.fonts.ui.default,
     color: colors.primary.mutedStone,
   },
   aiBadge: {
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   },
   aiBadgeText: {
     fontSize: 10,
-    fontFamily: typography.secondary.medium,
+    fontFamily: typography.fonts.ui.default,
     color: colors.accent.gold,
   },
   contextCard: {
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   },
   contextText: {
     fontSize: 15,
-    fontFamily: typography.secondary.regular,
+    fontFamily: typography.fonts.ui.default,
     color: colors.text.primary,
     lineHeight: 24,
   },
@@ -425,13 +425,13 @@ const styles = StyleSheet.create({
   },
   generatingText: {
     fontSize: 15,
-    fontFamily: typography.secondary.medium,
+    fontFamily: typography.fonts.ui.default,
     color: colors.primary.mutedStone,
     textAlign: 'center',
   },
   generatingSubtext: {
     fontSize: 13,
-    fontFamily: typography.secondary.regular,
+    fontFamily: typography.fonts.ui.default,
     color: colors.text.secondary,
     textAlign: 'center',
   },
@@ -442,13 +442,13 @@ const styles = StyleSheet.create({
   },
   noContextText: {
     fontSize: 15,
-    fontFamily: typography.secondary.medium,
+    fontFamily: typography.fonts.ui.default,
     color: colors.primary.mutedStone,
     textAlign: 'center',
   },
   noContextSubtext: {
     fontSize: 13,
-    fontFamily: typography.secondary.regular,
+    fontFamily: typography.fonts.ui.default,
     color: colors.text.secondary,
     textAlign: 'center',
   },
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   },
   retryContextButtonText: {
     fontSize: 14,
-    fontFamily: typography.secondary.semibold,
+    fontFamily: typography.fonts.ui.default,
     color: colors.text.onDark,
   },
   refreshButton: {
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   },
   refreshButtonText: {
     fontSize: 14,
-    fontFamily: typography.secondary.medium,
+    fontFamily: typography.fonts.ui.default,
     color: colors.accent.gold,
   },
   tipsCard: {
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   },
   tipsTitle: {
     fontSize: 16,
-    fontFamily: typography.secondary.semibold,
+    fontFamily: typography.fonts.ui.default,
     color: colors.primary.mutedStone,
   },
   tipItem: {
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   tipBullet: {
     fontSize: 14,
-    fontFamily: typography.secondary.regular,
+    fontFamily: typography.fonts.ui.default,
     color: colors.accent.gold,
     marginRight: spacing.sm,
     width: 16,
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   tipText: {
     flex: 1,
     fontSize: 14,
-    fontFamily: typography.secondary.regular,
+    fontFamily: typography.fonts.ui.default,
     color: colors.text.primary,
     lineHeight: 20,
   },
