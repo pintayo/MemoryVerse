@@ -12,9 +12,13 @@ import { useAuth } from '../contexts/AuthContext';
 
 console.log('[HomeScreen] All imports complete');
 
+console.log('[HomeScreen] Defining interface...');
+
 interface HomeScreenProps {
   navigation: any;
 }
+
+console.log('[HomeScreen] Defining component...');
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { user, profile } = useAuth();
@@ -266,7 +270,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 };
 
+console.log('[HomeScreen] Component defined successfully');
+
 // Helper functions
+console.log('[HomeScreen] Defining helper functions...');
+
 const getActionColor = (id: string): string => {
   const colors: { [key: string]: string } = {
     read: theme.colors.secondary.softClay,
@@ -330,6 +338,9 @@ const renderActionIcon = (iconName: string) => {
       return null;
   }
 };
+
+console.log('[HomeScreen] Helper functions defined');
+console.log('[HomeScreen] Creating styles...');
 
 const styles = StyleSheet.create({
   container: {
@@ -508,4 +519,9 @@ const styles = StyleSheet.create({
   },
 });
 
+console.log('[HomeScreen] Styles created');
+console.log('[HomeScreen] Exporting HomeScreen...');
+
 export default HomeScreen;
+
+console.log('[HomeScreen] Module loaded successfully!');
