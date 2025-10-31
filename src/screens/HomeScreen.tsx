@@ -1,4 +1,4 @@
-console.log('[HomeScreen] Module loading...');
+logger.log('[HomeScreen] Module loading...');
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
@@ -9,16 +9,17 @@ import Svg, { Path } from 'react-native-svg';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
 
-console.log('[HomeScreen] All imports complete');
+logger.log('[HomeScreen] All imports complete');
 
-console.log('[HomeScreen] Defining interface...');
+logger.log('[HomeScreen] Defining interface...');
 
 interface HomeScreenProps {
   navigation: any;
 }
 
-console.log('[HomeScreen] Defining component...');
+logger.log('[HomeScreen] Defining component...');
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { user, profile } = useAuth();
@@ -51,7 +52,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         setError('No verses found. Please import Bible data.');
       }
     } catch (err) {
-      console.error('[HomeScreen] Error loading verse:', err);
+      logger.error('[HomeScreen] Error loading verse:', err);
       setError('Failed to load verse. Please try again.');
     } finally {
       setIsLoading(false);
@@ -270,10 +271,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   );
 };
 
-console.log('[HomeScreen] Component defined successfully');
+logger.log('[HomeScreen] Component defined successfully');
 
 // Helper functions
-console.log('[HomeScreen] Defining helper functions...');
+logger.log('[HomeScreen] Defining helper functions...');
 
 const getActionColor = (id: string): string => {
   const colors: { [key: string]: string } = {
@@ -339,8 +340,8 @@ const renderActionIcon = (iconName: string) => {
   }
 };
 
-console.log('[HomeScreen] Helper functions defined');
-console.log('[HomeScreen] Creating styles...');
+logger.log('[HomeScreen] Helper functions defined');
+logger.log('[HomeScreen] Creating styles...');
 
 const styles = StyleSheet.create({
   container: {
@@ -519,9 +520,9 @@ const styles = StyleSheet.create({
   },
 });
 
-console.log('[HomeScreen] Styles created');
-console.log('[HomeScreen] Exporting HomeScreen...');
+logger.log('[HomeScreen] Styles created');
+logger.log('[HomeScreen] Exporting HomeScreen...');
 
 export default HomeScreen;
 
-console.log('[HomeScreen] Module loaded successfully!');
+logger.log('[HomeScreen] Module loaded successfully!');

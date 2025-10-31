@@ -127,60 +127,44 @@ MemoryVerse/
 └── README.md
 ```
 
-## Getting Started
+## 📚 Documentation
 
-### Prerequisites
-- Node.js 18 or higher
-- **Expo Go app** on your iOS or Android device (download from App Store or Google Play)
-- OR iOS Simulator (macOS only) / Android Emulator for development
+- **[Getting Started Guide](GETTING_STARTED.md)** - Complete setup instructions
+- **[Production Guide](PRODUCTION_GUIDE.md)** - Deployment and launch checklist
+- **[Feature Backlog](BACKLOG.md)** - Wishlist of future features
 
-### Installation
+## 🚀 Quick Start
 
-1. Clone the repository
+### 1. Database Setup (Required First!)
+
+Run `supabase/complete-setup.sql` in your Supabase SQL Editor. This sets up all tables, policies, and sample data.
+
+**[See detailed instructions →](GETTING_STARTED.md#1-database-setup-5-minutes)**
+
+### 2. Install & Run
+
 ```bash
-git clone <repository-url>
-cd MemoryVerse
-```
-
-2. Install dependencies
-```bash
+# Install dependencies
 npm install
+
+# Set up environment variables (see .env.example)
+cp .env.example .env
+
+# Run the app
+npm run ios     # iOS
+npm run android # Android
+npm run web     # Web (limited features)
 ```
 
-3. Start the Expo development server
-```bash
-npm start
-```
+### 3. Test Account
 
-This will open Expo DevTools in your browser and show a QR code.
+Login with:
+- Email: `pintayo.dev@gmail.com`
+- Password: [Your password]
 
-4. Run the app
+Or create a new account through signup.
 
-**Option A: On your physical device (easiest)**
-- Install the "Expo Go" app from the App Store (iOS) or Google Play (Android)
-- Scan the QR code from the terminal or Expo DevTools
-- The app will load on your device
-
-**Option B: On iOS Simulator (macOS only)**
-```bash
-npm run ios
-```
-
-**Option C: On Android Emulator**
-```bash
-npm run android
-```
-
-**Option D: In web browser**
-```bash
-npm run web
-```
-
-### Quick Start Tips
-
-- **First time?** Just run `npm install` then `npm start` and scan the QR code with Expo Go
-- **Changes not showing?** Shake your device to reload or press `r` in the terminal
-- **Need to clear cache?** Press `Shift + C` in the terminal while Expo is running
+**[Full getting started guide →](GETTING_STARTED.md)**
 
 ## Key Components
 
@@ -209,17 +193,27 @@ All animations are smooth and gentle:
 - **Page turns**: Parchment ripple effect with 3D rotation
 - **Breathing**: 2-second loop for companion character
 
-## Future Enhancements
+## 🎯 Roadmap & Features
 
-- Voice recognition for verse recitation
-- Social features (share verses, study groups)
-- Customizable study plans
-- Verse collections and categories
-- Dark mode with muted stone backgrounds
-- Multi-language support
-- Offline mode with local storage
+**Current Status**: MVP Complete - All core features working!
+
+### ✅ Completed
+- User authentication & profiles
+- Verse learning with AI context generation
+- Practice/Recall mode with voice input
+- Prayer training
+- Gamification (XP, levels, streaks, achievements)
+- Leaderboard
+- Profile editing with avatar selection
+
+### 🔜 Coming Soon
 - Push notifications for daily reminders
-- Apple Watch companion app
+- Offline mode
+- Verse collections
+- Social features
+- Premium features (AI prayer coaching, voice-guided prayer)
+
+**[Full feature wishlist →](BACKLOG.md)**
 
 ## Design Credits
 

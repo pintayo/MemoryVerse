@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+import { logger } from '../utils/logger';
   View,
   Text,
   StyleSheet,
@@ -45,7 +46,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, onLoginSuccess })
         onLoginSuccess();
       }
     } catch (error) {
-      console.error('[LoginScreen] Login error:', error);
+      logger.error('[LoginScreen] Login error:', error);
       Alert.alert('Login Failed', error instanceof Error ? error.message : 'Invalid email or password');
     } finally {
       setIsLoading(false);

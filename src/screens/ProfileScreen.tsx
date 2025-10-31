@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { achievementService } from '../services/achievementService';
 import { profileService } from '../services/profileService';
 import { Achievement } from '../types/database';
+import { logger } from '../utils/logger';
 
 interface ProfileScreenProps {
   navigation: any;
@@ -58,7 +59,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         setAchievements(result.data);
       }
     } catch (error) {
-      console.error('[ProfileScreen] Error loading achievements:', error);
+      logger.error('[ProfileScreen] Error loading achievements:', error);
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +79,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               setIsSigningOut(true);
               await signOut();
             } catch (error) {
-              console.error('[ProfileScreen] Error signing out:', error);
+              logger.error('[ProfileScreen] Error signing out:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
               setIsSigningOut(false);
             }
@@ -125,7 +126,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       setIsEditMode(false);
       Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
-      console.error('[ProfileScreen] Error updating profile:', error);
+      logger.error('[ProfileScreen] Error updating profile:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     } finally {
       setIsSaving(false);

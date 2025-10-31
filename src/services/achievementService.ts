@@ -1,15 +1,16 @@
-console.log('[achievementService] Module loading...');
+logger.log('[achievementService] Module loading...');
 
 import { supabase } from '../lib/supabase';
-console.log('[achievementService] supabase imported');
+import { logger } from '../utils/logger';
+logger.log('[achievementService] supabase imported');
 
 import { Achievement, DailyStreak } from '../types/database';
-console.log('[achievementService] types imported');
+logger.log('[achievementService] types imported');
 
 import { profileService } from './profileService';
-console.log('[achievementService] profileService imported');
+logger.log('[achievementService] profileService imported');
 
-console.log('[achievementService] About to define achievementService object...');
+logger.log('[achievementService] About to define achievementService object...');
 
 /**
  * Achievement & Streak Service
@@ -27,7 +28,7 @@ export const achievementService = {
       .order('earned_at', { ascending: false });
 
     if (!result) {
-      console.warn('[achievementService] getUserAchievements returned undefined');
+      logger.warn('[achievementService] getUserAchievements returned undefined');
       return [];
     }
 
@@ -54,7 +55,7 @@ export const achievementService = {
       .single();
 
     if (!existingResult) {
-      console.warn('[achievementService] awardAchievement check returned undefined');
+      logger.warn('[achievementService] awardAchievement check returned undefined');
     } else {
       const { data: existing } = existingResult;
       if (existing) {
@@ -75,7 +76,7 @@ export const achievementService = {
       .single();
 
     if (!result) {
-      console.warn('[achievementService] awardAchievement insert returned undefined');
+      logger.warn('[achievementService] awardAchievement insert returned undefined');
       throw new Error('Failed to award achievement');
     }
 
@@ -102,7 +103,7 @@ export const achievementService = {
         .eq('user_id', userId);
 
       if (!countResult) {
-        console.warn('[achievementService] checkAndAwardAchievements first-verse count returned undefined');
+        logger.warn('[achievementService] checkAndAwardAchievements first-verse count returned undefined');
       } else {
         const { count } = countResult;
         if (count && count >= 1) {
@@ -145,7 +146,7 @@ export const achievementService = {
         .eq('accuracy_percentage', 100);
 
       if (!countResult) {
-        console.warn('[achievementService] checkAndAwardAchievements perfect-recital count returned undefined');
+        logger.warn('[achievementService] checkAndAwardAchievements perfect-recital count returned undefined');
       } else {
         const { count } = countResult;
         if (count && count >= 10) {
@@ -168,7 +169,7 @@ export const achievementService = {
         .eq('status', 'mastered');
 
       if (!countResult) {
-        console.warn('[achievementService] checkAndAwardAchievements century count returned undefined');
+        logger.warn('[achievementService] checkAndAwardAchievements century count returned undefined');
       } else {
         const { count } = countResult;
         if (count && count >= 100) {
@@ -205,7 +206,7 @@ export const achievementService = {
       .single();
 
     if (!result) {
-      console.warn('[achievementService] recordDailyPractice returned undefined');
+      logger.warn('[achievementService] recordDailyPractice returned undefined');
       throw new Error('Failed to record daily practice');
     }
 
@@ -234,7 +235,7 @@ export const achievementService = {
       .order('date', { ascending: false });
 
     if (!result) {
-      console.warn('[achievementService] updateStreak returned undefined');
+      logger.warn('[achievementService] updateStreak returned undefined');
       return;
     }
 
@@ -293,7 +294,7 @@ export const achievementService = {
       .order('date', { ascending: true });
 
     if (!result) {
-      console.warn('[achievementService] getStreakHistory returned undefined');
+      logger.warn('[achievementService] getStreakHistory returned undefined');
       return [];
     }
 
@@ -303,5 +304,5 @@ export const achievementService = {
   },
 };
 
-console.log('[achievementService] achievementService object defined successfully');
-console.log('[achievementService] Module loaded!');
+logger.log('[achievementService] achievementService object defined successfully');
+logger.log('[achievementService] Module loaded!');

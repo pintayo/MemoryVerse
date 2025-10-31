@@ -3,21 +3,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { logger } from '../utils/logger';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('[Supabase] Missing environment variables!');
-  console.error('EXPO_PUBLIC_SUPABASE_URL:', supabaseUrl);
-  console.error('EXPO_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? '***' : 'undefined');
+  logger.error('[Supabase] Missing environment variables!');
+  logger.error('EXPO_PUBLIC_SUPABASE_URL:', supabaseUrl);
+  logger.error('EXPO_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? '***' : 'undefined');
   throw new Error(
     'Missing Supabase environment variables. Please ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set in your .env file.'
   );
 }
 
-console.log('[Supabase] Initializing with URL:', supabaseUrl);
+logger.log('[Supabase] Initializing with URL:', supabaseUrl);
 
 // Custom storage adapter for React Native
 // Uses SecureStore for sensitive data on mobile, AsyncStorage for web
@@ -29,7 +30,7 @@ const ExpoSecureStoreAdapter = {
       }
       return SecureStore.getItemAsync(key);
     } catch (error) {
-      console.error('[Supabase Storage] Error getting item:', key, error);
+      logger.error('[Supabase Storage] Error getting item:', key, error);
       return null;
     }
   },
@@ -40,7 +41,7 @@ const ExpoSecureStoreAdapter = {
       }
       return SecureStore.setItemAsync(key, value);
     } catch (error) {
-      console.error('[Supabase Storage] Error setting item:', key, error);
+      logger.error('[Supabase Storage] Error setting item:', key, error);
     }
   },
   removeItem: async (key: string) => {
@@ -50,12 +51,12 @@ const ExpoSecureStoreAdapter = {
       }
       return SecureStore.deleteItemAsync(key);
     } catch (error) {
-      console.error('[Supabase Storage] Error removing item:', key, error);
+      logger.error('[Supabase Storage] Error removing item:', key, error);
     }
   },
 };
 
-console.log('[Supabase] Creating client with config...');
+logger.log('[Supabase] Creating client with config...');
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -73,6 +74,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-console.log('[Supabase] Client created successfully');
-console.log('[Supabase] Client auth object:', typeof supabase.auth);
-console.log('[Supabase] Initialization complete');
+logger.log('[Supabase] Client created successfully');
+logger.log('[Supabase] Client auth object:', typeof supabase.auth);
+logger.log('[Supabase] Initialization complete');

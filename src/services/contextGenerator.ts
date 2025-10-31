@@ -4,15 +4,9 @@
  * Supports OpenAI, Anthropic (Claude), and Perplexity APIs
  */
 
-console.log('[contextGenerator] Module loading...');
-
-console.log('[contextGenerator] Importing config...');
 import { config } from '../config/env';
-console.log('[contextGenerator] config imported');
-
-console.log('[contextGenerator] Importing supabase...');
 import { supabase } from '../lib/supabase';
-console.log('[contextGenerator] supabase imported');
+import { logger } from '../utils/logger';
 
 // Types
 export interface Verse {
@@ -64,7 +58,7 @@ class RateLimiter {
       const waitTime = this.windowMs - (now - oldestRequest) + 100; // Add 100ms buffer
 
       if (waitTime > 0) {
-        console.log(`[RateLimiter] Waiting ${waitTime}ms to respect rate limit...`);
+        logger.log(`[RateLimiter] Waiting ${waitTime}ms to respect rate limit...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
 
@@ -77,12 +71,7 @@ class RateLimiter {
   }
 }
 
-console.log('[contextGenerator] RateLimiter class defined');
-console.log('[contextGenerator] Creating RateLimiter instance...');
-
 const rateLimiter = new RateLimiter(config.ai.rateLimitRPM);
-
-console.log('[contextGenerator] RateLimiter instance created');
 
 /**
  * Generate context prompt for AI
@@ -271,7 +260,7 @@ export async function generateContext(
         context = await generateContextWithAnthropic(verse);
       }
 
-      console.log(`[ContextGenerator] Successfully generated context for ${verse.book} ${verse.chapter}:${verse.verse_number}`);
+      logger.log(`[ContextGenerator] Successfully generated context for ${verse.book} ${verse.chapter}:${verse.verse_number}`);
 
       return {
         success: true,
@@ -281,12 +270,12 @@ export async function generateContext(
 
     } catch (error) {
       lastError = error as Error;
-      console.error(`[ContextGenerator] Attempt ${attempt + 1} failed:`, error);
+      logger.error(`[ContextGenerator] Attempt ${attempt + 1} failed:`, error);
 
       // Wait before retrying (exponential backoff)
       if (attempt < retries) {
         const delay = config.ai.retryDelayMs * Math.pow(2, attempt);
-        console.log(`[ContextGenerator] Retrying in ${delay}ms...`);
+        logger.log(`[ContextGenerator] Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -322,7 +311,7 @@ export async function saveContextToDatabase(
 
     return { success: true };
   } catch (error) {
-    console.error('[ContextGenerator] Database save error:', error);
+    logger.error('[ContextGenerator] Database save error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown database error',
@@ -359,7 +348,7 @@ export async function getOrGenerateContext(verseId: string): Promise<{
     }
 
     // Generate new context
-    console.log(`[ContextGenerator] Generating context for verse ${verseId}...`);
+    logger.log(`[ContextGenerator] Generating context for verse ${verseId}...`);
     const result = await generateContext(verse);
 
     if (!result.success || !result.context) {
@@ -374,7 +363,7 @@ export async function getOrGenerateContext(verseId: string): Promise<{
     const saveResult = await saveContextToDatabase(verseId, result.context);
 
     if (!saveResult.success) {
-      console.error('[ContextGenerator] Failed to save context:', saveResult.error);
+      logger.error('[ContextGenerator] Failed to save context:', saveResult.error);
       // Still return the generated context even if save failed
     }
 
@@ -384,7 +373,7 @@ export async function getOrGenerateContext(verseId: string): Promise<{
     };
 
   } catch (error) {
-    console.error('[ContextGenerator] Error in getOrGenerateContext:', error);
+    logger.error('[ContextGenerator] Error in getOrGenerateContext:', error);
     return {
       context: null,
       isGenerated: false,
@@ -414,7 +403,7 @@ export async function batchGenerateContexts(
     }
 
     if (!verses || verses.length === 0) {
-      console.log('[ContextGenerator] No verses found without context');
+      logger.log('[ContextGenerator] No verses found without context');
       return {
         totalProcessed: 0,
         successful: 0,
@@ -423,7 +412,7 @@ export async function batchGenerateContexts(
       };
     }
 
-    console.log(`[ContextGenerator] Processing ${verses.length} verses in batches of ${config.ai.batchSize}...`);
+    logger.log(`[ContextGenerator] Processing ${verses.length} verses in batches of ${config.ai.batchSize}...`);
 
     let successful = 0;
     let failed = 0;
@@ -433,7 +422,7 @@ export async function batchGenerateContexts(
     for (let i = 0; i < verses.length; i += config.ai.batchSize) {
       const batch = verses.slice(i, i + config.ai.batchSize);
 
-      console.log(`[ContextGenerator] Processing batch ${Math.floor(i / config.ai.batchSize) + 1} (${batch.length} verses)...`);
+      logger.log(`[ContextGenerator] Processing batch ${Math.floor(i / config.ai.batchSize) + 1} (${batch.length} verses)...`);
 
       // Process batch sequentially to respect rate limits
       for (const verse of batch) {
@@ -472,7 +461,7 @@ export async function batchGenerateContexts(
       }
     }
 
-    console.log(`[ContextGenerator] Batch complete: ${successful} successful, ${failed} failed`);
+    logger.log(`[ContextGenerator] Batch complete: ${successful} successful, ${failed} failed`);
 
     return {
       totalProcessed: verses.length,
@@ -482,7 +471,7 @@ export async function batchGenerateContexts(
     };
 
   } catch (error) {
-    console.error('[ContextGenerator] Batch generation error:', error);
+    logger.error('[ContextGenerator] Batch generation error:', error);
     throw error;
   }
 }
@@ -522,7 +511,7 @@ export async function getContextStats(): Promise<{
       aiGenerated: aiGenerated || 0,
     };
   } catch (error) {
-    console.error('[ContextGenerator] Error fetching stats:', error);
+    logger.error('[ContextGenerator] Error fetching stats:', error);
     return {
       total: 0,
       withContext: 0,
@@ -532,5 +521,5 @@ export async function getContextStats(): Promise<{
   }
 }
 
-console.log('[contextGenerator] All functions defined');
-console.log('[contextGenerator] Module loaded successfully!');
+logger.log('[contextGenerator] All functions defined');
+logger.log('[contextGenerator] Module loaded successfully!');

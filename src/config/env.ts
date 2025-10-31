@@ -3,15 +3,16 @@
  * Centralized access to environment variables
  */
 
-console.log('[config/env] Module loading...');
+logger.log('[config/env] Module loading...');
 
-console.log('[config/env] Importing Constants...');
+logger.log('[config/env] Importing Constants...');
 import Constants from 'expo-constants';
-console.log('[config/env] Constants imported:', typeof Constants);
+import { logger } from '../utils/logger';
+logger.log('[config/env] Constants imported:', typeof Constants);
 
-console.log('[config/env] Accessing Constants.expoConfig...');
+logger.log('[config/env] Accessing Constants.expoConfig...');
 const env = Constants.expoConfig?.extra || {};
-console.log('[config/env] env loaded:', typeof env);
+logger.log('[config/env] env loaded:', typeof env);
 
 export const config = {
   // Supabase

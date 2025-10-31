@@ -1,9 +1,10 @@
-console.log('[profileService] Module loading...');
+logger.log('[profileService] Module loading...');
 
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types/database';
+import { logger } from '../utils/logger';
 
-console.log('[profileService] Module loaded');
+logger.log('[profileService] Module loaded');
 
 /**
  * Profile Service
@@ -22,7 +23,7 @@ export const profileService = {
         .single();
 
       if (!result) {
-        console.warn('[profileService] getProfile returned undefined for user:', userId);
+        logger.warn('[profileService] getProfile returned undefined for user:', userId);
         return null;
       }
 
@@ -30,7 +31,7 @@ export const profileService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('[profileService] Error getting profile:', error);
+      logger.error('[profileService] Error getting profile:', error);
       throw error;
     }
   },
@@ -47,7 +48,7 @@ export const profileService = {
       .single();
 
     if (!result) {
-      console.warn('[profileService] updateProfile returned undefined for user:', userId);
+      logger.warn('[profileService] updateProfile returned undefined for user:', userId);
       return null;
     }
 
@@ -121,7 +122,7 @@ export const profileService = {
     const result = await query;
 
     if (!result) {
-      console.warn('[profileService] getLeaderboard returned undefined');
+      logger.warn('[profileService] getLeaderboard returned undefined');
       return [];
     }
 
@@ -141,7 +142,7 @@ export const profileService = {
       .single();
 
     if (!result) {
-      console.warn('[profileService] getUserRank returned undefined for user:', userId);
+      logger.warn('[profileService] getUserRank returned undefined for user:', userId);
       return 0;
     }
 
@@ -157,7 +158,7 @@ export const profileService = {
       .gt('total_xp', userXP);
 
     if (!countResult) {
-      console.warn('[profileService] getUserRank count query returned undefined');
+      logger.warn('[profileService] getUserRank count query returned undefined');
       return 1;
     }
 

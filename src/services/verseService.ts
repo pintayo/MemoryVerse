@@ -1,18 +1,19 @@
-console.log('[verseService] Module loading...');
+logger.log('[verseService] Module loading...');
 
-console.log('[verseService] Importing supabase...');
+logger.log('[verseService] Importing supabase...');
 import { supabase } from '../lib/supabase';
-console.log('[verseService] supabase imported');
+import { logger } from '../utils/logger';
+logger.log('[verseService] supabase imported');
 
-console.log('[verseService] Importing types...');
+logger.log('[verseService] Importing types...');
 import { Verse, UserVerseProgress, PracticeSession } from '../types/database';
-console.log('[verseService] types imported');
+logger.log('[verseService] types imported');
 
-console.log('[verseService] Importing contextGenerator...');
+logger.log('[verseService] Importing contextGenerator...');
 import { getOrGenerateContext } from './contextGenerator';
-console.log('[verseService] contextGenerator imported');
+logger.log('[verseService] contextGenerator imported');
 
-console.log('[verseService] About to define verseService object...');
+logger.log('[verseService] About to define verseService object...');
 
 /**
  * Verse Service
@@ -32,7 +33,7 @@ export const verseService = {
       .order('verse_number', { ascending: true });
 
     if (!result) {
-      console.warn('[verseService] getAllVerses returned undefined');
+      logger.warn('[verseService] getAllVerses returned undefined');
       return [];
     }
 
@@ -52,7 +53,7 @@ export const verseService = {
       .single();
 
     if (!result) {
-      console.warn('[verseService] getVerseById returned undefined for verse:', verseId);
+      logger.warn('[verseService] getVerseById returned undefined for verse:', verseId);
       return null;
     }
 
@@ -73,7 +74,7 @@ export const verseService = {
       .order('difficulty', { ascending: true });
 
     if (!result) {
-      console.warn('[verseService] getVersesByCategory returned undefined');
+      logger.warn('[verseService] getVersesByCategory returned undefined');
       return [];
     }
 
@@ -93,7 +94,7 @@ export const verseService = {
       .eq('translation', translation);
 
     if (!result) {
-      console.warn('[verseService] getVersesByDifficulty returned undefined');
+      logger.warn('[verseService] getVersesByDifficulty returned undefined');
       return [];
     }
 
@@ -113,7 +114,7 @@ export const verseService = {
       .limit(100); // Get a pool of verses
 
     if (!result) {
-      console.warn('[verseService] getRandomVerse returned undefined');
+      logger.warn('[verseService] getRandomVerse returned undefined');
       return null;
     }
 
@@ -137,7 +138,7 @@ export const verseService = {
       .eq('user_id', userId);
 
     if (!progressResult) {
-      console.warn('[verseService] getTodaysVerse progress query returned undefined');
+      logger.warn('[verseService] getTodaysVerse progress query returned undefined');
       return null;
     }
 
@@ -159,7 +160,7 @@ export const verseService = {
     const result = await query.limit(1);
 
     if (!result) {
-      console.warn('[verseService] getTodaysVerse query returned undefined');
+      logger.warn('[verseService] getTodaysVerse query returned undefined');
       return null;
     }
 
@@ -180,7 +181,7 @@ export const verseService = {
       .single();
 
     if (!result) {
-      console.warn('[verseService] getUserVerseProgress returned undefined');
+      logger.warn('[verseService] getUserVerseProgress returned undefined');
       return null;
     }
 
@@ -208,7 +209,7 @@ export const verseService = {
       .single();
 
     if (!result) {
-      console.warn('[verseService] upsertUserVerseProgress returned undefined');
+      logger.warn('[verseService] upsertUserVerseProgress returned undefined');
       throw new Error('Failed to upsert user verse progress');
     }
 
@@ -244,7 +245,7 @@ export const verseService = {
       .single();
 
     if (!result) {
-      console.warn('[verseService] recordPracticeSession returned undefined');
+      logger.warn('[verseService] recordPracticeSession returned undefined');
       throw new Error('Failed to record practice session');
     }
 
@@ -293,7 +294,7 @@ export const verseService = {
       .limit(limit);
 
     if (!result) {
-      console.warn('[verseService] getVersesForReview returned undefined');
+      logger.warn('[verseService] getVersesForReview returned undefined');
       return [];
     }
 
@@ -315,7 +316,7 @@ export const verseService = {
       .order('mastered_at', { ascending: false });
 
     if (!result) {
-      console.warn('[verseService] getMasteredVerses returned undefined');
+      logger.warn('[verseService] getMasteredVerses returned undefined');
       return [];
     }
 
@@ -403,7 +404,7 @@ export const verseService = {
         error: contextResult.error,
       };
     } catch (error) {
-      console.error('[VerseService] Error in getVerseWithContext:', error);
+      logger.error('[VerseService] Error in getVerseWithContext:', error);
       return {
         verse: null,
         context: null,
@@ -432,7 +433,7 @@ export const verseService = {
         .eq('id', verseId);
 
       if (!result) {
-        console.warn('[verseService] updateVerseContext returned undefined');
+        logger.warn('[verseService] updateVerseContext returned undefined');
         return {
           success: false,
           error: 'Update query returned undefined',
@@ -444,7 +445,7 @@ export const verseService = {
 
       return { success: true };
     } catch (error) {
-      console.error('[VerseService] Error updating context:', error);
+      logger.error('[VerseService] Error updating context:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -463,7 +464,7 @@ export const verseService = {
       .limit(limit);
 
     if (!result) {
-      console.warn('[verseService] getVersesNeedingContext returned undefined');
+      logger.warn('[verseService] getVersesNeedingContext returned undefined');
       return [];
     }
 
@@ -473,5 +474,5 @@ export const verseService = {
   },
 };
 
-console.log('[verseService] verseService object defined successfully');
-console.log('[verseService] Module loaded!');
+logger.log('[verseService] verseService object defined successfully');
+logger.log('[verseService] Module loaded!');

@@ -1,7 +1,8 @@
-console.log('[UnderstandScreen] Module loading...');
+logger.log('[UnderstandScreen] Module loading...');
 
 import React, { useState, useEffect } from 'react';
 import {
+import { logger } from '../utils/logger';
   View,
   StyleSheet,
   ScrollView,
@@ -25,7 +26,7 @@ import { BibleCompanion } from '../components/BibleCompanion';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 
-console.log('[UnderstandScreen] All imports complete');
+logger.log('[UnderstandScreen] All imports complete');
 
 type RootStackParamList = {
   Understand: { verseId: string };
@@ -68,7 +69,7 @@ export function UnderstandScreen({ navigation, route }: Props) {
       setShowAiBadge(result.verse?.context_generated_by_ai || false);
 
     } catch (err) {
-      console.error('[UnderstandScreen] Error loading verse:', err);
+      logger.error('[UnderstandScreen] Error loading verse:', err);
       setError(err instanceof Error ? err.message : 'Failed to load verse');
     } finally {
       setIsLoading(false);

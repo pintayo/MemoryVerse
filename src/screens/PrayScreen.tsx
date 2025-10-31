@@ -8,6 +8,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
+import { logger } from '../utils/logger';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pray'>;
 
@@ -48,7 +49,7 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
         setError('Verse not found. Please try again.');
       }
     } catch (err) {
-      console.error('[PrayScreen] Error loading verse:', err);
+      logger.error('[PrayScreen] Error loading verse:', err);
       setError('Failed to load verse. Please try again.');
     } finally {
       setIsLoading(false);

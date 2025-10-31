@@ -6,6 +6,7 @@ import { theme } from '../theme';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 import { getOrGenerateContext } from '../services/contextGenerator';
+import { logger } from '../utils/logger';
 
 interface VerseCardScreenProps {
   navigation: any;
@@ -50,7 +51,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
         setError('No verses found. Please import Bible data.');
       }
     } catch (err) {
-      console.error('[VerseCardScreen] Error loading verses:', err);
+      logger.error('[VerseCardScreen] Error loading verses:', err);
       setError('Failed to load verses. Please try again.');
     } finally {
       setIsLoading(false);
@@ -119,7 +120,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
     if (newShowContext && currentVerse && currentVerse.id && !currentVerse.context) {
       try {
         setIsGeneratingContext(true);
-        console.log('[VerseCardScreen] Auto-generating context for verse:', currentVerse.id);
+        logger.log('[VerseCardScreen] Auto-generating context for verse:', currentVerse.id);
 
         const result = await getOrGenerateContext(currentVerse.id);
 
@@ -132,13 +133,13 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
             context_generated_by_ai: true,
           };
           setVerses(updatedVerses);
-          console.log('[VerseCardScreen] Context generated and updated successfully');
+          logger.log('[VerseCardScreen] Context generated and updated successfully');
         } else if (result.error) {
-          console.error('[VerseCardScreen] Failed to generate context:', result.error);
+          logger.error('[VerseCardScreen] Failed to generate context:', result.error);
           // Don't show error to user - they'll just see the placeholder
         }
       } catch (err) {
-        console.error('[VerseCardScreen] Error generating context:', err);
+        logger.error('[VerseCardScreen] Error generating context:', err);
         // Silent fail - user experience isn't disrupted
       } finally {
         setIsGeneratingContext(false);

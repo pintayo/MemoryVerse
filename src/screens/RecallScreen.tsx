@@ -10,6 +10,7 @@ import { verseService } from '../services/verseService';
 import { profileService } from '../services/profileService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
 
@@ -56,7 +57,7 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
         setError('Verse not found. Please try again.');
       }
     } catch (err) {
-      console.error('[RecallScreen] Error loading verse:', err);
+      logger.error('[RecallScreen] Error loading verse:', err);
       setError('Failed to load verse. Please try again.');
     } finally {
       setIsLoading(false);
@@ -131,7 +132,7 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
         await profileService.addXP(user.id, xpEarned);
       }
     } catch (error) {
-      console.error('[RecallScreen] Error recording practice session:', error);
+      logger.error('[RecallScreen] Error recording practice session:', error);
       // Continue with UI feedback even if recording fails
     }
 

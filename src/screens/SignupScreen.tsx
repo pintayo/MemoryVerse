@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+import { logger } from '../utils/logger';
   View,
   Text,
   StyleSheet,
@@ -97,7 +98,7 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation, onSignupSuccess
       });
 
       if (profileResult.error) {
-        console.error('[SignupScreen] Profile creation error:', profileResult.error);
+        logger.error('[SignupScreen] Profile creation error:', profileResult.error);
         Alert.alert(
           'Warning',
           'Account created but profile setup failed. Please update your profile later.'
@@ -115,7 +116,7 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation, onSignupSuccess
         ]
       );
     } catch (error) {
-      console.error('[SignupScreen] Signup error:', error);
+      logger.error('[SignupScreen] Signup error:', error);
       Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

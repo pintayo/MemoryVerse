@@ -1,9 +1,10 @@
-console.log('[authService] Module loading...');
+logger.log('[authService] Module loading...');
 
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types/database';
+import { logger } from '../utils/logger';
 
-console.log('[authService] Module loaded, supabase client:', typeof supabase);
+logger.log('[authService] Module loaded, supabase client:', typeof supabase);
 
 export interface SignUpData {
   email: string;
@@ -36,7 +37,7 @@ export const authService = {
     });
 
     if (!result) {
-      console.warn('[authService] signUp returned undefined');
+      logger.warn('[authService] signUp returned undefined');
       throw new Error('Sign up failed');
     }
 
@@ -55,7 +56,7 @@ export const authService = {
     });
 
     if (!result) {
-      console.warn('[authService] signIn returned undefined');
+      logger.warn('[authService] signIn returned undefined');
       throw new Error('Sign in failed');
     }
 
@@ -70,7 +71,7 @@ export const authService = {
   async signOut() {
     const result = await supabase.auth.signOut();
     if (!result) {
-      console.warn('[authService] signOut returned undefined');
+      logger.warn('[authService] signOut returned undefined');
       return;
     }
     const { error } = result;
@@ -84,14 +85,14 @@ export const authService = {
     try {
       const result = await supabase.auth.getSession();
       if (!result) {
-        console.warn('[authService] getSession returned undefined');
+        logger.warn('[authService] getSession returned undefined');
         return null;
       }
       const { data, error } = result;
       if (error) throw error;
       return data?.session ?? null;
     } catch (error) {
-      console.error('[authService] Error getting session:', error);
+      logger.error('[authService] Error getting session:', error);
       throw error;
     }
   },
@@ -103,14 +104,14 @@ export const authService = {
     try {
       const result = await supabase.auth.getUser();
       if (!result) {
-        console.warn('[authService] getUser returned undefined');
+        logger.warn('[authService] getUser returned undefined');
         return null;
       }
       const { data, error } = result;
       if (error) throw error;
       return data?.user ?? null;
     } catch (error) {
-      console.error('[authService] Error getting user:', error);
+      logger.error('[authService] Error getting user:', error);
       throw error;
     }
   },
@@ -122,12 +123,12 @@ export const authService = {
     try {
       const result = supabase.auth.onAuthStateChange(callback);
       if (!result) {
-        console.warn('[authService] onAuthStateChange returned undefined');
+        logger.warn('[authService] onAuthStateChange returned undefined');
         return { data: { subscription: { unsubscribe: () => {} } } };
       }
       return result;
     } catch (error) {
-      console.error('[authService] Error setting up auth state listener:', error);
+      logger.error('[authService] Error setting up auth state listener:', error);
       return { data: { subscription: { unsubscribe: () => {} } } };
     }
   },
@@ -138,7 +139,7 @@ export const authService = {
   async resetPassword(email: string) {
     const result = await supabase.auth.resetPasswordForEmail(email);
     if (!result) {
-      console.warn('[authService] resetPassword returned undefined');
+      logger.warn('[authService] resetPassword returned undefined');
       throw new Error('Reset password failed');
     }
     const { data, error } = result;
@@ -154,7 +155,7 @@ export const authService = {
       password: newPassword,
     });
     if (!result) {
-      console.warn('[authService] updatePassword returned undefined');
+      logger.warn('[authService] updatePassword returned undefined');
       throw new Error('Update password failed');
     }
     const { data, error } = result;

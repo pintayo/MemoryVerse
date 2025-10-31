@@ -7,6 +7,7 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useAuth } from '../contexts/AuthContext';
 import { profileService } from '../services/profileService';
 import { Profile } from '../types/database';
+import { logger } from '../utils/logger';
 
 interface LeaderboardScreenProps {
   navigation: any;
@@ -70,7 +71,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ navigation }) => 
         }
       }
     } catch (error) {
-      console.error('[LeaderboardScreen] Error loading leaderboard:', error);
+      logger.error('[LeaderboardScreen] Error loading leaderboard:', error);
     } finally {
       setIsLoading(false);
     }
