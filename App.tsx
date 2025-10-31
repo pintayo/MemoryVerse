@@ -1,15 +1,40 @@
+console.log('[App.tsx] Starting module imports...');
+
 import React from 'react';
 import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
+console.log('[App.tsx] React Native imports loaded');
+
 import { NavigationContainer } from '@react-navigation/native';
+console.log('[App.tsx] NavigationContainer loaded');
+
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+console.log('[App.tsx] SafeAreaProvider loaded');
+
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+console.log('[App.tsx] GestureHandlerRootView loaded');
+
 import { createStackNavigator } from '@react-navigation/stack';
+console.log('[App.tsx] createStackNavigator loaded');
+
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+console.log('[App.tsx] AuthContext loaded');
+
 import RootNavigator from './src/navigation/RootNavigator';
+console.log('[App.tsx] RootNavigator loaded');
+
 import LoginScreen from './src/screens/LoginScreen';
+console.log('[App.tsx] LoginScreen loaded');
+
 import SignupScreen from './src/screens/SignupScreen';
+console.log('[App.tsx] SignupScreen loaded');
+
 import { ErrorBoundary } from './src/components';
+console.log('[App.tsx] ErrorBoundary loaded');
+
 import { theme } from './src/theme';
+console.log('[App.tsx] theme loaded');
+
+console.log('[App.tsx] ALL IMPORTS COMPLETE!');
 
 console.log('[App.tsx] Setting up global error handlers...');
 
