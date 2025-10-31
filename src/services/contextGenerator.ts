@@ -77,7 +77,12 @@ class RateLimiter {
   }
 }
 
+console.log('[contextGenerator] RateLimiter class defined');
+console.log('[contextGenerator] Creating RateLimiter instance...');
+
 const rateLimiter = new RateLimiter(config.ai.rateLimitRPM);
+
+console.log('[contextGenerator] RateLimiter instance created');
 
 /**
  * Generate context prompt for AI
@@ -526,3 +531,6 @@ export async function getContextStats(): Promise<{
     };
   }
 }
+
+console.log('[contextGenerator] All functions defined');
+console.log('[contextGenerator] Module loaded successfully!');
