@@ -127,8 +127,10 @@ CREATE TABLE IF NOT EXISTS public.daily_streaks (
 -- 3. VIEWS
 -- ============================================================================
 
--- Leaderboard view
-CREATE OR REPLACE VIEW public.leaderboard AS
+-- Drop and recreate leaderboard view (fixes column name issue)
+DROP VIEW IF EXISTS public.leaderboard;
+
+CREATE VIEW public.leaderboard AS
 SELECT
     p.id as user_id,
     p.full_name,
