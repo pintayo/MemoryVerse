@@ -4,3 +4,4 @@ export { default as Card } from './Card';
 export { default as Input } from './Input';
 export { default as VerseText } from './VerseText';
 export { default as VerseReference } from './VerseReference';
+export { default as ErrorBoundary } from './ErrorBoundary';
