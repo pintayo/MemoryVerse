@@ -4,8 +4,15 @@
  * Supports OpenAI, Anthropic (Claude), and Perplexity APIs
  */
 
+console.log('[contextGenerator] Module loading...');
+
+console.log('[contextGenerator] Importing config...');
 import { config } from '../config/env';
+console.log('[contextGenerator] config imported');
+
+console.log('[contextGenerator] Importing supabase...');
 import { supabase } from '../lib/supabase';
+console.log('[contextGenerator] supabase imported');
 
 // Types
 export interface Verse {

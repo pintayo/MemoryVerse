@@ -1,6 +1,16 @@
+console.log('[verseService] Module loading...');
+
+console.log('[verseService] Importing supabase...');
 import { supabase } from '../lib/supabase';
+console.log('[verseService] supabase imported');
+
+console.log('[verseService] Importing types...');
 import { Verse, UserVerseProgress, PracticeSession } from '../types/database';
+console.log('[verseService] types imported');
+
+console.log('[verseService] Importing contextGenerator...');
 import { getOrGenerateContext } from './contextGenerator';
+console.log('[verseService] contextGenerator imported');
 
 /**
  * Verse Service
