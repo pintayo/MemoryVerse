@@ -35,12 +35,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, onLoginSuccess })
 
     try {
       setIsLoading(true);
-      const result = await authService.signIn(email.trim(), password);
-
-      if (result.error) {
-        Alert.alert('Login Failed', result.error.message || 'Invalid email or password');
-        return;
-      }
+      const result = await authService.signIn({
+        email: email.trim(),
+        password: password
+      });
 
       if (result.user) {
         // Success! The AuthContext will handle the session
@@ -48,7 +46,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, onLoginSuccess })
       }
     } catch (error) {
       console.error('[LoginScreen] Login error:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      Alert.alert('Login Failed', error instanceof Error ? error.message : 'Invalid email or password');
     } finally {
       setIsLoading(false);
     }

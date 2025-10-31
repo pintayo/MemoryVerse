@@ -74,11 +74,17 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation, onSignupSuccess
       setIsLoading(true);
 
       // Create auth user
-      const result = await authService.signUp(email.trim(), password);
+      const result = await authService.signUp({
+        email: email.trim(),
+        password: password,
+        fullName: fullName.trim()
+      });
 
-      if (result.error) {
-        Alert.alert('Signup Failed', result.error.message || 'Failed to create account');
-        return;
+      if (result.user) {
+        // Success! Navigate or show success
+        Alert.alert('Success', 'Account created successfully!', [
+          { text: 'OK', onPress: () => navigation.navigate('Login') }
+        ]);
       }
 
       if (!result.user) {
