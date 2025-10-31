@@ -17,26 +17,41 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+console.log('[Supabase] Initializing with URL:', supabaseUrl);
+
 // Custom storage adapter for React Native
 // Uses SecureStore for sensitive data on mobile, AsyncStorage for web
 const ExpoSecureStoreAdapter = {
   getItem: async (key: string) => {
-    if (Platform.OS === 'web') {
-      return AsyncStorage.getItem(key);
+    try {
+      if (Platform.OS === 'web') {
+        return AsyncStorage.getItem(key);
+      }
+      return SecureStore.getItemAsync(key);
+    } catch (error) {
+      console.error('[Supabase Storage] Error getting item:', key, error);
+      return null;
     }
-    return SecureStore.getItemAsync(key);
   },
   setItem: async (key: string, value: string) => {
-    if (Platform.OS === 'web') {
-      return AsyncStorage.setItem(key, value);
+    try {
+      if (Platform.OS === 'web') {
+        return AsyncStorage.setItem(key, value);
+      }
+      return SecureStore.setItemAsync(key, value);
+    } catch (error) {
+      console.error('[Supabase Storage] Error setting item:', key, error);
     }
-    return SecureStore.setItemAsync(key, value);
   },
   removeItem: async (key: string) => {
-    if (Platform.OS === 'web') {
-      return AsyncStorage.removeItem(key);
+    try {
+      if (Platform.OS === 'web') {
+        return AsyncStorage.removeItem(key);
+      }
+      return SecureStore.deleteItemAsync(key);
+    } catch (error) {
+      console.error('[Supabase Storage] Error removing item:', key, error);
     }
-    return SecureStore.deleteItemAsync(key);
   },
 };
 
@@ -48,3 +63,5 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+console.log('[Supabase] Client initialized successfully');

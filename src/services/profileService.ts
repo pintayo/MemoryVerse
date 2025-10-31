@@ -10,14 +10,25 @@ export const profileService = {
    * Get user profile by ID
    */
   async getProfile(userId: string): Promise<Profile | null> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const result = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (!result) {
+        console.warn('[profileService] getProfile returned undefined for user:', userId);
+        return null;
+      }
+
+      const { data, error } = result;
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('[profileService] Error getting profile:', error);
+      throw error;
+    }
   },
 
   /**

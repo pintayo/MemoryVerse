@@ -29,9 +29,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Load profile data when user changes
   const loadProfile = async (userId: string) => {
     try {
-      const result = await profileService.getProfile(userId);
-      if (result.data) {
-        setProfile(result.data);
+      console.log('[AuthContext] Loading profile for user:', userId);
+      const profile = await profileService.getProfile(userId);
+      console.log('[AuthContext] Profile result:', profile ? 'success' : 'null');
+      if (profile) {
+        setProfile(profile);
+        console.log('[AuthContext] Profile loaded successfully');
       } else {
         console.warn('[AuthContext] No profile found for user:', userId);
       }
