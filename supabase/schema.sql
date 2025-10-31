@@ -185,60 +185,73 @@ ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_streaks ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for profiles
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
 CREATE POLICY "Users can view their own profile"
     ON public.profiles FOR SELECT
     USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile"
     ON public.profiles FOR UPDATE
     USING (auth.uid() = id);
 
 -- RLS Policies for verses (public read)
+DROP POLICY IF EXISTS "Verses are viewable by everyone" ON public.verses;
 CREATE POLICY "Verses are viewable by everyone"
     ON public.verses FOR SELECT
     TO authenticated
     USING (true);
 
 -- RLS Policies for user_verse_progress
+DROP POLICY IF EXISTS "Users can view their own progress" ON public.user_verse_progress;
 CREATE POLICY "Users can view their own progress"
     ON public.user_verse_progress FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own progress" ON public.user_verse_progress;
 CREATE POLICY "Users can insert their own progress"
     ON public.user_verse_progress FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own progress" ON public.user_verse_progress;
 CREATE POLICY "Users can update their own progress"
     ON public.user_verse_progress FOR UPDATE
     USING (auth.uid() = user_id);
 
 -- RLS Policies for practice_sessions
+DROP POLICY IF EXISTS "Users can view their own sessions" ON public.practice_sessions;
 CREATE POLICY "Users can view their own sessions"
     ON public.practice_sessions FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own sessions" ON public.practice_sessions;
 CREATE POLICY "Users can insert their own sessions"
     ON public.practice_sessions FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
 -- RLS Policies for achievements
+DROP POLICY IF EXISTS "Users can view their own achievements" ON public.achievements;
 CREATE POLICY "Users can view their own achievements"
     ON public.achievements FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own achievements" ON public.achievements;
 CREATE POLICY "Users can insert their own achievements"
     ON public.achievements FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
 -- RLS Policies for daily_streaks
+DROP POLICY IF EXISTS "Users can view their own streaks" ON public.daily_streaks;
 CREATE POLICY "Users can view their own streaks"
     ON public.daily_streaks FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own streaks" ON public.daily_streaks;
 CREATE POLICY "Users can insert their own streaks"
     ON public.daily_streaks FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own streaks" ON public.daily_streaks;
 CREATE POLICY "Users can update their own streaks"
     ON public.daily_streaks FOR UPDATE
     USING (auth.uid() = user_id);
