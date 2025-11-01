@@ -373,7 +373,59 @@ export const verseService = {
   },
 
   /**
-   * Check user answer accuracy
+   * Calculate Levenshtein distance (edit distance) between two strings
+   * Used for fuzzy matching in checkAnswer
+   */
+  levenshteinDistance(str1: string, str2: string): number {
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    // Create a 2D array for dynamic programming
+    const matrix: number[][] = Array(len1 + 1)
+      .fill(null)
+      .map(() => Array(len2 + 1).fill(0));
+
+    // Initialize first row and column
+    for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+    for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+    // Fill the matrix
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,      // deletion
+          matrix[i][j - 1] + 1,      // insertion
+          matrix[i - 1][j - 1] + cost // substitution
+        );
+      }
+    }
+
+    return matrix[len1][len2];
+  },
+
+  /**
+   * Check if two words are similar enough (fuzzy match)
+   * Allows for common typos and small spelling variations
+   */
+  isFuzzyMatch(correctWord: string, userWord: string): boolean {
+    // Exact match
+    if (correctWord === userWord) return true;
+
+    // Calculate edit distance
+    const distance = verseService.levenshteinDistance(correctWord, userWord);
+
+    // Allow more leniency for longer words
+    // Short words (≤4 chars): max 1 edit
+    // Medium words (5-7 chars): max 2 edits
+    // Long words (8+ chars): max 3 edits
+    const maxDistance = correctWord.length <= 4 ? 1 : correctWord.length <= 7 ? 2 : 3;
+
+    return distance <= maxDistance;
+  },
+
+  /**
+   * Check user answer accuracy with fuzzy matching
    * Returns accuracy percentage and detailed feedback
    */
   checkAnswer(correctText: string, userAnswer: string): {
@@ -396,12 +448,15 @@ export const verseService = {
     const correctWords = correctNormalized.split(' ');
     const userWords = userNormalized.split(' ');
 
-    // Calculate word-level accuracy
+    // Calculate word-level accuracy with fuzzy matching
     let correctWordCount = 0;
     const mistakes: string[] = [];
 
     correctWords.forEach((word, index) => {
-      if (userWords[index] === word) {
+      const userWord = userWords[index] || '';
+
+      // Use fuzzy matching to allow for typos
+      if (verseService.isFuzzyMatch(word, userWord)) {
         correctWordCount++;
       } else {
         mistakes.push(word);
