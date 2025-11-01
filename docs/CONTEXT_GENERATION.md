@@ -131,7 +131,7 @@ EXPO_PUBLIC_ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
 
 # Perplexity Configuration
 EXPO_PUBLIC_PERPLEXITY_API_KEY=pplx-...
-EXPO_PUBLIC_PERPLEXITY_MODEL=llama-3.1-sonar-small-128k-online
+EXPO_PUBLIC_PERPLEXITY_MODEL=sonar
 
 # Rate Limiting
 EXPO_PUBLIC_AI_RATE_LIMIT_RPM=50
@@ -320,7 +320,7 @@ console.log(`${stats.withContext}/${stats.total} verses have context`);
 - **1000 verses:** ~$0.24
 - **31,000 verses (full KJV):** ~$7.44
 
-**Recommendation:** Use **Perplexity (llama-3.1-sonar-small)** or **gpt-4o-mini** for cost-effective batch generation. Perplexity offers the lowest cost while maintaining good quality.
+**Recommendation:** Use **Perplexity (sonar)** or **gpt-4o-mini** for cost-effective batch generation. Perplexity offers the lowest cost while maintaining good quality.
 
 ## Rate Limiting
 

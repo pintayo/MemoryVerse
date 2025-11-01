@@ -165,7 +165,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_production_anon_key
 
 # Production AI Keys
 EXPO_PUBLIC_PERPLEXITY_API_KEY=your_production_key
-EXPO_PUBLIC_PERPLEXITY_MODEL=llama-3.1-sonar-small-128k-chat
+EXPO_PUBLIC_PERPLEXITY_MODEL=sonar
 
 # Analytics
 EXPO_PUBLIC_FIREBASE_API_KEY=your_firebase_key

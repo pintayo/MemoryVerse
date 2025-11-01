@@ -37,7 +37,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # AI Context Generation (Required)
 EXPO_PUBLIC_PERPLEXITY_API_KEY=your_perplexity_api_key
-EXPO_PUBLIC_PERPLEXITY_MODEL=llama-3.1-sonar-small-128k-chat
+EXPO_PUBLIC_PERPLEXITY_MODEL=sonar
 
 # AI Provider Selection
 EXPO_PUBLIC_AI_PROVIDER=perplexity
@@ -184,7 +184,7 @@ npm run ios
 ### "AI context not generating"
 - Verify Perplexity API key is valid
 - Check console for API errors
-- Ensure model name is correct: `llama-3.1-sonar-small-128k-chat`
+- Ensure model name is correct: `sonar`
 
 ## 10. Need Help?
 
