@@ -96,7 +96,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleCancelEdit = () => {
     // Reset to original values
     setEditedName(profile?.full_name || '');
-    setEditedAvatar(profile?.avatar || '😊');
+    setEditedAvatar(profile?.avatar_url || '😊');
     setIsEditMode(false);
   };
 
@@ -534,12 +534,13 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
   },
   profileHeader: {
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    width: '100%',
   },
   avatarLarge: {
     width: 80,
@@ -707,7 +708,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.ui.heading.fontWeight,
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     textAlign: 'center',
   },
   editLabel: {
@@ -715,8 +716,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.sm,
-    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
+    alignSelf: 'flex-start',
   },
   avatarScroll: {
     marginBottom: theme.spacing.md,
@@ -752,7 +754,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.ui.default,
     borderWidth: 1,
     borderColor: theme.colors.primary.oatmeal,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
 });
 
