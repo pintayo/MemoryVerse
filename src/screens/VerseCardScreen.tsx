@@ -250,26 +250,36 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                 </View>
 
                 {/* Context section */}
-                {showContext && (
-                  <View style={styles.contextContainer}>
-                    <View style={styles.contextDivider} />
-                    <Text style={styles.contextLabel}>Context</Text>
-                    {verses[currentVerseIndex]?.context ? (
-                      <Text style={styles.contextText}>{verses[currentVerseIndex].context}</Text>
-                    ) : isGeneratingContext ? (
-                      <View style={styles.contextLoadingContainer}>
-                        <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
+                {showContext && (() => {
+                  const hasContext = verses[currentVerseIndex]?.context;
+                  logger.log('[VerseCardScreen] Rendering context section:', {
+                    showContext,
+                    currentVerseIndex,
+                    hasContext: !!hasContext,
+                    contextLength: hasContext ? hasContext.length : 0,
+                    isGeneratingContext
+                  });
+                  return (
+                    <View style={styles.contextContainer}>
+                      <View style={styles.contextDivider} />
+                      <Text style={styles.contextLabel}>Context</Text>
+                      {hasContext ? (
+                        <Text style={styles.contextText}>{hasContext}</Text>
+                      ) : isGeneratingContext ? (
+                        <View style={styles.contextLoadingContainer}>
+                          <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
+                          <Text style={styles.contextPlaceholder}>
+                            Generating spiritual context...
+                          </Text>
+                        </View>
+                      ) : (
                         <Text style={styles.contextPlaceholder}>
-                          Generating spiritual context...
+                          Click "Show Context" to generate AI-powered context for this verse.
                         </Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.contextPlaceholder}>
-                        Click "Show Context" to generate AI-powered context for this verse.
-                      </Text>
-                    )}
-                  </View>
-                )}
+                      )}
+                    </View>
+                  );
+                })()}
               </ScrollView>
 
               {/* Decorative bottom border */}
