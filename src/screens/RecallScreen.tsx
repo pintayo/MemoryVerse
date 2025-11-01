@@ -360,24 +360,24 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
             </Text>
           </Animated.View>
         )}
-
-        {/* Action buttons */}
-        <View style={styles.buttonRow}>
-          <Button
-            title={showAnswer ? "Hide Answer" : "Give Answer"}
-            onPress={() => setShowAnswer(!showAnswer)}
-            variant="secondary"
-            style={styles.giveAnswerButton}
-          />
-          <Button
-            title="Check Answer"
-            onPress={handleSubmit}
-            variant="olive"
-            disabled={!userInput.trim() || isRecording || showAnswer}
-            style={styles.submitButton}
-          />
-        </View>
       </ScrollView>
+
+      {/* Fixed action buttons at bottom */}
+      <View style={styles.buttonRow}>
+        <Button
+          title={showAnswer ? "Hide Answer" : "Give Answer"}
+          onPress={() => setShowAnswer(!showAnswer)}
+          variant="secondary"
+          style={styles.giveAnswerButton}
+        />
+        <Button
+          title="Check Answer"
+          onPress={handleSubmit}
+          variant="olive"
+          disabled={!userInput.trim() || isRecording || showAnswer}
+          style={styles.submitButton}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -393,10 +393,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: theme.spacing.screen.horizontal,
     paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: 100, // Extra padding for fixed button row
   },
   header: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   title: {
     fontSize: theme.typography.ui.title.fontSize,
@@ -459,18 +459,18 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   inputSection: {
-    marginBottom: theme.spacing.lg,
-  },
-  inputContainer: {
     marginBottom: theme.spacing.md,
   },
+  inputContainer: {
+    marginBottom: theme.spacing.sm,
+  },
   textInput: {
-    height: 100,
+    height: 80,
     textAlignVertical: 'top',
   },
   micSection: {
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
   orText: {
     fontSize: theme.typography.ui.bodySmall.fontSize,
@@ -541,7 +541,11 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: theme.spacing.md,
-    marginTop: theme.spacing.md,
+    paddingHorizontal: theme.spacing.screen.horizontal,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.background.offWhiteParchment,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.primary.oatmeal,
   },
   giveAnswerButton: {
     flex: 1,
