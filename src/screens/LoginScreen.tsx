@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-import { logger } from '../utils/logger';
   View,
   Text,
   StyleSheet,
@@ -16,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import { authService } from '../services/authService';
 import Svg, { Path } from 'react-native-svg';
+import { logger } from '../utils/logger';
 
 interface LoginScreenProps {
   navigation: any;
