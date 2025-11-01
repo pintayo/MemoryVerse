@@ -58,6 +58,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
     }
   };
 
+  // Get current verse (recalculated on every render to ensure fresh data)
   const currentVerse = verses[currentVerseIndex];
 
   // Page turn animation effect
@@ -249,19 +250,13 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                 </View>
 
                 {/* Context section */}
-                {showContext && currentVerse.context && (
+                {showContext && (
                   <View style={styles.contextContainer}>
                     <View style={styles.contextDivider} />
                     <Text style={styles.contextLabel}>Context</Text>
-                    <Text style={styles.contextText}>{currentVerse.context}</Text>
-                  </View>
-                )}
-
-                {showContext && !currentVerse.context && (
-                  <View style={styles.contextContainer}>
-                    <View style={styles.contextDivider} />
-                    <Text style={styles.contextLabel}>Context</Text>
-                    {isGeneratingContext ? (
+                    {verses[currentVerseIndex]?.context ? (
+                      <Text style={styles.contextText}>{verses[currentVerseIndex].context}</Text>
+                    ) : isGeneratingContext ? (
                       <View style={styles.contextLoadingContainer}>
                         <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
                         <Text style={styles.contextPlaceholder}>

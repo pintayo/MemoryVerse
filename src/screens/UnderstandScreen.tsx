@@ -19,7 +19,7 @@ import { shadows } from '../theme/shadows';
 import { Card } from '../components/Card';
 import { VerseText } from '../components/VerseText';
 import { VerseReference } from '../components/VerseReference';
-import { BibleCompanion } from '../components/BibleCompanion';
+import BibleCompanion from '../components/BibleCompanion';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 import { logger } from '../utils/logger';
