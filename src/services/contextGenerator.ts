@@ -73,6 +73,13 @@ class RateLimiter {
 
 const rateLimiter = new RateLimiter(config.ai.rateLimitRPM);
 
+// Generation locks to prevent duplicate API calls for the same verse
+const generationLocks = new Map<string, Promise<{
+  context: string | null;
+  isGenerated: boolean;
+  error?: string;
+}>>();
+
 /**
  * Generate context prompt for AI
  */
@@ -321,65 +328,85 @@ export async function saveContextToDatabase(
 
 /**
  * Get context for a verse (from cache or generate on-demand)
+ * Uses locks to prevent duplicate API calls for concurrent requests
  */
 export async function getOrGenerateContext(verseId: string): Promise<{
   context: string | null;
   isGenerated: boolean;
   error?: string;
 }> {
-  try {
-    // Fetch verse from database
-    const { data: verse, error: fetchError } = await supabase
-      .from('verses')
-      .select('*')
-      .eq('id', verseId)
-      .single();
+  // Check if generation is already in progress for this verse
+  const existingLock = generationLocks.get(verseId);
+  if (existingLock) {
+    logger.log(`[ContextGenerator] Generation already in progress for ${verseId}, waiting...`);
+    return existingLock;
+  }
 
-    if (fetchError || !verse) {
-      throw new Error('Verse not found');
-    }
+  // Create new generation promise
+  const generationPromise = (async () => {
+    try {
+      // Fetch verse from database
+      const { data: verse, error: fetchError } = await supabase
+        .from('verses')
+        .select('*')
+        .eq('id', verseId)
+        .single();
 
-    // If context exists, return it
-    if (verse.context && verse.context.trim() !== '') {
+      if (fetchError || !verse) {
+        throw new Error('Verse not found');
+      }
+
+      // If context exists, return it
+      if (verse.context && verse.context.trim() !== '') {
+        logger.log(`[ContextGenerator] Context already exists for ${verseId}, using cached version`);
+        return {
+          context: verse.context,
+          isGenerated: false, // Already cached
+        };
+      }
+
+      // Generate new context
+      logger.log(`[ContextGenerator] Generating context for verse ${verseId}...`);
+      const result = await generateContext(verse);
+
+      if (!result.success || !result.context) {
+        return {
+          context: null,
+          isGenerated: false,
+          error: result.error || 'Failed to generate context',
+        };
+      }
+
+      // Save to database
+      const saveResult = await saveContextToDatabase(verseId, result.context);
+
+      if (!saveResult.success) {
+        logger.error('[ContextGenerator] Failed to save context:', saveResult.error);
+        // Still return the generated context even if save failed
+      }
+
       return {
-        context: verse.context,
-        isGenerated: false, // Already cached
+        context: result.context,
+        isGenerated: true,
       };
-    }
 
-    // Generate new context
-    logger.log(`[ContextGenerator] Generating context for verse ${verseId}...`);
-    const result = await generateContext(verse);
-
-    if (!result.success || !result.context) {
+    } catch (error) {
+      logger.error('[ContextGenerator] Error in getOrGenerateContext:', error);
       return {
         context: null,
         isGenerated: false,
-        error: result.error || 'Failed to generate context',
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
+    } finally {
+      // Remove lock when done
+      generationLocks.delete(verseId);
     }
+  })();
 
-    // Save to database
-    const saveResult = await saveContextToDatabase(verseId, result.context);
+  // Store the promise as a lock
+  generationLocks.set(verseId, generationPromise);
 
-    if (!saveResult.success) {
-      logger.error('[ContextGenerator] Failed to save context:', saveResult.error);
-      // Still return the generated context even if save failed
-    }
-
-    return {
-      context: result.context,
-      isGenerated: true,
-    };
-
-  } catch (error) {
-    logger.error('[ContextGenerator] Error in getOrGenerateContext:', error);
-    return {
-      context: null,
-      isGenerated: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
+  return generationPromise;
 }
 
 /**

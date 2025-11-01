@@ -5,6 +5,10 @@ import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
 logger.log('[verseService] supabase imported');
 
+logger.log('[verseService] Importing AsyncStorage...');
+import AsyncStorage from '@react-native-async-storage/async-storage';
+logger.log('[verseService] AsyncStorage imported');
+
 logger.log('[verseService] Importing types...');
 import { Verse, UserVerseProgress, PracticeSession } from '../types/database';
 logger.log('[verseService] types imported');
@@ -125,6 +129,48 @@ export const verseService = {
     // Pick random verse from the pool
     const randomIndex = Math.floor(Math.random() * data.length);
     return data[randomIndex];
+  },
+
+  /**
+   * Get today's verse with 24-hour caching
+   * Returns the same verse all day, refreshes at midnight
+   */
+  async getTodayVerseWithCache(translation: string = 'NIV'): Promise<Verse | null> {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
+      // Check cache for today's verse
+      const cachedDate = await AsyncStorage.getItem('todayVerseDate');
+      const cachedVerseId = await AsyncStorage.getItem('todayVerseId');
+
+      // If cached verse is from today, return it
+      if (cachedDate === today && cachedVerseId) {
+        logger.log(`[verseService] Using cached today's verse from ${today}`);
+        const verse = await this.getVerseById(cachedVerseId);
+        if (verse) {
+          return verse;
+        }
+        // If verse not found (deleted?), fall through to get new one
+        logger.warn('[verseService] Cached verse not found, fetching new one');
+      }
+
+      // Get a new random verse for today
+      logger.log(`[verseService] Fetching new today's verse for ${today}`);
+      const newVerse = await this.getRandomVerse(translation);
+
+      if (newVerse?.id) {
+        // Cache the new verse
+        await AsyncStorage.setItem('todayVerseDate', today);
+        await AsyncStorage.setItem('todayVerseId', newVerse.id);
+        logger.log(`[verseService] Cached today's verse: ${newVerse.id}`);
+      }
+
+      return newVerse;
+    } catch (error) {
+      logger.error('[verseService] Error in getTodayVerseWithCache:', error);
+      // Fallback to random verse if caching fails
+      return this.getRandomVerse(translation);
+    }
   },
 
   /**

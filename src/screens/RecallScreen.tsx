@@ -122,7 +122,7 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
         session_type: 'recall',
         user_answer: answer,
         is_correct: result.isCorrect,
-        accuracy_percentage: result.accuracy * 100,
+        accuracy_percentage: result.accuracy, // Already 0-100 from checkAnswer()
         hints_used: hintsUsed,
         xp_earned: xpEarned,
       });

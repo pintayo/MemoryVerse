@@ -1,16 +1,13 @@
-logger.log('[UnderstandScreen] Module loading...');
-
 import React, { useState, useEffect } from 'react';
 import {
-import { logger } from '../utils/logger';
   View,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  Text,
 } from 'react-native';
-import { Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,8 +22,9 @@ import { VerseReference } from '../components/VerseReference';
 import { BibleCompanion } from '../components/BibleCompanion';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
+import { logger } from '../utils/logger';
 
-logger.log('[UnderstandScreen] All imports complete');
+logger.log('[UnderstandScreen] Module loaded');
 
 type RootStackParamList = {
   Understand: { verseId: string };

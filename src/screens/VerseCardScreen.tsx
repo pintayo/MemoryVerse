@@ -126,14 +126,17 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
 
         if (result.context) {
           // Update the verse in the verses array with the new context
-          const updatedVerses = [...verses];
-          updatedVerses[currentVerseIndex] = {
-            ...currentVerse,
-            context: result.context,
-            context_generated_by_ai: true,
-          };
+          const updatedVerses = verses.map((v, idx) =>
+            idx === currentVerseIndex
+              ? { ...v, context: result.context, context_generated_by_ai: true }
+              : v
+          );
           setVerses(updatedVerses);
-          logger.log('[VerseCardScreen] Context generated and updated successfully');
+          logger.log('[VerseCardScreen] Context updated:', {
+            verseId: currentVerse.id,
+            contextPreview: result.context.substring(0, 50) + '...',
+            updatedVerse: updatedVerses[currentVerseIndex]
+          });
         } else if (result.error) {
           logger.error('[VerseCardScreen] Failed to generate context:', result.error);
           // Don't show error to user - they'll just see the placeholder

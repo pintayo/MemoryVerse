@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-import { logger } from '../utils/logger';
   View,
   Text,
   StyleSheet,
@@ -17,6 +16,7 @@ import { theme } from '../theme';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
 import Svg, { Path } from 'react-native-svg';
+import { logger } from '../utils/logger';
 
 interface SignupScreenProps {
   navigation: any;

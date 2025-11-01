@@ -3,11 +3,10 @@
  * Centralized access to environment variables
  */
 
-logger.log('[config/env] Module loading...');
-
-logger.log('[config/env] Importing Constants...');
 import Constants from 'expo-constants';
 import { logger } from '../utils/logger';
+
+logger.log('[config/env] Module loading...');
 logger.log('[config/env] Constants imported:', typeof Constants);
 
 logger.log('[config/env] Accessing Constants.expoConfig...');
@@ -37,7 +36,7 @@ export const config = {
 
     perplexity: {
       apiKey: process.env.EXPO_PUBLIC_PERPLEXITY_API_KEY || env.EXPO_PUBLIC_PERPLEXITY_API_KEY || '',
-      model: process.env.EXPO_PUBLIC_PERPLEXITY_MODEL || env.EXPO_PUBLIC_PERPLEXITY_MODEL || 'llama-3.1-sonar-small-128k-chat',
+      model: process.env.EXPO_PUBLIC_PERPLEXITY_MODEL || env.EXPO_PUBLIC_PERPLEXITY_MODEL || 'sonar',
     },
 
     // Rate limiting
