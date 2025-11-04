@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, VerseText, VerseReference } from '../components';
 import { theme } from '../theme';
@@ -113,6 +113,11 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
       useNativeDriver: true,
     }).start();
     setIsFlipped(!isFlipped);
+  };
+
+  // Handle Show/Hide Context button
+  const handleToggleContext = () => {
+    flipCard();
   };
 
   // Page turn animation effect
@@ -264,11 +269,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
               },
             ]}
           >
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={flipCard}
-              style={styles.flipContainer}
-            >
+            <View style={styles.flipContainer}>
               {/* Front of card - Verse */}
               <Animated.View
                 style={[
@@ -291,10 +292,6 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                     <VerseReference style={styles.reference}>
                       {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
                     </VerseReference>
-
-                    <View style={styles.tapHint}>
-                      <Text style={styles.tapHintText}>Tap to see context</Text>
-                    </View>
                   </View>
 
                   <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
@@ -330,7 +327,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                         </Text>
                       </View>
                     ) : currentVerse.context ? (
-                      <Text style={styles.contextText}>
+                      <Text style={styles.contextText} numberOfLines={10} ellipsizeMode="tail">
                         {currentVerse.context}
                       </Text>
                     ) : (
@@ -338,26 +335,29 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                         Context is being generated for this verse...
                       </Text>
                     )}
-
-                    <View style={styles.tapHint}>
-                      <Text style={styles.tapHintText}>Tap to see verse</Text>
-                    </View>
                   </View>
 
                   <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
                 </Card>
               </Animated.View>
-            </TouchableOpacity>
+            </View>
           </Animated.View>
         )}
 
         {/* Action buttons */}
         <View style={styles.buttonsContainer}>
+          <Button
+            title={isFlipped ? "Hide Context" : "Show Context"}
+            onPress={handleToggleContext}
+            variant="gold"
+            style={styles.contextButton}
+          />
+
           {currentVerse?.id && (
             <Button
               title="Learn More"
               onPress={() => navigation.navigate('Understand', { verseId: currentVerse.id })}
-              variant="gold"
+              variant="secondary"
               style={styles.learnMoreButton}
             />
           )}
@@ -483,19 +483,7 @@ const styles = StyleSheet.create({
   },
   contextReference: {
     marginTop: 0,
-    marginBottom: theme.spacing.xl,
-  },
-  tapHint: {
-    marginTop: 'auto',
-    paddingTop: theme.spacing.xl,
-    alignItems: 'center',
-  },
-  tapHintText: {
-    fontSize: theme.typography.ui.caption.fontSize,
-    color: theme.colors.secondary.lightGold,
-    fontStyle: 'italic',
-    opacity: 0.6,
-    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.lg,
   },
   contextLabel: {
     fontSize: theme.typography.ui.caption.fontSize,
@@ -503,14 +491,14 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary.lightGold,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     textAlign: 'center',
     fontFamily: theme.typography.fonts.ui.default,
   },
   contextText: {
-    fontSize: theme.typography.context.fontSize,
-    lineHeight: theme.typography.context.lineHeight,
-    letterSpacing: theme.typography.context.letterSpacing,
+    fontSize: 13,
+    lineHeight: 20,
+    letterSpacing: 0.2,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'left',
@@ -538,6 +526,9 @@ const styles = StyleSheet.create({
   },
   buttonsContainer: {
     paddingBottom: theme.spacing.lg,
+  },
+  contextButton: {
+    marginBottom: theme.spacing.md,
   },
   learnMoreButton: {
     marginBottom: theme.spacing.md,
