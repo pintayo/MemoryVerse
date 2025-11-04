@@ -251,35 +251,60 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                 </View>
 
                 {/* Context section */}
-                {showContext && verses[currentVerseIndex]?.context && (
-                  <View style={[styles.contextContainer, { backgroundColor: '#F5F5DC', padding: 16, marginTop: 24, borderRadius: 12 }]}>
-                    <Text style={[styles.contextLabel, { color: '#8B7355', marginBottom: 12 }]}>Context</Text>
-                    <Text style={[styles.contextText, { color: '#2C1810', fontSize: 16, lineHeight: 24 }]}>
-                      {verses[currentVerseIndex].context}
-                    </Text>
-                  </View>
-                )}
+                {(() => {
+                  const hasContext = verses[currentVerseIndex]?.context;
+                  const contextLength = hasContext ? hasContext.length : 0;
 
-                {showContext && !verses[currentVerseIndex]?.context && isGeneratingContext && (
-                  <View style={[styles.contextContainer, { backgroundColor: '#F5F5DC', padding: 16, marginTop: 24, borderRadius: 12 }]}>
-                    <Text style={[styles.contextLabel, { color: '#8B7355', marginBottom: 12 }]}>Context</Text>
-                    <View style={styles.contextLoadingContainer}>
-                      <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
-                      <Text style={styles.contextPlaceholder}>
-                        Generating spiritual context...
+                  logger.log('[VerseCardScreen] Context render check:', {
+                    showContext,
+                    currentVerseIndex,
+                    hasContext: !!hasContext,
+                    contextLength,
+                    isGeneratingContext,
+                    contextPreview: hasContext ? hasContext.substring(0, 50) : null
+                  });
+
+                  if (!showContext) {
+                    return null;
+                  }
+
+                  if (hasContext) {
+                    logger.log('[VerseCardScreen] Rendering WITH context');
+                    return (
+                      <View style={[styles.contextContainer, { backgroundColor: '#FF0000', padding: 16, marginTop: 24, borderRadius: 12 }]}>
+                        <Text style={[styles.contextLabel, { color: '#FFFFFF', marginBottom: 12, fontSize: 18, fontWeight: 'bold' }]}>Context</Text>
+                        <Text style={[styles.contextText, { color: '#FFFFFF', fontSize: 16, lineHeight: 24 }]}>
+                          {hasContext}
+                        </Text>
+                      </View>
+                    );
+                  }
+
+                  if (isGeneratingContext) {
+                    logger.log('[VerseCardScreen] Rendering GENERATING');
+                    return (
+                      <View style={[styles.contextContainer, { backgroundColor: '#FFFF00', padding: 16, marginTop: 24, borderRadius: 12 }]}>
+                        <Text style={[styles.contextLabel, { color: '#000000', marginBottom: 12 }]}>Context</Text>
+                        <View style={styles.contextLoadingContainer}>
+                          <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
+                          <Text style={[styles.contextPlaceholder, { color: '#000000' }]}>
+                            Generating spiritual context...
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  }
+
+                  logger.log('[VerseCardScreen] Rendering PLACEHOLDER');
+                  return (
+                    <View style={[styles.contextContainer, { backgroundColor: '#00FF00', padding: 16, marginTop: 24, borderRadius: 12 }]}>
+                      <Text style={[styles.contextLabel, { color: '#000000', marginBottom: 12 }]}>Context</Text>
+                      <Text style={[styles.contextPlaceholder, { color: '#000000' }]}>
+                        Click "Show Context" to generate AI-powered context for this verse.
                       </Text>
                     </View>
-                  </View>
-                )}
-
-                {showContext && !verses[currentVerseIndex]?.context && !isGeneratingContext && (
-                  <View style={[styles.contextContainer, { backgroundColor: '#F5F5DC', padding: 16, marginTop: 24, borderRadius: 12 }]}>
-                    <Text style={[styles.contextLabel, { color: '#8B7355', marginBottom: 12 }]}>Context</Text>
-                    <Text style={styles.contextPlaceholder}>
-                      Click "Show Context" to generate AI-powered context for this verse.
-                    </Text>
-                  </View>
-                )}
+                  );
+                })()}
               </ScrollView>
 
               {/* Decorative bottom border */}
