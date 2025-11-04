@@ -99,7 +99,13 @@ Provide a concise, encouraging 1-3 sentence explanation that:
 3. Encourages practical application
 4. Uses warm, accessible language suitable for all ages
 
-Keep it under 150 words. Focus on the core message and why this verse matters.`;
+IMPORTANT:
+- Keep it under 150 words
+- Focus on the core message and why this verse matters
+- DO NOT include citations, references, or source numbers like [1], [2], [3]
+- DO NOT use markdown formatting (**, __, etc.)
+- Write in plain, natural text only
+- Speak directly to the reader in second person ("you")`;
 }
 
 /**
@@ -303,6 +309,8 @@ export async function saveContextToDatabase(
   context: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    logger.log(`[ContextGenerator] Saving context to database for ${verseId} (length: ${context.length})`);
+
     const { error } = await supabase
       .from('verses')
       .update({
@@ -316,6 +324,7 @@ export async function saveContextToDatabase(
       throw error;
     }
 
+    logger.log(`[ContextGenerator] Successfully saved context to database for ${verseId}`);
     return { success: true };
   } catch (error) {
     logger.error('[ContextGenerator] Database save error:', error);
@@ -358,12 +367,14 @@ export async function getOrGenerateContext(verseId: string): Promise<{
 
       // If context exists, return it
       if (verse.context && verse.context.trim() !== '') {
-        logger.log(`[ContextGenerator] Context already exists for ${verseId}, using cached version`);
+        logger.log(`[ContextGenerator] Context already exists for ${verseId}, using cached version (length: ${verse.context.length})`);
         return {
           context: verse.context,
           isGenerated: false, // Already cached
         };
       }
+
+      logger.log(`[ContextGenerator] No existing context found for ${verseId}, will generate new one`);
 
       // Generate new context
       logger.log(`[ContextGenerator] Generating context for verse ${verseId}...`);

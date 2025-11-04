@@ -264,7 +264,9 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                       <View style={styles.contextDivider} />
                       <Text style={styles.contextLabel}>Context</Text>
                       {hasContext ? (
-                        <Text style={styles.contextText}>{hasContext}</Text>
+                        <View style={{ backgroundColor: '#FFF9E6', padding: 12, borderRadius: 8 }}>
+                          <Text style={[styles.contextText, { color: '#2C1810' }]}>{hasContext}</Text>
+                        </View>
                       ) : isGeneratingContext ? (
                         <View style={styles.contextLoadingContainer}>
                           <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
