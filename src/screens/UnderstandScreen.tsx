@@ -163,7 +163,16 @@ export function UnderstandScreen({ navigation, route }: Props) {
         {/* Verse Card */}
         <Card variant="parchment" style={styles.verseCard}>
           <VerseReference style={styles.reference}>{reference}</VerseReference>
-          <VerseText style={styles.verseText}>{verse.text}</VerseText>
+          <Text style={[styles.verseText, {
+            fontSize: 20,
+            lineHeight: 32,
+            color: '#2C1810',
+            fontFamily: typography.fonts.scripture.default,
+            textAlign: 'center',
+            marginBottom: spacing.lg,
+          }]}>
+            {verse.text}
+          </Text>
 
           {verse.category && (
             <View style={styles.categoryBadge}>

@@ -238,6 +238,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                 style={styles.verseScrollView}
                 contentContainerStyle={styles.verseScrollContent}
                 showsVerticalScrollIndicator={true}
+                bounces={true}
               >
                 {/* Verse text */}
                 <View style={styles.verseContainer}>
@@ -250,38 +251,35 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                 </View>
 
                 {/* Context section */}
-                {showContext && (() => {
-                  const hasContext = verses[currentVerseIndex]?.context;
-                  logger.log('[VerseCardScreen] Rendering context section:', {
-                    showContext,
-                    currentVerseIndex,
-                    hasContext: !!hasContext,
-                    contextLength: hasContext ? hasContext.length : 0,
-                    isGeneratingContext
-                  });
-                  return (
-                    <View style={styles.contextContainer}>
-                      <View style={styles.contextDivider} />
-                      <Text style={styles.contextLabel}>Context</Text>
-                      {hasContext ? (
-                        <View style={{ backgroundColor: '#FFF9E6', padding: 12, borderRadius: 8 }}>
-                          <Text style={[styles.contextText, { color: '#2C1810' }]}>{hasContext}</Text>
-                        </View>
-                      ) : isGeneratingContext ? (
-                        <View style={styles.contextLoadingContainer}>
-                          <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
-                          <Text style={styles.contextPlaceholder}>
-                            Generating spiritual context...
-                          </Text>
-                        </View>
-                      ) : (
-                        <Text style={styles.contextPlaceholder}>
-                          Click "Show Context" to generate AI-powered context for this verse.
-                        </Text>
-                      )}
+                {showContext && verses[currentVerseIndex]?.context && (
+                  <View style={[styles.contextContainer, { backgroundColor: '#F5F5DC', padding: 16, marginTop: 24, borderRadius: 12 }]}>
+                    <Text style={[styles.contextLabel, { color: '#8B7355', marginBottom: 12 }]}>Context</Text>
+                    <Text style={[styles.contextText, { color: '#2C1810', fontSize: 16, lineHeight: 24 }]}>
+                      {verses[currentVerseIndex].context}
+                    </Text>
+                  </View>
+                )}
+
+                {showContext && !verses[currentVerseIndex]?.context && isGeneratingContext && (
+                  <View style={[styles.contextContainer, { backgroundColor: '#F5F5DC', padding: 16, marginTop: 24, borderRadius: 12 }]}>
+                    <Text style={[styles.contextLabel, { color: '#8B7355', marginBottom: 12 }]}>Context</Text>
+                    <View style={styles.contextLoadingContainer}>
+                      <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
+                      <Text style={styles.contextPlaceholder}>
+                        Generating spiritual context...
+                      </Text>
                     </View>
-                  );
-                })()}
+                  </View>
+                )}
+
+                {showContext && !verses[currentVerseIndex]?.context && !isGeneratingContext && (
+                  <View style={[styles.contextContainer, { backgroundColor: '#F5F5DC', padding: 16, marginTop: 24, borderRadius: 12 }]}>
+                    <Text style={[styles.contextLabel, { color: '#8B7355', marginBottom: 12 }]}>Context</Text>
+                    <Text style={styles.contextPlaceholder}>
+                      Click "Show Context" to generate AI-powered context for this verse.
+                    </Text>
+                  </View>
+                )}
               </ScrollView>
 
               {/* Decorative bottom border */}
@@ -394,7 +392,8 @@ const styles = StyleSheet.create({
   verseScrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.xxl,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.xxxl,
   },
   decorativeBorder: {
     height: 2,
@@ -403,10 +402,10 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   decorativeBorderBottom: {
-    marginTop: theme.spacing.xl,
+    marginTop: theme.spacing.md,
   },
   verseContainer: {
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
   },
   verse: {
     marginBottom: theme.spacing.lg,
