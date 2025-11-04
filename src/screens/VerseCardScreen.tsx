@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, VerseText, VerseReference } from '../components';
 import { theme } from '../theme';
@@ -16,13 +16,14 @@ const { width } = Dimensions.get('window');
 
 const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
-  const [showContext, setShowContext] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
   const [verses, setVerses] = useState<Verse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingContext, setIsGeneratingContext] = useState(false);
 
-  // Animation values for page turn effect
+  // Animation values for card flip effect
+  const flipAnim = useRef(new Animated.Value(0)).current;
   const pageFlipAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -30,6 +31,14 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
   useEffect(() => {
     loadVerses();
   }, []);
+
+  // Auto-generate context when verse changes
+  useEffect(() => {
+    if (currentVerseIndex < verses.length && verses[currentVerseIndex]) {
+      generateContextForCurrentVerse();
+    }
+    setIsFlipped(false); // Reset flip when changing verses
+  }, [currentVerseIndex, verses.length]);
 
   const loadVerses = async () => {
     try {
@@ -58,8 +67,53 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
     }
   };
 
+  const generateContextForCurrentVerse = async () => {
+    const currentVerse = verses[currentVerseIndex];
+    if (!currentVerse?.id || currentVerse.context) {
+      return; // Skip if no verse or context already exists
+    }
+
+    try {
+      setIsGeneratingContext(true);
+      logger.log('[VerseCardScreen] Auto-generating context for verse:', currentVerse.id);
+
+      const result = await getOrGenerateContext(currentVerse.id);
+
+      if (result.context) {
+        // Update the verse in the verses array with the new context
+        const updatedVerses = verses.map((v, idx) =>
+          idx === currentVerseIndex
+            ? { ...v, context: result.context, context_generated_by_ai: true }
+            : v
+        );
+        setVerses(updatedVerses);
+        logger.log('[VerseCardScreen] Context updated:', {
+          verseId: currentVerse.id,
+          contextPreview: result.context.substring(0, 50) + '...',
+        });
+      } else if (result.error) {
+        logger.error('[VerseCardScreen] Failed to generate context:', result.error);
+      }
+    } catch (err) {
+      logger.error('[VerseCardScreen] Error generating context:', err);
+    } finally {
+      setIsGeneratingContext(false);
+    }
+  };
+
   // Get current verse (recalculated on every render to ensure fresh data)
   const currentVerse = verses[currentVerseIndex];
+
+  // Card flip animation effect
+  const flipCard = () => {
+    Animated.spring(flipAnim, {
+      toValue: isFlipped ? 0 : 1,
+      friction: 8,
+      tension: 10,
+      useNativeDriver: true,
+    }).start();
+    setIsFlipped(!isFlipped);
+  };
 
   // Page turn animation effect
   const animatePageTurn = () => {
@@ -96,7 +150,6 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
       animatePageTurn();
       setTimeout(() => {
         setCurrentVerseIndex(currentVerseIndex + 1);
-        setShowContext(false);
       }, 200);
     } else {
       navigation.goBack();
@@ -108,48 +161,30 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
       animatePageTurn();
       setTimeout(() => {
         setCurrentVerseIndex(currentVerseIndex - 1);
-        setShowContext(false);
       }, 200);
     }
   };
 
-  const toggleContext = async () => {
-    const newShowContext = !showContext;
-    setShowContext(newShowContext);
+  // Interpolate card flip rotation
+  const frontRotation = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
 
-    // If showing context and no context exists, generate it automatically
-    if (newShowContext && currentVerse && currentVerse.id && !currentVerse.context) {
-      try {
-        setIsGeneratingContext(true);
-        logger.log('[VerseCardScreen] Auto-generating context for verse:', currentVerse.id);
+  const backRotation = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['180deg', '360deg'],
+  });
 
-        const result = await getOrGenerateContext(currentVerse.id);
+  const frontOpacity = flipAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0, 0],
+  });
 
-        if (result.context) {
-          // Update the verse in the verses array with the new context
-          const updatedVerses = verses.map((v, idx) =>
-            idx === currentVerseIndex
-              ? { ...v, context: result.context, context_generated_by_ai: true }
-              : v
-          );
-          setVerses(updatedVerses);
-          logger.log('[VerseCardScreen] Context updated:', {
-            verseId: currentVerse.id,
-            contextPreview: result.context.substring(0, 50) + '...',
-            updatedVerse: updatedVerses[currentVerseIndex]
-          });
-        } else if (result.error) {
-          logger.error('[VerseCardScreen] Failed to generate context:', result.error);
-          // Don't show error to user - they'll just see the placeholder
-        }
-      } catch (err) {
-        logger.error('[VerseCardScreen] Error generating context:', err);
-        // Silent fail - user experience isn't disrupted
-      } finally {
-        setIsGeneratingContext(false);
-      }
-    }
-  };
+  const backOpacity = flipAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0, 1],
+  });
 
   // Interpolate page flip rotation
   const pageRotation = pageFlipAnim.interpolate({
@@ -214,7 +249,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
           ))}
         </View>
 
-        {/* Verse card with page turn animation */}
+        {/* Verse card with flip animation */}
         {currentVerse && (
           <Animated.View
             style={[
@@ -229,95 +264,101 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
               },
             ]}
           >
-            <Card variant="parchment" elevated outlined style={styles.verseCard}>
-              {/* Decorative top border */}
-              <View style={styles.decorativeBorder} />
-
-              {/* Scrollable verse content */}
-              <ScrollView
-                style={styles.verseScrollView}
-                contentContainerStyle={styles.verseScrollContent}
-                showsVerticalScrollIndicator={true}
-                bounces={true}
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={flipCard}
+              style={styles.flipContainer}
+            >
+              {/* Front of card - Verse */}
+              <Animated.View
+                style={[
+                  styles.cardFace,
+                  styles.cardFront,
+                  {
+                    opacity: frontOpacity,
+                    transform: [{ rotateY: frontRotation }],
+                  },
+                ]}
+                pointerEvents={isFlipped ? 'none' : 'auto'}
               >
-                {/* Verse text */}
-                <View style={styles.verseContainer}>
-                  <VerseText size="large" style={styles.verse}>
-                    {currentVerse.text}
-                  </VerseText>
-                  <VerseReference style={styles.reference}>
-                    {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
-                  </VerseReference>
-                </View>
+                <Card variant="parchment" elevated outlined style={styles.verseCard}>
+                  <View style={styles.decorativeBorder} />
 
-                {/* Context section */}
-                {(() => {
-                  const hasContext = verses[currentVerseIndex]?.context;
+                  <View style={styles.cardContent}>
+                    <VerseText size="large" style={styles.verse}>
+                      {currentVerse.text}
+                    </VerseText>
+                    <VerseReference style={styles.reference}>
+                      {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
+                    </VerseReference>
 
-                  if (!showContext) {
-                    return null;
-                  }
+                    <View style={styles.tapHint}>
+                      <Text style={styles.tapHintText}>Tap to see context</Text>
+                    </View>
+                  </View>
 
-                  if (hasContext) {
-                    return (
-                      <View style={styles.contextContainer}>
-                        <View style={styles.contextDivider} />
-                        <Text style={styles.contextLabel}>Context</Text>
-                        <Text style={styles.contextText}>
-                          {hasContext}
+                  <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
+                </Card>
+              </Animated.View>
+
+              {/* Back of card - Context */}
+              <Animated.View
+                style={[
+                  styles.cardFace,
+                  styles.cardBack,
+                  {
+                    opacity: backOpacity,
+                    transform: [{ rotateY: backRotation }],
+                  },
+                ]}
+                pointerEvents={isFlipped ? 'auto' : 'none'}
+              >
+                <Card variant="parchment" elevated outlined style={styles.verseCard}>
+                  <View style={styles.decorativeBorder} />
+
+                  <View style={styles.cardContent}>
+                    <Text style={styles.contextLabel}>CONTEXT</Text>
+                    <VerseReference style={[styles.reference, styles.contextReference]}>
+                      {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
+                    </VerseReference>
+
+                    {isGeneratingContext ? (
+                      <View style={styles.contextLoadingContainer}>
+                        <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
+                        <Text style={styles.contextLoadingText}>
+                          Discovering deeper meaning...
                         </Text>
                       </View>
-                    );
-                  }
-
-                  if (isGeneratingContext) {
-                    return (
-                      <View style={styles.contextContainer}>
-                        <View style={styles.contextDivider} />
-                        <Text style={styles.contextLabel}>Context</Text>
-                        <View style={styles.contextLoadingContainer}>
-                          <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
-                          <Text style={styles.contextLoadingText}>
-                            Discovering deeper meaning in God's Word...
-                          </Text>
-                        </View>
-                      </View>
-                    );
-                  }
-
-                  return (
-                    <View style={styles.contextContainer}>
-                      <View style={styles.contextDivider} />
-                      <Text style={styles.contextLabel}>Context</Text>
-                      <Text style={styles.contextPlaceholder}>
-                        Tap "Show Context" to explore the deeper meaning and spiritual insights of this verse.
+                    ) : currentVerse.context ? (
+                      <Text style={styles.contextText}>
+                        {currentVerse.context}
                       </Text>
-                    </View>
-                  );
-                })()}
-              </ScrollView>
+                    ) : (
+                      <Text style={styles.contextPlaceholder}>
+                        Context is being generated for this verse...
+                      </Text>
+                    )}
 
-              {/* Decorative bottom border */}
-              <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
-            </Card>
+                    <View style={styles.tapHint}>
+                      <Text style={styles.tapHintText}>Tap to see verse</Text>
+                    </View>
+                  </View>
+
+                  <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
+                </Card>
+              </Animated.View>
+            </TouchableOpacity>
           </Animated.View>
         )}
 
         {/* Action buttons */}
         <View style={styles.buttonsContainer}>
-          <Button
-            title={showContext ? "Hide Context" : "Show Context"}
-            onPress={toggleContext}
-            variant="gold"
-            style={styles.contextButton}
-          />
-
           {currentVerse?.id && (
             <Button
               title="Learn More"
               onPress={() => navigation.navigate('Understand', { verseId: currentVerse.id })}
-              variant="secondary"
-              style={styles.contextButton}
+              variant="gold"
+              style={styles.learnMoreButton}
             />
           )}
 
@@ -397,19 +438,31 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: theme.spacing.xl,
   },
-  verseCard: {
-    // Removed flex: 1 to allow Card to grow with content and enable scrolling
-    paddingVertical: theme.spacing.xxl,
-    minHeight: 400, // Ensure minimum height for verse display
-  },
-  verseScrollView: {
+  flipContainer: {
     flex: 1,
   },
-  verseScrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.xxxl,
+  cardFace: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    backfaceVisibility: 'hidden',
+  },
+  cardFront: {
+    // Front face styling
+  },
+  cardBack: {
+    // Back face styling
+  },
+  verseCard: {
+    flex: 1,
+    paddingVertical: theme.spacing.xxl,
+    justifyContent: 'center',
+  },
+  cardContent: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
+    justifyContent: 'center',
   },
   decorativeBorder: {
     height: 2,
@@ -420,25 +473,29 @@ const styles = StyleSheet.create({
   decorativeBorderBottom: {
     marginTop: theme.spacing.md,
   },
-  verseContainer: {
-    paddingVertical: theme.spacing.lg,
-  },
   verse: {
-    marginBottom: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
+    textAlign: 'center',
   },
   reference: {
     marginTop: theme.spacing.md,
+    textAlign: 'center',
   },
-  contextContainer: {
-    marginTop: theme.spacing.xl,
-    paddingTop: theme.spacing.lg,
+  contextReference: {
+    marginTop: 0,
+    marginBottom: theme.spacing.xl,
   },
-  contextDivider: {
-    height: 1,
-    backgroundColor: theme.colors.primary.mutedStone,
-    marginBottom: theme.spacing.md,
-    opacity: 0.3,
+  tapHint: {
+    marginTop: 'auto',
+    paddingTop: theme.spacing.xl,
+    alignItems: 'center',
+  },
+  tapHintText: {
+    fontSize: theme.typography.ui.caption.fontSize,
+    color: theme.colors.secondary.lightGold,
+    fontStyle: 'italic',
+    opacity: 0.6,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   contextLabel: {
     fontSize: theme.typography.ui.caption.fontSize,
@@ -446,7 +503,8 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary.lightGold,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
+    textAlign: 'center',
     fontFamily: theme.typography.fonts.ui.default,
   },
   contextText: {
@@ -455,6 +513,7 @@ const styles = StyleSheet.create({
     letterSpacing: theme.typography.context.letterSpacing,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'left',
   },
   contextPlaceholder: {
     fontSize: theme.typography.context.fontSize,
@@ -462,23 +521,25 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     fontStyle: 'italic',
     fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
   },
   contextLoadingContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.xl,
   },
   contextLoadingText: {
     fontSize: theme.typography.context.fontSize,
-    lineHeight: theme.typography.context.lineHeight,
     color: theme.colors.secondary.lightGold,
     fontFamily: theme.typography.fonts.ui.default,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   buttonsContainer: {
     paddingBottom: theme.spacing.lg,
   },
-  contextButton: {
+  learnMoreButton: {
     marginBottom: theme.spacing.md,
   },
   navigationButtons: {
