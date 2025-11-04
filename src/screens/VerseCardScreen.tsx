@@ -253,27 +253,17 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                 {/* Context section */}
                 {(() => {
                   const hasContext = verses[currentVerseIndex]?.context;
-                  const contextLength = hasContext ? hasContext.length : 0;
-
-                  logger.log('[VerseCardScreen] Context render check:', {
-                    showContext,
-                    currentVerseIndex,
-                    hasContext: !!hasContext,
-                    contextLength,
-                    isGeneratingContext,
-                    contextPreview: hasContext ? hasContext.substring(0, 50) : null
-                  });
 
                   if (!showContext) {
                     return null;
                   }
 
                   if (hasContext) {
-                    logger.log('[VerseCardScreen] Rendering WITH context');
                     return (
-                      <View style={[styles.contextContainer, { backgroundColor: '#FF0000', padding: 16, marginTop: 24, borderRadius: 12 }]}>
-                        <Text style={[styles.contextLabel, { color: '#FFFFFF', marginBottom: 12, fontSize: 18, fontWeight: 'bold' }]}>Context</Text>
-                        <Text style={[styles.contextText, { color: '#FFFFFF', fontSize: 16, lineHeight: 24 }]}>
+                      <View style={styles.contextContainer}>
+                        <View style={styles.contextDivider} />
+                        <Text style={styles.contextLabel}>Context</Text>
+                        <Text style={styles.contextText}>
                           {hasContext}
                         </Text>
                       </View>
@@ -281,26 +271,26 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                   }
 
                   if (isGeneratingContext) {
-                    logger.log('[VerseCardScreen] Rendering GENERATING');
                     return (
-                      <View style={[styles.contextContainer, { backgroundColor: '#FFFF00', padding: 16, marginTop: 24, borderRadius: 12 }]}>
-                        <Text style={[styles.contextLabel, { color: '#000000', marginBottom: 12 }]}>Context</Text>
+                      <View style={styles.contextContainer}>
+                        <View style={styles.contextDivider} />
+                        <Text style={styles.contextLabel}>Context</Text>
                         <View style={styles.contextLoadingContainer}>
                           <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
-                          <Text style={[styles.contextPlaceholder, { color: '#000000' }]}>
-                            Generating spiritual context...
+                          <Text style={styles.contextLoadingText}>
+                            Discovering deeper meaning in God's Word...
                           </Text>
                         </View>
                       </View>
                     );
                   }
 
-                  logger.log('[VerseCardScreen] Rendering PLACEHOLDER');
                   return (
-                    <View style={[styles.contextContainer, { backgroundColor: '#00FF00', padding: 16, marginTop: 24, borderRadius: 12 }]}>
-                      <Text style={[styles.contextLabel, { color: '#000000', marginBottom: 12 }]}>Context</Text>
-                      <Text style={[styles.contextPlaceholder, { color: '#000000' }]}>
-                        Click "Show Context" to generate AI-powered context for this verse.
+                    <View style={styles.contextContainer}>
+                      <View style={styles.contextDivider} />
+                      <Text style={styles.contextLabel}>Context</Text>
+                      <Text style={styles.contextPlaceholder}>
+                        Tap "Show Context" to explore the deeper meaning and spiritual insights of this verse.
                       </Text>
                     </View>
                   );
@@ -408,8 +398,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   verseCard: {
-    flex: 1,
+    // Removed flex: 1 to allow Card to grow with content and enable scrolling
     paddingVertical: theme.spacing.xxl,
+    minHeight: 400, // Ensure minimum height for verse display
   },
   verseScrollView: {
     flex: 1,
@@ -476,6 +467,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
+  },
+  contextLoadingText: {
+    fontSize: theme.typography.context.fontSize,
+    lineHeight: theme.typography.context.lineHeight,
+    color: theme.colors.secondary.lightGold,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontStyle: 'italic',
   },
   buttonsContainer: {
     paddingBottom: theme.spacing.lg,
