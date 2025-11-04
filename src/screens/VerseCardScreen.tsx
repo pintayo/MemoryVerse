@@ -393,8 +393,8 @@ const styles = StyleSheet.create({
   },
   verseScrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.xxl,
   },
   decorativeBorder: {
     height: 2,

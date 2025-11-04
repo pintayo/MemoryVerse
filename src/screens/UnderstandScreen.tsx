@@ -162,8 +162,8 @@ export function UnderstandScreen({ navigation, route }: Props) {
 
         {/* Verse Card */}
         <Card variant="parchment" style={styles.verseCard}>
-          <VerseReference reference={reference} style={styles.reference} />
-          <VerseText text={verse.text} style={styles.verseText} />
+          <VerseReference style={styles.reference}>{reference}</VerseReference>
+          <VerseText style={styles.verseText}>{verse.text}</VerseText>
 
           {verse.category && (
             <View style={styles.categoryBadge}>
