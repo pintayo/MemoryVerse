@@ -211,24 +211,24 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
     const totalXP = lessonResults.reduce((sum, r) => sum + r.xp, 0);
     const correctCount = lessonResults.filter(r => r.isCorrect).length;
 
-    // Get current profile
+    // Get current profile and award XP
     let currentXP = 0;
     let currentLevel = 1;
     let xpForNextLevel = 100;
 
     if (user?.id) {
       try {
+        // Award total XP first
+        if (totalXP > 0) {
+          await profileService.addXP(user.id, totalXP);
+        }
+
+        // Then fetch updated profile to get correct values
         const profile = await profileService.getProfile(user.id);
         if (profile) {
           currentXP = profile.total_xp || 0;
           currentLevel = profile.level || 1;
           xpForNextLevel = profile.xp_for_next_level || 100;
-        }
-
-        // Award total XP
-        if (totalXP > 0) {
-          await profileService.addXP(user.id, totalXP);
-          currentXP += totalXP; // Update local value for display
         }
       } catch (error) {
         logger.error('[RecallScreen] Error awarding XP:', error);
@@ -321,8 +321,10 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
 
         {/* Blurred verse preview */}
         <Card variant="warm" style={styles.versePreviewCard}>
-          <Text style={styles.blurredVerse} numberOfLines={3}>
-            {showAnswer ? verse.text : '******************************************'}
+          <Text style={[
+            showAnswer || feedback === 'incorrect' ? styles.revealedVerse : styles.blurredVerse
+          ]} numberOfLines={5}>
+            {showAnswer || feedback === 'incorrect' ? verse.text : '******************************************'}
           </Text>
           <VerseReference style={styles.reference}>
             {verseReference}
@@ -563,6 +565,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     textAlign: 'center',
     opacity: 0.3,
+    marginBottom: theme.spacing.md,
+  },
+  revealedVerse: {
+    fontFamily: theme.typography.fonts.scripture.default,
+    fontSize: theme.typography.scripture.medium.fontSize,
+    lineHeight: theme.typography.scripture.medium.lineHeight,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
     marginBottom: theme.spacing.md,
   },
   reference: {

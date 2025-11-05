@@ -20,6 +20,7 @@ import Card from '../components/Card';
 import VerseText from '../components/VerseText';
 import VerseReference from '../components/VerseReference';
 import BibleCompanion from '../components/BibleCompanion';
+import { BibleVersePicker } from '../components/BibleVersePicker';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 import { logger } from '../utils/logger';
@@ -42,17 +43,19 @@ export function UnderstandScreen({ navigation, route }: Props) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAiBadge, setShowAiBadge] = useState(false);
+  const [showVersePicker, setShowVersePicker] = useState(false);
+  const [currentVerseId, setCurrentVerseId] = useState(verseId);
 
   useEffect(() => {
     loadVerseWithContext();
-  }, [verseId]);
+  }, [currentVerseId]);
 
   const loadVerseWithContext = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const result = await verseService.getVerseWithContext(verseId);
+      const result = await verseService.getVerseWithContext(currentVerseId);
 
       if (result.error) {
         setError(result.error);
@@ -80,6 +83,17 @@ export function UnderstandScreen({ navigation, route }: Props) {
       'This feature is coming soon in the premium version!',
       [{ text: 'OK' }]
     );
+  };
+
+  const handleVerseSelect = (newVerseId: string) => {
+    setCurrentVerseId(newVerseId);
+  };
+
+  const handleRandomVerse = async () => {
+    const randomVerse = await verseService.getRandomVerse('NIV');
+    if (randomVerse?.id) {
+      setCurrentVerseId(randomVerse.id);
+    }
   };
 
   if (isLoading) {
@@ -144,7 +158,12 @@ export function UnderstandScreen({ navigation, route }: Props) {
           <Ionicons name="arrow-back" size={24} color={colors.primary.mutedStone} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Understanding</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity
+          onPress={() => setShowVersePicker(true)}
+          style={styles.bibleButton}
+        >
+          <Ionicons name="book" size={24} color={colors.accent.gold} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -281,6 +300,14 @@ export function UnderstandScreen({ navigation, route }: Props) {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Bible Verse Picker Modal */}
+      <BibleVersePicker
+        visible={showVersePicker}
+        onClose={() => setShowVersePicker(false)}
+        onVerseSelect={handleVerseSelect}
+        onRandomVerse={handleRandomVerse}
+      />
     </SafeAreaView>
   );
 }
@@ -306,6 +333,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: typography.fonts.scripture.default,
     color: colors.primary.mutedStone,
+  },
+  bibleButton: {
+    padding: spacing.xs,
   },
   placeholder: {
     width: 40,

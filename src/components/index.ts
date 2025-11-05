@@ -24,4 +24,7 @@ console.log('[components/index] ErrorBoundary exported');
 export { LessonCompleteModal } from './LessonCompleteModal';
 console.log('[components/index] LessonCompleteModal exported');
 
+export { BibleVersePicker } from './BibleVersePicker';
+console.log('[components/index] BibleVersePicker exported');
+
 console.log('[components/index] ALL COMPONENTS EXPORTED');
