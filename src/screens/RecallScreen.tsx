@@ -226,9 +226,15 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
         // Then fetch updated profile to get correct values
         const profile = await profileService.getProfile(user.id);
         if (profile) {
-          currentXP = profile.total_xp || 0;
+          const totalXPEarned = profile.total_xp || 0;
           currentLevel = profile.level || 1;
-          xpForNextLevel = profile.xp_for_next_level || 100;
+
+          // Calculate XP within current level
+          const xpForCurrentLevel = (currentLevel - 1) * (currentLevel - 1) * 100;
+          const xpForNext = currentLevel * currentLevel * 100;
+
+          currentXP = totalXPEarned - xpForCurrentLevel; // XP within current level
+          xpForNextLevel = xpForNext - xpForCurrentLevel; // XP needed for this level
         }
       } catch (error) {
         logger.error('[RecallScreen] Error awarding XP:', error);
