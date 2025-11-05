@@ -9,6 +9,7 @@ interface BibleVersePickerProps {
   visible: boolean;
   onClose: () => void;
   onVerseSelect: (verseId: string) => void;
+  onChapterSelect?: (book: string, chapter: number) => void;
   onRandomVerse: () => void;
 }
 
@@ -20,6 +21,7 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
   visible,
   onClose,
   onVerseSelect,
+  onChapterSelect,
   onRandomVerse,
 }) => {
   const [step, setStep] = useState<'books' | 'chapters' | 'verses'>('books');
@@ -53,6 +55,7 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
 
       // Get unique books
       const uniqueBooks = [...new Set(data.map((item: Book) => item.book))];
+      logger.log(`[BibleVersePicker] Loaded ${uniqueBooks.length} books:`, uniqueBooks.slice(0, 5));
       setBooks(uniqueBooks);
     } catch (error) {
       logger.error('[BibleVersePicker] Error loading books:', error);
@@ -74,6 +77,7 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
 
       // Get unique chapters
       const uniqueChapters = [...new Set(data.map((item: any) => item.chapter))];
+      logger.log(`[BibleVersePicker] Loaded ${uniqueChapters.length} chapters for ${book}`);
       setChapters(uniqueChapters);
       setSelectedBook(book);
       setStep('chapters');
@@ -203,20 +207,41 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
               )}
 
               {step === 'verses' && (
-                <View style={styles.verseList}>
-                  {verses.map((verse) => (
+                <>
+                  {onChapterSelect && selectedBook && selectedChapter && (
                     <TouchableOpacity
-                      key={verse.id}
-                      style={styles.verseItem}
-                      onPress={() => handleVerseSelect(verse.id)}
+                      style={styles.selectAllButton}
+                      onPress={() => {
+                        onChapterSelect(selectedBook, selectedChapter);
+                        onClose();
+                      }}
                     >
-                      <Text style={styles.verseNumber}>{verse.verse_number}</Text>
-                      <Text style={styles.verseText} numberOfLines={2}>
-                        {verse.text}
+                      <Svg width="20" height="20" viewBox="0 0 24 24">
+                        <Path
+                          d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+                          fill={theme.colors.text.onDark}
+                        />
+                      </Svg>
+                      <Text style={styles.selectAllText}>
+                        Explain All Verses in {selectedBook} {selectedChapter}
                       </Text>
                     </TouchableOpacity>
-                  ))}
-                </View>
+                  )}
+                  <View style={styles.verseList}>
+                    {verses.map((verse) => (
+                      <TouchableOpacity
+                        key={verse.id}
+                        style={styles.verseItem}
+                        onPress={() => handleVerseSelect(verse.id)}
+                      >
+                        <Text style={styles.verseNumber}>{verse.verse_number}</Text>
+                        <Text style={styles.verseText} numberOfLines={2}>
+                          {verse.text}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
               )}
             </ScrollView>
           )}
@@ -275,6 +300,24 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.body.fontSize,
     fontWeight: '600',
     color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  selectAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    margin: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: theme.colors.success.mutedOlive,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.sm,
+  },
+  selectAllText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.onDark,
     fontFamily: theme.typography.fonts.ui.default,
   },
   scrollView: {
