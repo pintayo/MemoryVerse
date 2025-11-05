@@ -26,6 +26,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
   const flipAnim = useRef(new Animated.Value(0)).current;
   const pageFlipAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const contextGeneratedFor = useRef(new Set<string>()).current;
 
   // Load verses on mount
   useEffect(() => {
@@ -38,7 +39,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
       generateContextForCurrentVerse();
     }
     setIsFlipped(false); // Reset flip when changing verses
-  }, [currentVerseIndex, verses.length]);
+  }, [currentVerseIndex]);
 
   const loadVerses = async () => {
     try {
@@ -69,9 +70,12 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
 
   const generateContextForCurrentVerse = async () => {
     const currentVerse = verses[currentVerseIndex];
-    if (!currentVerse?.id || currentVerse.context) {
-      return; // Skip if no verse or context already exists
+    if (!currentVerse?.id || currentVerse.context || contextGeneratedFor.has(currentVerse.id)) {
+      return; // Skip if no verse, context already exists, or already generated
     }
+
+    // Mark as being generated
+    contextGeneratedFor.add(currentVerse.id);
 
     try {
       setIsGeneratingContext(true);
@@ -93,9 +97,13 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
         });
       } else if (result.error) {
         logger.error('[VerseCardScreen] Failed to generate context:', result.error);
+        // Remove from set if failed, so it can be retried
+        contextGeneratedFor.delete(currentVerse.id);
       }
     } catch (err) {
       logger.error('[VerseCardScreen] Error generating context:', err);
+      // Remove from set if error, so it can be retried
+      contextGeneratedFor.delete(currentVerse.id);
     } finally {
       setIsGeneratingContext(false);
     }
@@ -152,6 +160,10 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
 
   const handleNext = () => {
     if (currentVerseIndex < verses.length - 1) {
+      // Flip back to verse if showing context
+      if (isFlipped) {
+        flipCard();
+      }
       animatePageTurn();
       setTimeout(() => {
         setCurrentVerseIndex(currentVerseIndex + 1);
@@ -163,6 +175,10 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
 
   const handlePrevious = () => {
     if (currentVerseIndex > 0) {
+      // Flip back to verse if showing context
+      if (isFlipped) {
+        flipCard();
+      }
       animatePageTurn();
       setTimeout(() => {
         setCurrentVerseIndex(currentVerseIndex - 1);
@@ -286,7 +302,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                   <View style={styles.decorativeBorder} />
 
                   <View style={styles.cardContent}>
-                    <VerseText size="large" style={styles.verse}>
+                    <VerseText size="large" style={styles.verse} numberOfLines={15}>
                       {currentVerse.text}
                     </VerseText>
                     <VerseReference style={styles.reference}>

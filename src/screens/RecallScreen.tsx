@@ -11,6 +11,7 @@ import { profileService } from '../services/profileService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
+import { practiceConfig } from '../config/practiceConfig';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
 
@@ -18,7 +19,8 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const { verseId } = route.params;
   const { user } = useAuth();
 
-  const [verse, setVerse] = useState<Verse | null>(null);
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userInput, setUserInput] = useState('');
@@ -27,38 +29,47 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const [showHint, setShowHint] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [hasAnswered, setHasAnswered] = useState(false);
+  const [lessonResults, setLessonResults] = useState<Array<{verseId: string, isCorrect: boolean, xp: number}>>([]);
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
   const feedbackAnim = useRef(new Animated.Value(0)).current;
-  const waveAnim = useRef(new Animated.Value(0)).current;
+  const waveHeightAnim = useRef(new Animated.Value(20)).current; // Fixed: Use numeric value instead of animated height
 
-  // Load verse on mount
+  // Load verses on mount
   useEffect(() => {
-    loadVerse();
+    loadVerses();
   }, [verseId]);
 
-  const loadVerse = async () => {
+  const loadVerses = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Load the specified verse or get a random one
-      let loadedVerse: Verse | null;
+      // Load verses for the lesson
+      const loadedVerses: Verse[] = [];
+
       if (verseId) {
-        loadedVerse = await verseService.getVerseById(verseId);
+        // If specific verse ID, load that one verse
+        const verse = await verseService.getVerseById(verseId);
+        if (verse) loadedVerses.push(verse);
       } else {
-        loadedVerse = await verseService.getRandomVerse('NIV');
+        // Load multiple random verses for practice lesson
+        for (let i = 0; i < practiceConfig.versesPerLesson; i++) {
+          const verse = await verseService.getRandomVerse('NIV');
+          if (verse) loadedVerses.push(verse);
+        }
       }
 
-      if (loadedVerse) {
-        setVerse(loadedVerse);
+      if (loadedVerses.length > 0) {
+        setVerses(loadedVerses);
       } else {
-        setError('Verse not found. Please try again.');
+        setError('No verses found. Please import Bible data.');
       }
     } catch (err) {
-      logger.error('[RecallScreen] Error loading verse:', err);
-      setError('Failed to load verse. Please try again.');
+      logger.error('[RecallScreen] Error loading verses:', err);
+      setError('Failed to load verses. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -82,13 +93,20 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       ])
     ).start();
 
-    // Simulate recording waveform
+    // Animate wave height (using numeric value, not height style)
     Animated.loop(
-      Animated.timing(waveAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      })
+      Animated.sequence([
+        Animated.timing(waveHeightAnim, {
+          toValue: 40,
+          duration: 400,
+          useNativeDriver: false, // Height cannot use native driver
+        }),
+        Animated.timing(waveHeightAnim, {
+          toValue: 20,
+          duration: 400,
+          useNativeDriver: false,
+        }),
+      ])
     ).start();
 
     // Auto-stop after 5 seconds (in real app, this would be user-controlled)
@@ -100,40 +118,58 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const stopRecording = () => {
     setIsRecording(false);
     micPulseAnim.stopAnimation();
-    waveAnim.stopAnimation();
+    waveHeightAnim.stopAnimation();
     micPulseAnim.setValue(1);
-    waveAnim.setValue(0);
+    waveHeightAnim.setValue(20);
     // In real app, process voice input here
-    checkAnswer("For I know the plans I have for you");
+    const verse = verses[currentVerseIndex];
+    if (verse) {
+      checkAnswer("For I know the plans I have for you");
+    }
   };
 
   const checkAnswer = async (answer: string) => {
+    const verse = verses[currentVerseIndex];
     if (!verse || !user?.id) return;
+
+    // Mark as answered
+    setHasAnswered(true);
 
     // Use verseService to check answer accuracy
     const result = verseService.checkAnswer(verse.text, answer);
     setFeedback(result.isCorrect ? 'correct' : 'incorrect');
 
-    // Record practice session
-    try {
-      const xpEarned = result.isCorrect ? Math.max(10, Math.floor(result.accuracy * 20)) : 0;
+    // Calculate XP based on accuracy
+    let xpEarned = 0;
+    if (result.isCorrect) {
+      if (result.accuracy >= 100) xpEarned = practiceConfig.xp.perfect;
+      else if (result.accuracy >= 80) xpEarned = practiceConfig.xp.good;
+      else if (result.accuracy >= 60) xpEarned = practiceConfig.xp.okay;
+      else xpEarned = practiceConfig.xp.poor;
+    }
 
+    // Save result for end summary
+    setLessonResults(prev => [...prev, {
+      verseId: verse.id!,
+      isCorrect: result.isCorrect,
+      xp: xpEarned,
+    }]);
+
+    // Record practice session (but don't block on errors)
+    try {
       await verseService.recordPracticeSession(user.id, verse.id, {
         session_type: 'recall',
         user_answer: answer,
         is_correct: result.isCorrect,
-        accuracy_percentage: result.accuracy, // Already 0-100 from checkAnswer()
+        accuracy_percentage: result.accuracy,
         hints_used: hintsUsed,
         xp_earned: xpEarned,
       });
-
-      // Award XP if correct
-      if (result.isCorrect && xpEarned > 0) {
-        await profileService.addXP(user.id, xpEarned);
+    } catch (error: any) {
+      // Log but don't block - duplicate key errors are OK (means we already have progress for this verse)
+      if (error?.code !== '23505') {
+        logger.error('[RecallScreen] Error recording practice session:', error);
       }
-    } catch (error) {
-      logger.error('[RecallScreen] Error recording practice session:', error);
-      // Continue with UI feedback even if recording fails
     }
 
     // Animate feedback
@@ -143,18 +179,52 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
         duration: 300,
         useNativeDriver: true,
       }),
-      Animated.delay(2000),
+      Animated.delay(1500),
       Animated.timing(feedbackAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }),
-    ]).start(() => {
-      if (result.isCorrect) {
-        // Navigate to next screen or back
-        setTimeout(() => navigation.goBack(), 500);
+    ]).start();
+  };
+
+  const handleNextVerse = () => {
+    if (currentVerseIndex < verses.length - 1) {
+      // Move to next verse
+      setCurrentVerseIndex(currentVerseIndex + 1);
+      setUserInput('');
+      setFeedback(null);
+      setShowHint(false);
+      setShowAnswer(false);
+      setHintsUsed(0);
+      setHasAnswered(false);
+      feedbackAnim.setValue(0);
+    } else {
+      // Show lesson summary
+      showLessonSummary();
+    }
+  };
+
+  const showLessonSummary = async () => {
+    const totalXP = lessonResults.reduce((sum, r) => sum + r.xp, 0);
+    const correctCount = lessonResults.filter(r => r.isCorrect).length;
+
+    // Award total XP
+    if (user?.id && totalXP > 0) {
+      try {
+        await profileService.addXP(user.id, totalXP);
+      } catch (error) {
+        logger.error('[RecallScreen] Error awarding XP:', error);
       }
-    });
+    }
+
+    // Navigate back with results
+    navigation.navigate('Home', {
+      lessonComplete: true,
+      totalXP,
+      correctCount,
+      totalVerses: verses.length,
+    } as any);
   };
 
   const handleSubmit = () => {
@@ -182,14 +252,14 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   }
 
   // Show error state
-  if (error || !verse) {
+  if (error || verses.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={[styles.scrollContent, styles.centerContent]}>
-          <Text style={styles.errorText}>{error || 'Verse not found'}</Text>
+          <Text style={styles.errorText}>{error || 'No verses found'}</Text>
           <Button
             title="Try Again"
-            onPress={loadVerse}
+            onPress={loadVerses}
             variant="gold"
             style={styles.retryButton}
           />
@@ -204,8 +274,10 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   }
 
+  const verse = verses[currentVerseIndex];
   const verseReference = `${verse.book} ${verse.chapter}:${verse.verse_number}`;
   const hintText = verse.text.substring(0, Math.min(30, verse.text.length)) + '...';
+  const progress = `${currentVerseIndex + 1}/${verses.length}`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -218,6 +290,9 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.header}>
           <Text style={styles.title}>Practice the Verse</Text>
           <Text style={styles.subtitle}>Type or speak what you remember</Text>
+          <View style={styles.progressIndicator}>
+            <Text style={styles.progressText}>{progress}</Text>
+          </View>
         </View>
 
         {/* Blurred verse preview */}
@@ -294,24 +369,17 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
           {/* Audio waveform (when recording) */}
           {isRecording && (
             <View style={styles.waveformContainer}>
-              {[...Array(12)].map((_, i) => {
-                const height = waveAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [10, Math.random() * 40 + 10],
-                });
-                return (
-                  <Animated.View
-                    key={i}
-                    style={[
-                      styles.waveBar,
-                      {
-                        height,
-                        animationDelay: `${i * 50}ms`,
-                      },
-                    ]}
-                  />
-                );
-              })}
+              {[...Array(12)].map((_, i) => (
+                <Animated.View
+                  key={i}
+                  style={[
+                    styles.waveBar,
+                    {
+                      height: waveHeightAnim,
+                    },
+                  ]}
+                />
+              ))}
             </View>
           )}
         </View>
@@ -364,19 +432,40 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
 
       {/* Fixed action buttons at bottom */}
       <View style={styles.buttonRow}>
-        <Button
-          title={showAnswer ? "Hide Answer" : "Give Answer"}
-          onPress={() => setShowAnswer(!showAnswer)}
-          variant="secondary"
-          style={styles.giveAnswerButton}
-        />
-        <Button
-          title="Check Answer"
-          onPress={handleSubmit}
-          variant="olive"
-          disabled={!userInput.trim() || isRecording || showAnswer}
-          style={styles.submitButton}
-        />
+        {!hasAnswered && !showAnswer && (
+          <>
+            <Button
+              title="Give Answer"
+              onPress={() => {
+                setShowAnswer(true);
+                setHasAnswered(true);
+                // Record as gave up - no XP
+                setLessonResults(prev => [...prev, {
+                  verseId: verse.id!,
+                  isCorrect: false,
+                  xp: practiceConfig.xp.gaveUp,
+                }]);
+              }}
+              variant="secondary"
+              style={styles.giveAnswerButton}
+            />
+            <Button
+              title="Check Answer"
+              onPress={handleSubmit}
+              variant="olive"
+              disabled={!userInput.trim() || isRecording}
+              style={styles.submitButton}
+            />
+          </>
+        )}
+        {hasAnswered && (
+          <Button
+            title={currentVerseIndex < verses.length - 1 ? "Next Verse" : "Finish Lesson"}
+            onPress={handleNextVerse}
+            variant="gold"
+            style={styles.nextButton}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -409,6 +498,21 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: theme.typography.ui.body.fontSize,
     color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+  },
+  progressIndicator: {
+    alignSelf: 'center',
+    marginTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    backgroundColor: theme.colors.secondary.lightGold,
+    borderRadius: theme.borderRadius.full,
+  },
+  progressText: {
+    fontSize: theme.typography.ui.caption.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
   },
   versePreviewCard: {
@@ -551,6 +655,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   submitButton: {
+    flex: 1,
+  },
+  nextButton: {
     flex: 1,
   },
   centerContent: {

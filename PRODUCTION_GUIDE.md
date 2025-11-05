@@ -41,6 +41,7 @@
 - [ ] Beta testing program (TestFlight/Play Console)
 - [ ] Marketing website
 - [ ] Support email/system
+- [ ] Bible chat buddy integration (Example: Understanding screen you can talk to him about that verse)
 
 ---
 
