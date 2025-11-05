@@ -1,8 +1,9 @@
 export type RootStackParamList = {
   Main: undefined;
   VerseCard: undefined;
-  Recall: undefined;
-  Recite: undefined;
+  Recall: { verseId: string };
+  Pray: { verseId: string };
+  Understand: { verseId: string };
 };
 
 export type BottomTabParamList = {

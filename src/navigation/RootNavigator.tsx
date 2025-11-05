@@ -1,9 +1,30 @@
+console.log('[RootNavigator] Module loading...');
+
 import React from 'react';
+console.log('[RootNavigator] React imported');
+
 import { createStackNavigator } from '@react-navigation/stack';
+console.log('[RootNavigator] createStackNavigator imported');
+
 import BottomTabNavigator from './BottomTabNavigator';
+console.log('[RootNavigator] BottomTabNavigator imported');
+
 import { VerseCardScreen, RecallScreen } from '../screens';
+console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
+
+import { UnderstandScreen } from '../screens/UnderstandScreen';
+console.log('[RootNavigator] UnderstandScreen imported');
+
+import PrayScreen from '../screens/PrayScreen';
+console.log('[RootNavigator] PrayScreen imported');
+
 import { theme } from '../theme';
+console.log('[RootNavigator] theme imported');
+
 import { RootStackParamList } from './types';
+console.log('[RootNavigator] types imported');
+
+console.log('[RootNavigator] All imports complete');
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -44,16 +65,23 @@ const RootNavigator = () => {
         name="Recall"
         component={RecallScreen}
         options={{
-          title: 'Recall Verse',
+          title: 'Practice Verse',
           headerBackTitle: 'Back',
         }}
       />
       <Stack.Screen
-        name="Recite"
-        component={RecallScreen}
+        name="Pray"
+        component={PrayScreen}
         options={{
-          title: 'Recite Verse',
+          title: 'Prayer Training',
           headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="Understand"
+        component={UnderstandScreen}
+        options={{
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

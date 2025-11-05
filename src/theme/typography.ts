@@ -3,6 +3,8 @@
  * Elegant serif fonts for Scripture, soft sans-serif for UI text
  */
 
+console.log('[theme/typography] Loading typography module...');
+
 export const typography = {
   // Font Families
   fonts: {
@@ -143,4 +145,8 @@ export const typography = {
   },
 };
 
+console.log('[theme/typography] typography object created successfully');
+
 export default typography;
+
+console.log('[theme/typography] Typography module loaded successfully!');

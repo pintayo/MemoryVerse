@@ -1,28 +1,99 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+logger.log('[HomeScreen] Module loading...');
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
 import { theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
+import { verseService } from '../services/verseService';
+import { Verse } from '../types/database';
+import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
+
+logger.log('[HomeScreen] All imports complete');
+
+logger.log('[HomeScreen] Defining interface...');
 
 interface HomeScreenProps {
   navigation: any;
 }
 
-const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const [streak, setStreak] = useState(7);
-  const [xp, setXp] = useState(450);
-  const [isCelebrating, setIsCelebrating] = useState(false);
+logger.log('[HomeScreen] Defining component...');
 
-  // Sample verse data
-  const todayVerse = {
-    text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.",
-    reference: "Jeremiah 29:11",
+const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const { user, profile } = useAuth();
+  const [isCelebrating, setIsCelebrating] = useState(false);
+  const [todayVerse, setTodayVerse] = useState<Verse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get real stats from profile
+  const streak = profile?.current_streak || 0;
+  const xp = profile?.total_xp || 0;
+  const versesLearned = profile?.verses_memorized || 0;
+
+  // Load today's verse on mount
+  useEffect(() => {
+    loadTodayVerse();
+  }, []);
+
+  const loadTodayVerse = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Get today's verse with 24-hour caching
+      const verse = await verseService.getTodayVerseWithCache('NIV');
+
+      if (verse) {
+        setTodayVerse(verse);
+      } else {
+        setError('No verses found. Please import Bible data.');
+      }
+    } catch (err) {
+      logger.error('[HomeScreen] Error loading verse:', err);
+      setError('Failed to load verse. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCompanionPress = () => {
     setIsCelebrating(true);
     setTimeout(() => setIsCelebrating(false), 2000);
+
+    // Show encouragement or tips based on streak
+    const messages = [
+      {
+        title: "Keep Going! 🌟",
+        message: `You're on a ${streak}-day streak! Remember: "Thy word have I hid in mine heart, that I might not sin against thee." - Psalm 119:11`
+      },
+      {
+        title: "Scripture Tip 💡",
+        message: "Try practicing your verses at the same time each day. Consistency builds strong memory and spiritual discipline!"
+      },
+      {
+        title: "You're Amazing! ✨",
+        message: `${xp} XP earned so far! Every verse you memorize is a treasure stored in your heart.`
+      },
+      {
+        title: "Prayer Time 🙏",
+        message: "After memorizing, try praying the verse back to God. It deepens understanding and makes the Word come alive!"
+      },
+      {
+        title: "Share the Word 📖",
+        message: "Challenge: Share a verse you've learned with someone today. Teaching others helps solidify your own memory!"
+      }
+    ];
+
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+    Alert.alert(
+      randomMessage.title,
+      randomMessage.message,
+      [{ text: "Amen!", style: "default" }]
+    );
   };
 
   const actionButtons = [
@@ -31,28 +102,44 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Read',
       icon: 'book',
       description: 'Read today\'s verse',
-      onPress: () => navigation.navigate('VerseCard'),
+      onPress: () => {
+        if (todayVerse) {
+          navigation.navigate('VerseCard');
+        }
+      },
     },
     {
       id: 'understand',
       title: 'Understand',
       icon: 'lightbulb',
       description: 'Learn the context',
-      onPress: () => navigation.navigate('VerseCard'),
+      onPress: () => {
+        if (todayVerse?.id) {
+          navigation.navigate('Understand', { verseId: todayVerse.id });
+        }
+      },
     },
     {
-      id: 'recall',
-      title: 'Recall',
+      id: 'practice',
+      title: 'Practice',
       icon: 'brain',
-      description: 'Fill in the blanks',
-      onPress: () => navigation.navigate('Recall'),
+      description: 'Recall & recite verses',
+      onPress: () => {
+        if (todayVerse?.id) {
+          navigation.navigate('Recall', { verseId: todayVerse.id });
+        }
+      },
     },
     {
-      id: 'recite',
-      title: 'Recite',
-      icon: 'mic',
-      description: 'Speak it aloud',
-      onPress: () => navigation.navigate('Recite'),
+      id: 'pray',
+      title: 'Pray',
+      icon: 'heart',
+      description: 'Prayer training',
+      onPress: () => {
+        if (todayVerse?.id) {
+          navigation.navigate('Pray', { verseId: todayVerse.id });
+        }
+      },
     },
   ];
 
@@ -105,12 +192,32 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         {/* Today's Verse Card */}
         <Card variant="cream" outlined style={styles.verseCard}>
           <Text style={styles.verseLabel}>Today's Verse</Text>
-          <VerseText size="large" style={styles.verseText}>
-            {todayVerse.text}
-          </VerseText>
-          <VerseReference style={styles.verseReference}>
-            {todayVerse.reference}
-          </VerseReference>
+
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
+              <Text style={styles.loadingText}>Loading verse...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={loadTodayVerse}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : todayVerse ? (
+            <>
+              <VerseText size="large" style={styles.verseText}>
+                {todayVerse.text}
+              </VerseText>
+              <VerseReference style={styles.verseReference}>
+                {`${todayVerse.book} ${todayVerse.chapter}:${todayVerse.verse_number}`}
+              </VerseReference>
+            </>
+          ) : null}
         </Card>
 
         {/* Action Buttons */}
@@ -153,24 +260,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         {/* Daily Progress */}
         <View style={styles.progressSection}>
-          <Text style={styles.progressTitle}>Daily Progress</Text>
+          <Text style={styles.progressTitle}>Your Progress</Text>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '60%' }]} />
+            <View style={[styles.progressFill, { width: `${Math.min((versesLearned / 10) * 100, 100)}%` }]} />
           </View>
-          <Text style={styles.progressText}>3 of 5 verses completed</Text>
+          <Text style={styles.progressText}>{versesLearned} verses memorized</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+logger.log('[HomeScreen] Component defined successfully');
+
 // Helper functions
+logger.log('[HomeScreen] Defining helper functions...');
+
 const getActionColor = (id: string): string => {
   const colors: { [key: string]: string } = {
     read: theme.colors.secondary.softClay,
     understand: theme.colors.secondary.lightGold,
-    recall: theme.colors.success.mutedOlive,
-    recite: theme.colors.secondary.warmTerracotta,
+    practice: theme.colors.success.mutedOlive,
+    pray: theme.colors.secondary.warmTerracotta,
   };
   return colors[id] || theme.colors.secondary.softClay;
 };
@@ -215,10 +326,22 @@ const renderActionIcon = (iconName: string) => {
           />
         </Svg>
       );
+    case 'heart':
+      return (
+        <Svg width="24" height="24" viewBox="0 0 24 24">
+          <Path
+            d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z"
+            fill={iconColor}
+          />
+        </Svg>
+      );
     default:
       return null;
   }
 };
+
+logger.log('[HomeScreen] Helper functions defined');
+logger.log('[HomeScreen] Creating styles...');
 
 const styles = StyleSheet.create({
   container: {
@@ -272,6 +395,7 @@ const styles = StyleSheet.create({
   verseCard: {
     marginBottom: theme.spacing.xl,
     paddingVertical: theme.spacing.xl,
+    minHeight: 200,
   },
   verseLabel: {
     fontSize: theme.typography.ui.caption.fontSize,
@@ -289,6 +413,43 @@ const styles = StyleSheet.create({
   },
   verseReference: {
     marginTop: theme.spacing.sm,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  loadingText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  errorText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.error.main,
+    textAlign: 'center',
+    fontFamily: theme.typography.fonts.ui.default,
+    paddingHorizontal: theme.spacing.md,
+  },
+  retryButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.sm,
+  },
+  retryButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.onDark,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   actionsContainer: {
     marginBottom: theme.spacing.xl,
@@ -359,4 +520,9 @@ const styles = StyleSheet.create({
   },
 });
 
+logger.log('[HomeScreen] Styles created');
+logger.log('[HomeScreen] Exporting HomeScreen...');
+
 export default HomeScreen;
+
+logger.log('[HomeScreen] Module loaded successfully!');
