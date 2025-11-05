@@ -33,13 +33,13 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
     loadVerses();
   }, []);
 
-  // Auto-generate context when verse changes
+  // Auto-generate context when verse changes OR when verses first load
   useEffect(() => {
-    if (currentVerseIndex < verses.length && verses[currentVerseIndex]) {
+    if (verses.length > 0 && verses[currentVerseIndex]) {
       generateContextForCurrentVerse();
     }
     setIsFlipped(false); // Reset flip when changing verses
-  }, [currentVerseIndex]);
+  }, [currentVerseIndex, verses.length]);
 
   const loadVerses = async () => {
     try {

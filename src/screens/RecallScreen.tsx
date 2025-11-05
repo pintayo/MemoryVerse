@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card, Input, VerseReference } from '../components';
+import { Button, Card, Input, VerseReference, LessonCompleteModal } from '../components';
 import { theme } from '../theme';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -31,6 +31,14 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [lessonResults, setLessonResults] = useState<Array<{verseId: string, isCorrect: boolean, xp: number}>>([]);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [lessonSummary, setLessonSummary] = useState<{
+    totalXP: number;
+    correctCount: number;
+    currentXP: number;
+    currentLevel: number;
+    xpForNextLevel: number;
+  } | null>(null);
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
@@ -47,19 +55,13 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       setIsLoading(true);
       setError(null);
 
-      // Load verses for the lesson
+      // Load verses for the lesson (always load multiple for practice)
       const loadedVerses: Verse[] = [];
 
-      if (verseId) {
-        // If specific verse ID, load that one verse
-        const verse = await verseService.getVerseById(verseId);
+      // Load multiple random verses for practice lesson
+      for (let i = 0; i < practiceConfig.versesPerLesson; i++) {
+        const verse = await verseService.getRandomVerse('NIV');
         if (verse) loadedVerses.push(verse);
-      } else {
-        // Load multiple random verses for practice lesson
-        for (let i = 0; i < practiceConfig.versesPerLesson; i++) {
-          const verse = await verseService.getRandomVerse('NIV');
-          if (verse) loadedVerses.push(verse);
-        }
       }
 
       if (loadedVerses.length > 0) {
@@ -209,22 +211,44 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
     const totalXP = lessonResults.reduce((sum, r) => sum + r.xp, 0);
     const correctCount = lessonResults.filter(r => r.isCorrect).length;
 
-    // Award total XP
-    if (user?.id && totalXP > 0) {
+    // Get current profile
+    let currentXP = 0;
+    let currentLevel = 1;
+    let xpForNextLevel = 100;
+
+    if (user?.id) {
       try {
-        await profileService.addXP(user.id, totalXP);
+        const profile = await profileService.getProfile(user.id);
+        if (profile) {
+          currentXP = profile.total_xp || 0;
+          currentLevel = profile.level || 1;
+          xpForNextLevel = profile.xp_for_next_level || 100;
+        }
+
+        // Award total XP
+        if (totalXP > 0) {
+          await profileService.addXP(user.id, totalXP);
+          currentXP += totalXP; // Update local value for display
+        }
       } catch (error) {
         logger.error('[RecallScreen] Error awarding XP:', error);
       }
     }
 
-    // Navigate back with results
-    navigation.navigate('Home', {
-      lessonComplete: true,
+    // Show completion modal
+    setLessonSummary({
       totalXP,
       correctCount,
-      totalVerses: verses.length,
-    } as any);
+      currentXP,
+      currentLevel,
+      xpForNextLevel,
+    });
+    setShowCompleteModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowCompleteModal(false);
+    navigation.goBack();
   };
 
   const handleSubmit = () => {
@@ -467,6 +491,20 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
           />
         )}
       </View>
+
+      {/* Lesson Complete Modal */}
+      {lessonSummary && (
+        <LessonCompleteModal
+          visible={showCompleteModal}
+          correctCount={lessonSummary.correctCount}
+          totalVerses={verses.length}
+          xpEarned={lessonSummary.totalXP}
+          currentXP={lessonSummary.currentXP}
+          currentLevel={lessonSummary.currentLevel}
+          xpForNextLevel={lessonSummary.xpForNextLevel}
+          onClose={handleModalClose}
+        />
+      )}
     </SafeAreaView>
   );
 };

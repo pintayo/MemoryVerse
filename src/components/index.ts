@@ -21,4 +21,7 @@ console.log('[components/index] VerseReference exported');
 export { default as ErrorBoundary } from './ErrorBoundary';
 console.log('[components/index] ErrorBoundary exported');
 
+export { LessonCompleteModal } from './LessonCompleteModal';
+console.log('[components/index] LessonCompleteModal exported');
+
 console.log('[components/index] ALL COMPONENTS EXPORTED');
