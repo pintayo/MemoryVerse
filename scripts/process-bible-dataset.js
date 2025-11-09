@@ -1,43 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * Process Bible CSV dataset and generate SQL INSERT statements
+ * Process Bible JSON dataset and generate SQL INSERT statements
  *
- * Download the dataset from:
- * https://www.kaggle.com/datasets/oswinrh/bible/data
- *
- * Expected CSV format from Kaggle:
- * id,b,c,v,t
- * Where: id=unique_id, b=book_number, c=chapter, v=verse_number, t=text
+ * Expected JSON format:
+ * [{"book":"Genesis","chapter":1,"verse":1,"text":"In the beginning..."}]
  *
  * Usage:
- *   node scripts/process-bible-dataset.js <csv-file-path> [translation]
+ *   node scripts/process-bible-dataset.js
  *
- * Example:
- *   node scripts/process-bible-dataset.js t_kjv.csv KJV
- *   node scripts/process-bible-dataset.js t_asv.csv ASV
+ * This will process all JSON files in assets/translations/ directory
+ * and generate SQL files in the supabase/ directory.
  */
 
 const fs = require('fs');
 const path = require('path');
-
-// Bible book number to name mapping (66 books)
-const bookNames = {
-  1: 'Genesis', 2: 'Exodus', 3: 'Leviticus', 4: 'Numbers', 5: 'Deuteronomy',
-  6: 'Joshua', 7: 'Judges', 8: 'Ruth', 9: '1 Samuel', 10: '2 Samuel',
-  11: '1 Kings', 12: '2 Kings', 13: '1 Chronicles', 14: '2 Chronicles', 15: 'Ezra',
-  16: 'Nehemiah', 17: 'Esther', 18: 'Job', 19: 'Psalms', 20: 'Proverbs',
-  21: 'Ecclesiastes', 22: 'Song of Solomon', 23: 'Isaiah', 24: 'Jeremiah', 25: 'Lamentations',
-  26: 'Ezekiel', 27: 'Daniel', 28: 'Hosea', 29: 'Joel', 30: 'Amos',
-  31: 'Obadiah', 32: 'Jonah', 33: 'Micah', 34: 'Nahum', 35: 'Habakkuk',
-  36: 'Zephaniah', 37: 'Haggai', 38: 'Zechariah', 39: 'Malachi',
-  40: 'Matthew', 41: 'Mark', 42: 'Luke', 43: 'John', 44: 'Acts',
-  45: 'Romans', 46: '1 Corinthians', 47: '2 Corinthians', 48: 'Galatians', 49: 'Ephesians',
-  50: 'Philippians', 51: 'Colossians', 52: '1 Thessalonians', 53: '2 Thessalonians', 54: '1 Timothy',
-  55: '2 Timothy', 56: 'Titus', 57: 'Philemon', 58: 'Hebrews', 59: 'James',
-  60: '1 Peter', 61: '2 Peter', 62: '1 John', 63: '2 John', 64: '3 John',
-  65: 'Jude', 66: 'Revelation'
-};
 
 // Category keywords for verse classification (expanded for better coverage)
 const categoryKeywords = {
@@ -293,72 +270,67 @@ function escapeSQLString(str) {
 }
 
 /**
- * Parse CSV line (handles quoted fields)
+ * Process JSON file and generate SQL
  */
-function parseCSVLine(line) {
-  const fields = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-
-    if (char === '"' && nextChar === '"') {
-      current += '"';
-      i++; // Skip next quote
-    } else if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      fields.push(current.trim());
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  fields.push(current.trim());
-
-  return fields;
-}
-
-/**
- * Process CSV file and generate SQL
- */
-function processBibleCSV(csvFilePath, translation = 'KJV') {
-  console.log(`📖 Processing Bible dataset: ${csvFilePath}`);
+function processBibleJSON(jsonFilePath, translation) {
+  console.log(`📖 Processing Bible dataset: ${jsonFilePath}`);
   console.log(`📝 Translation: ${translation}`);
   console.log('');
 
-  if (!fs.existsSync(csvFilePath)) {
-    console.error(`❌ Error: File not found: ${csvFilePath}`);
-    console.log('');
-    console.log('Please download the dataset from:');
-    console.log('https://www.kaggle.com/datasets/oswinrh/bible/data');
+  if (!fs.existsSync(jsonFilePath)) {
+    console.error(`❌ Error: File not found: ${jsonFilePath}`);
     process.exit(1);
   }
 
-  const fileContent = fs.readFileSync(csvFilePath, 'utf-8');
-  const lines = fileContent.split('\n');
+  // Read and parse JSON file
+  const fileContent = fs.readFileSync(jsonFilePath, 'utf-8');
+  let verses;
 
-  // Skip header line (id,b,c,v,t)
-  const headerLine = lines[0].trim();
-  console.log(`Header: ${headerLine}`);
-
-  if (!headerLine.includes('id,b,c,v,t')) {
-    console.log('⚠️  Warning: Expected header format "id,b,c,v,t"');
-    console.log(`   Found: ${headerLine}`);
+  try {
+    verses = JSON.parse(fileContent);
+  } catch (error) {
+    console.error(`❌ Error parsing JSON: ${error.message}`);
+    process.exit(1);
   }
 
+  console.log(`📊 Loaded ${verses.length} verse entries from JSON file`);
+
+  // Combine duplicate verses (some translations split verses into multiple entries)
+  const verseMap = new Map();
+
+  for (const verse of verses) {
+    const key = `${verse.book}:${verse.chapter}:${verse.verse}`;
+
+    if (verseMap.has(key)) {
+      // Append text to existing verse
+      const existing = verseMap.get(key);
+      existing.text = existing.text.trim() + ' ' + verse.text.trim();
+    } else {
+      verseMap.set(key, {
+        book: verse.book,
+        chapter: verse.chapter,
+        verse: verse.verse,
+        text: verse.text.trim()
+      });
+    }
+  }
+
+  // Convert map back to array
+  const consolidatedVerses = Array.from(verseMap.values());
+
+  console.log(`✅ Consolidated to ${consolidatedVerses.length} unique verses`);
+  console.log('');
+
   // Output SQL file
-  const outputFile = path.join(__dirname, '../supabase', `bible_verses_${translation.toLowerCase()}.sql`);
+  const outputFile = path.join(__dirname, '..', 'supabase', `bible_verses_${translation.toLowerCase()}.sql`);
   const sqlHeader = `-- Bible Verses - ${translation} Translation
--- Auto-generated from Kaggle Bible dataset
--- Source: https://www.kaggle.com/datasets/oswinrh/bible/data
--- Total verses: ${lines.length - 1}
+-- Auto-generated from JSON dataset
+-- Total unique verses: ${consolidatedVerses.length}
 
 -- Insert verses into public.verses table
 INSERT INTO public.verses (book, chapter, verse_number, text, translation, category, difficulty)
-VALUES\n`;
+VALUES
+`;
 
   fs.writeFileSync(outputFile, sqlHeader);
 
@@ -374,36 +346,21 @@ VALUES\n`;
     byDifficulty: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
   };
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+  for (let i = 0; i < consolidatedVerses.length; i++) {
+    const verse = consolidatedVerses[i];
 
     try {
-      const fields = parseCSVLine(line);
-
-      // Expected format: id,b,c,v,t
-      if (fields.length < 5) {
-        console.log(`⚠️  Skipping line ${i}: Invalid format (${fields.length} fields)`);
+      // Validate verse data
+      if (!verse.book || !verse.chapter || !verse.verse || !verse.text) {
+        console.log(`⚠️  Skipping verse ${i + 1}: Missing required fields`);
         skippedCount++;
         continue;
       }
 
-      const [id, bookNum, chapter, verseNum, text] = fields;
-
-      if (!bookNum || !chapter || !verseNum || !text) {
-        skippedCount++;
-        continue;
-      }
-
-      // Convert book number to book name
-      const bookNumber = parseInt(bookNum);
-      const bookName = bookNames[bookNumber];
-
-      if (!bookName) {
-        console.log(`⚠️  Skipping line ${i}: Unknown book number ${bookNumber}`);
-        skippedCount++;
-        continue;
-      }
+      const bookName = verse.book;
+      const chapter = verse.chapter;
+      const verseNum = verse.verse;
+      const text = verse.text;
 
       const category = categorizeVerse(text);
       const difficulty = calculateDifficulty(text);
@@ -431,7 +388,7 @@ VALUES\n`;
       }
 
     } catch (error) {
-      console.log(`\n⚠️  Error processing line ${i}: ${error.message}`);
+      console.log(`\n⚠️  Error processing verse ${i + 1}: ${error.message}`);
       skippedCount++;
     }
   }
@@ -447,7 +404,7 @@ VALUES\n`;
   // Print statistics
   console.log(`\n\n✅ Successfully processed ${processedCount} verses`);
   if (skippedCount > 0) {
-    console.log(`⚠️  Skipped ${skippedCount} invalid lines`);
+    console.log(`⚠️  Skipped ${skippedCount} invalid verses`);
   }
 
   console.log('\n📊 Statistics:');
@@ -464,35 +421,67 @@ VALUES\n`;
   console.log(`\n📄 SQL file generated: ${outputFile}`);
   console.log(`   File size: ${(fs.statSync(outputFile).size / 1024 / 1024).toFixed(2)} MB`);
   console.log('');
-  console.log('To import into Supabase:');
-  console.log('1. Open Supabase SQL Editor');
-  console.log(`2. Paste contents of ${path.basename(outputFile)}`);
-  console.log('3. Run the query (may take 1-2 minutes)');
+
+  return { processedCount, skippedCount, stats };
 }
 
 // Main execution
-const args = process.argv.slice(2);
+console.log('🚀 Bible Dataset Processor\n');
 
-if (args.length === 0) {
-  console.log('Usage: node scripts/process-bible-dataset.js <csv-file-path> [translation]');
+// Get translations directory
+const translationsDir = path.join(__dirname, '..', 'assets', 'translations');
+
+if (!fs.existsSync(translationsDir)) {
+  console.error(`❌ Error: Translations directory not found: ${translationsDir}`);
   console.log('');
-  console.log('Example:');
-  console.log('  node scripts/process-bible-dataset.js t_kjv.csv KJV');
-  console.log('  node scripts/process-bible-dataset.js t_asv.csv ASV');
-  console.log('');
-  console.log('Download the dataset from:');
-  console.log('https://www.kaggle.com/datasets/oswinrh/bible/data');
-  console.log('');
-  console.log('CSV files in the dataset:');
-  console.log('  t_kjv.csv - King James Version');
-  console.log('  t_asv.csv - American Standard Version');
-  console.log('  t_web.csv - World English Bible');
-  console.log('  t_ylt.csv - Young\'s Literal Translation');
-  console.log('  t_bbe.csv - Bible in Basic English');
+  console.log('Please ensure your JSON files are in: assets/translations/');
   process.exit(1);
 }
 
-const csvFile = args[0];
-const translation = args[1] || path.basename(csvFile, '.csv').split('_')[1]?.toUpperCase() || 'KJV';
+// Find all JSON files in the translations directory
+const files = fs.readdirSync(translationsDir).filter(f => f.endsWith('.json'));
 
-processBibleCSV(csvFile, translation);
+if (files.length === 0) {
+  console.error(`❌ Error: No JSON files found in ${translationsDir}`);
+  console.log('');
+  console.log('Please add your Bible translation JSON files to: assets/translations/');
+  process.exit(1);
+}
+
+console.log(`Found ${files.length} translation file(s):\n`);
+files.forEach(f => console.log(`  📖 ${f}`));
+console.log('');
+
+// Process each translation file
+const results = [];
+for (const file of files) {
+  const filePath = path.join(translationsDir, file);
+
+  // Extract translation name from filename (e.g., bible_kjv.json -> KJV)
+  const translationName = file
+    .replace('bible_', '')
+    .replace('.json', '')
+    .toUpperCase();
+
+  const result = processBibleJSON(filePath, translationName);
+  results.push({ translation: translationName, ...result });
+
+  console.log('─'.repeat(60));
+  console.log('');
+}
+
+// Print summary
+console.log('🎉 All translations processed successfully!\n');
+console.log('Summary:');
+results.forEach(r => {
+  console.log(`  ${r.translation}: ${r.processedCount} verses`);
+});
+
+console.log('\n📝 Next steps:');
+console.log('1. Open Supabase SQL Editor');
+console.log('2. Copy and paste the contents of each generated SQL file:');
+results.forEach(r => {
+  console.log(`   - supabase/bible_verses_${r.translation.toLowerCase()}.sql`);
+});
+console.log('3. Run each SQL query (may take 1-2 minutes per file)');
+console.log('');
