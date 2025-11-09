@@ -16,9 +16,9 @@
 - [x] All user-reported bugs fixed
 - [x] Production logger implemented
 - [x] Database schema finalized
-- [ ] **Run `supabase/complete-setup.sql` in Supabase**
+- [x] **Run `supabase/complete-setup.sql` in Supabase**
 - [ ] Set up error tracking (Sentry recommended)
-- [ ] Environment variables validated
+- [x] Environment variables validated
 - [ ] Test all features end-to-end
 - [ ] App icon and splash screen added
 - [ ] Privacy policy hosted
