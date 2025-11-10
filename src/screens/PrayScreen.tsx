@@ -9,6 +9,7 @@ import { RootStackParamList } from '../navigation/types';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 import { logger } from '../utils/logger';
+import { generatePrayerGuidance, getFallbackPrayerGuide, PrayerGuide } from '../services/prayerCoachingService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pray'>;
 
@@ -21,6 +22,9 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [hasRecorded, setHasRecorded] = useState(false);
   const [showGuidance, setShowGuidance] = useState(false);
+  const [prayerGuide, setPrayerGuide] = useState<PrayerGuide | null>(null);
+  const [isGeneratingGuide, setIsGeneratingGuide] = useState(false);
+  const [useAIGuide, setUseAIGuide] = useState(false);
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
@@ -40,7 +44,7 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
       if (verseId) {
         loadedVerse = await verseService.getVerseById(verseId);
       } else {
-        loadedVerse = await verseService.getRandomVerse('NIV');
+        loadedVerse = await verseService.getRandomVerse('KJV');
       }
 
       if (loadedVerse) {
@@ -53,6 +57,32 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
       setError('Failed to load verse. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const generateAIPrayerGuide = async () => {
+    if (!verse) return;
+
+    try {
+      setIsGeneratingGuide(true);
+      setUseAIGuide(true);
+      setShowGuidance(true);
+
+      logger.log('[PrayScreen] Generating AI prayer guidance...');
+      const result = await generatePrayerGuidance(verse);
+
+      if (result.success && result.guide) {
+        setPrayerGuide(result.guide);
+        logger.log('[PrayScreen] AI prayer guidance generated successfully');
+      } else {
+        logger.warn('[PrayScreen] AI generation failed, using fallback');
+        setPrayerGuide(getFallbackPrayerGuide(verse));
+      }
+    } catch (err) {
+      logger.error('[PrayScreen] Error generating AI prayer guidance:', err);
+      setPrayerGuide(getFallbackPrayerGuide(verse));
+    } finally {
+      setIsGeneratingGuide(false);
     }
   };
 
@@ -161,57 +191,121 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
           </VerseReference>
         </Card>
 
-        {/* Prayer Guidance */}
+        {/* Prayer Guidance Options */}
         {!showGuidance ? (
-          <TouchableOpacity
-            onPress={() => setShowGuidance(true)}
-            style={styles.guidanceToggle}
-          >
-            <Svg width="20" height="20" viewBox="0 0 24 24">
-              <Path
-                d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 19H11V17H13V19ZM15.07 11.25L14.17 12.17C13.45 12.9 13 13.5 13 15H11V14.5C11 13.4 11.45 12.4 12.17 11.67L13.41 10.41C13.78 10.05 14 9.55 14 9C14 7.9 13.1 7 12 7C10.9 7 10 7.9 10 9H8C8 6.79 9.79 5 12 5C14.21 5 16 6.79 16 9C16 9.88 15.64 10.68 15.07 11.25Z"
-                fill={theme.colors.secondary.lightGold}
-              />
-            </Svg>
-            <Text style={styles.guidanceToggleText}>Show Prayer Guide</Text>
-          </TouchableOpacity>
+          <View style={styles.guidanceOptions}>
+            <TouchableOpacity
+              onPress={() => {
+                setShowGuidance(true);
+                setUseAIGuide(false);
+              }}
+              style={styles.guidanceToggle}
+            >
+              <Svg width="20" height="20" viewBox="0 0 24 24">
+                <Path
+                  d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 19H11V17H13V19ZM15.07 11.25L14.17 12.17C13.45 12.9 13 13.5 13 15H11V14.5C11 13.4 11.45 12.4 12.17 11.67L13.41 10.41C13.78 10.05 14 9.55 14 9C14 7.9 13.1 7 12 7C10.9 7 10 7.9 10 9H8C8 6.79 9.79 5 12 5C14.21 5 16 6.79 16 9C16 9.88 15.64 10.68 15.07 11.25Z"
+                  fill={theme.colors.secondary.lightGold}
+                />
+              </Svg>
+              <Text style={styles.guidanceToggleText}>Prayer Guide</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={generateAIPrayerGuide}
+              style={[styles.guidanceToggle, styles.aiToggle]}
+              disabled={isGeneratingGuide}
+            >
+              <Svg width="20" height="20" viewBox="0 0 24 24">
+                <Path
+                  d="M9 11.75A1.25 1.25 0 0 0 7.75 13A1.25 1.25 0 0 0 9 14.25A1.25 1.25 0 0 0 10.25 13A1.25 1.25 0 0 0 9 11.75ZM15 11.75A1.25 1.25 0 0 0 13.75 13A1.25 1.25 0 0 0 15 14.25A1.25 1.25 0 0 0 16.25 13A1.25 1.25 0 0 0 15 11.75ZM12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2ZM12 20C7.59 20 4 16.41 4 12C4 11.71 4.02 11.42 4.05 11.14C6.41 10.09 8.28 8.16 9.26 5.77C11.07 8.33 14.05 10 17.42 10C18.2 10 18.95 9.91 19.67 9.74C19.88 10.45 20 11.21 20 12C20 16.41 16.41 20 12 20Z"
+                  fill={theme.colors.success.celebratoryGold}
+                />
+              </Svg>
+              <Text style={[styles.guidanceToggleText, styles.aiToggleText]}>
+                {isGeneratingGuide ? 'Generating...' : '✨ AI Prayer Coach'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <Card variant="parchment" style={styles.guidanceCard}>
             <TouchableOpacity
               onPress={() => setShowGuidance(false)}
               style={styles.guidanceHeader}
             >
-              <Text style={styles.guidanceTitle}>Prayer Guide</Text>
+              <Text style={styles.guidanceTitle}>
+                {useAIGuide ? '✨ AI Prayer Guide' : 'Prayer Guide'}
+              </Text>
               <Text style={styles.hideText}>Hide</Text>
             </TouchableOpacity>
 
-            <View style={styles.guidanceSection}>
-              <Text style={styles.guidanceStepTitle}>1. Start with Praise</Text>
-              <Text style={styles.guidanceStepText}>
-                "Father God, I praise You for Your wisdom and love..."
-              </Text>
-            </View>
+            {isGeneratingGuide ? (
+              <View style={styles.loadingGuide}>
+                <ActivityIndicator size="large" color={theme.colors.success.celebratoryGold} />
+                <Text style={styles.loadingGuideText}>
+                  Crafting personalized prayer guidance...
+                </Text>
+              </View>
+            ) : useAIGuide && prayerGuide ? (
+              <>
+                <View style={styles.guidanceSection}>
+                  <Text style={styles.guidanceStepTitle}>1. Start with Praise</Text>
+                  <Text style={styles.guidanceStepText}>
+                    {prayerGuide.praise}
+                  </Text>
+                </View>
 
-            <View style={styles.guidanceSection}>
-              <Text style={styles.guidanceStepTitle}>2. Reflect on the Verse</Text>
-              <Text style={styles.guidanceStepText}>
-                Share what this verse means to you and how it speaks to your heart.
-              </Text>
-            </View>
+                <View style={styles.guidanceSection}>
+                  <Text style={styles.guidanceStepTitle}>2. Reflect on the Verse</Text>
+                  <Text style={styles.guidanceStepText}>
+                    {prayerGuide.reflection}
+                  </Text>
+                </View>
 
-            <View style={styles.guidanceSection}>
-              <Text style={styles.guidanceStepTitle}>3. Personal Application</Text>
-              <Text style={styles.guidanceStepText}>
-                Ask God to help you live out this truth in your daily life.
-              </Text>
-            </View>
+                <View style={styles.guidanceSection}>
+                  <Text style={styles.guidanceStepTitle}>3. Personal Application</Text>
+                  <Text style={styles.guidanceStepText}>
+                    {prayerGuide.application}
+                  </Text>
+                </View>
 
-            <View style={styles.guidanceSection}>
-              <Text style={styles.guidanceStepTitle}>4. Close with Thanks</Text>
-              <Text style={styles.guidanceStepText}>
-                "Thank You for Your Word and presence. In Jesus' name, Amen."
-              </Text>
-            </View>
+                <View style={styles.guidanceSection}>
+                  <Text style={styles.guidanceStepTitle}>4. Close with Thanks</Text>
+                  <Text style={styles.guidanceStepText}>
+                    {prayerGuide.closing}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.guidanceSection}>
+                  <Text style={styles.guidanceStepTitle}>1. Start with Praise</Text>
+                  <Text style={styles.guidanceStepText}>
+                    "Father God, I praise You for Your wisdom and love..."
+                  </Text>
+                </View>
+
+                <View style={styles.guidanceSection}>
+                  <Text style={styles.guidanceStepTitle}>2. Reflect on the Verse</Text>
+                  <Text style={styles.guidanceStepText}>
+                    Share what this verse means to you and how it speaks to your heart.
+                  </Text>
+                </View>
+
+                <View style={styles.guidanceSection}>
+                  <Text style={styles.guidanceStepTitle}>3. Personal Application</Text>
+                  <Text style={styles.guidanceStepText}>
+                    Ask God to help you live out this truth in your daily life.
+                  </Text>
+                </View>
+
+                <View style={styles.guidanceSection}>
+                  <Text style={styles.guidanceStepTitle}>4. Close with Thanks</Text>
+                  <Text style={styles.guidanceStepText}>
+                    "Thank You for Your Word and presence. In Jesus' name, Amen."
+                  </Text>
+                </View>
+              </>
+            )}
           </Card>
         )}
 
@@ -350,6 +444,10 @@ const styles = StyleSheet.create({
   reference: {
     marginTop: theme.spacing.sm,
   },
+  guidanceOptions: {
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xl,
+  },
   guidanceToggle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -359,7 +457,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     backgroundColor: theme.colors.background.lightCream,
     borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.xl,
     ...theme.shadows.sm,
   },
   guidanceToggleText: {
@@ -367,6 +464,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
+  },
+  aiToggle: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    ...theme.shadows.md,
+  },
+  aiToggleText: {
+    color: theme.colors.text.onDark,
   },
   guidanceCard: {
     marginBottom: theme.spacing.xl,
@@ -481,6 +585,17 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: theme.spacing.sm,
+  },
+  loadingGuide: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl,
+    gap: theme.spacing.md,
+  },
+  loadingGuideText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
   },
 });
 
