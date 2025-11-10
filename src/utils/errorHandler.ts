@@ -11,9 +11,16 @@
 
 import { Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import * as Sentry from '@sentry/react-native';
 import { logger } from './logger';
 import { analyticsService } from '../services/analyticsService';
+
+// Try to load Sentry (optional for testing)
+let Sentry: any = null;
+try {
+  Sentry = require('@sentry/react-native');
+} catch (error) {
+  // Sentry not available
+}
 
 export interface ErrorHandlerOptions {
   showAlert?: boolean; // Show alert to user (default: true)
@@ -142,8 +149,8 @@ class ErrorHandler {
     // Log to console
     logger.error(`[ErrorHandler] ${errorType} error${screen ? ` on ${screen}` : ''}:`, error);
 
-    // Log to Sentry
-    if (logToSentry && errorType !== ErrorType.OFFLINE) {
+    // Log to Sentry (if available)
+    if (Sentry && logToSentry && errorType !== ErrorType.OFFLINE) {
       try {
         Sentry.captureException(error, {
           tags: {

@@ -1,11 +1,18 @@
 console.log('[App.tsx] Starting module imports...');
 
-// Initialize Sentry FIRST, before any other imports
-import * as Sentry from '@sentry/react-native';
+// Try to load Sentry (optional for testing in Expo Go)
+let Sentry: any = null;
+try {
+  Sentry = require('@sentry/react-native');
+  console.log('[App.tsx] Sentry loaded');
+} catch (error) {
+  console.log('[App.tsx] Sentry not available (testing mode)');
+}
+
 import { config } from './src/config/env';
 
-// Initialize Sentry if DSN is provided
-if (config.sentry.dsn && config.sentry.enabled) {
+// Initialize Sentry if available and DSN is provided
+if (Sentry && config.sentry.dsn && config.sentry.enabled) {
   Sentry.init({
     dsn: config.sentry.dsn,
     // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
@@ -25,7 +32,7 @@ if (config.sentry.dsn && config.sentry.enabled) {
   });
   console.log('[App.tsx] Sentry initialized');
 } else {
-  console.log('[App.tsx] Sentry not configured (missing DSN)');
+  console.log('[App.tsx] Sentry not configured (missing DSN or module)');
 }
 
 import React, { useState, useEffect } from 'react';

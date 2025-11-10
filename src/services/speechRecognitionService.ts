@@ -3,11 +3,19 @@
  * Handles speech-to-text conversion for verse recitation
  */
 
-import Voice, {
-  SpeechResultsEvent,
-  SpeechErrorEvent,
-} from '@react-native-voice/voice';
 import { logger } from '../utils/logger';
+
+// Try to load Voice module (optional for testing in Expo Go)
+let Voice: any = null;
+let SpeechResultsEvent: any = null;
+let SpeechErrorEvent: any = null;
+try {
+  const VoiceModule = require('@react-native-voice/voice');
+  Voice = VoiceModule.default;
+  logger.log('[SpeechRecognition] Voice module loaded');
+} catch (error) {
+  logger.log('[SpeechRecognition] Voice module not available (testing mode)');
+}
 
 export interface SpeechRecognitionResult {
   text: string;
@@ -24,18 +32,24 @@ class SpeechRecognitionService {
   private onErrorCallback: SpeechErrorCallback | null = null;
 
   constructor() {
-    // Set up event handlers
-    Voice.onSpeechStart = this.onSpeechStart;
-    Voice.onSpeechEnd = this.onSpeechEnd;
-    Voice.onSpeechResults = this.onSpeechResults;
-    Voice.onSpeechPartialResults = this.onSpeechPartialResults;
-    Voice.onSpeechError = this.onSpeechError;
+    // Set up event handlers (if Voice is available)
+    if (Voice) {
+      Voice.onSpeechStart = this.onSpeechStart;
+      Voice.onSpeechEnd = this.onSpeechEnd;
+      Voice.onSpeechResults = this.onSpeechResults;
+      Voice.onSpeechPartialResults = this.onSpeechPartialResults;
+      Voice.onSpeechError = this.onSpeechError;
+    }
   }
 
   /**
    * Check if speech recognition is available
    */
   async isAvailable(): Promise<boolean> {
+    if (!Voice) {
+      logger.log('[SpeechRecognition] Voice module not loaded');
+      return false;
+    }
     try {
       const available = await Voice.isAvailable();
       return available === 1;
@@ -71,10 +85,15 @@ class SpeechRecognitionService {
       this.onErrorCallback = onError;
 
       // Start listening
-      await Voice.start('en-US');
-      this.isListening = true;
-      logger.log('[SpeechRecognition] Started listening');
-      return true;
+      if (Voice) {
+        await Voice.start('en-US');
+        this.isListening = true;
+        logger.log('[SpeechRecognition] Started listening');
+        return true;
+      } else {
+        onError('Speech recognition module not available');
+        return false;
+      }
     } catch (error) {
       logger.error('[SpeechRecognition] Error starting:', error);
       onError('Failed to start speech recognition');
@@ -87,7 +106,7 @@ class SpeechRecognitionService {
    */
   async stopListening(): Promise<void> {
     try {
-      if (!this.isListening) {
+      if (!this.isListening || !Voice) {
         return;
       }
 
@@ -104,7 +123,7 @@ class SpeechRecognitionService {
    */
   async cancelListening(): Promise<void> {
     try {
-      if (!this.isListening) {
+      if (!this.isListening || !Voice) {
         return;
       }
 
@@ -128,7 +147,9 @@ class SpeechRecognitionService {
    */
   async destroy(): Promise<void> {
     try {
-      await Voice.destroy();
+      if (Voice) {
+        await Voice.destroy();
+      }
       this.isListening = false;
       this.onResultCallback = null;
       this.onErrorCallback = null;
