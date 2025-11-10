@@ -12,6 +12,7 @@ import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 import { practiceConfig } from '../config/practiceConfig';
+import { speechRecognitionService } from '../services/speechRecognitionService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
 
@@ -39,6 +40,8 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
     currentLevel: number;
     xpForNextLevel: number;
   } | null>(null);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [partialSpeechText, setPartialSpeechText] = useState<string>('');
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
@@ -49,6 +52,13 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     loadVerses();
   }, [verseId]);
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      speechRecognitionService.destroy();
+    };
+  }, []);
 
   const loadVerses = async () => {
     try {
@@ -78,7 +88,12 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   // Microphone recording animation
-  const startRecording = () => {
+  const startRecording = async () => {
+    // Clear any previous errors and partial text
+    setSpeechError(null);
+    setPartialSpeechText('');
+
+    // Start animations
     setIsRecording(true);
     Animated.loop(
       Animated.sequence([
@@ -111,23 +126,52 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       ])
     ).start();
 
-    // Auto-stop after 5 seconds (in real app, this would be user-controlled)
-    setTimeout(() => {
-      stopRecording();
-    }, 5000);
+    // Start speech recognition
+    const success = await speechRecognitionService.startListening(
+      (result) => {
+        // Handle speech results
+        logger.log('[RecallScreen] Speech result:', result.text, 'isFinal:', result.isFinal);
+
+        if (result.isFinal) {
+          // Final result - update input and stop recording
+          setUserInput(result.text);
+          setPartialSpeechText('');
+          stopRecording();
+        } else {
+          // Partial result - show in UI
+          setPartialSpeechText(result.text);
+        }
+      },
+      (error) => {
+        // Handle speech errors
+        logger.error('[RecallScreen] Speech error:', error);
+        setSpeechError(error);
+        stopRecording();
+      }
+    );
+
+    // If failed to start, stop recording state
+    if (!success) {
+      setIsRecording(false);
+      micPulseAnim.stopAnimation();
+      waveHeightAnim.stopAnimation();
+      micPulseAnim.setValue(1);
+      waveHeightAnim.setValue(20);
+    }
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     setIsRecording(false);
     micPulseAnim.stopAnimation();
     waveHeightAnim.stopAnimation();
     micPulseAnim.setValue(1);
     waveHeightAnim.setValue(20);
-    // In real app, process voice input here
-    const verse = verses[currentVerseIndex];
-    if (verse) {
-      checkAnswer("For I know the plans I have for you");
-    }
+
+    // Stop speech recognition
+    await speechRecognitionService.stopListening();
+
+    // Clear partial text
+    setPartialSpeechText('');
   };
 
   const checkAnswer = async (answer: string) => {
@@ -200,6 +244,8 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       setShowAnswer(false);
       setHintsUsed(0);
       setHasAnswered(false);
+      setSpeechError(null);
+      setPartialSpeechText('');
       feedbackAnim.setValue(0);
     } else {
       // Show lesson summary
@@ -394,9 +440,26 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
               </TouchableOpacity>
             </Animated.View>
             <Text style={styles.micLabel}>
-              {isRecording ? 'Recording...' : 'Tap to speak'}
+              {isRecording
+                ? partialSpeechText
+                  ? `"${partialSpeechText}"`
+                  : 'Listening...'
+                : 'Tap to speak'}
             </Text>
           </View>
+
+          {/* Speech error message */}
+          {speechError && (
+            <View style={styles.speechErrorContainer}>
+              <Svg width="20" height="20" viewBox="0 0 24 24">
+                <Path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                  fill={theme.colors.error.main}
+                />
+              </Svg>
+              <Text style={styles.speechErrorText}>{speechError}</Text>
+            </View>
+          )}
 
           {/* Audio waveform (when recording) */}
           {isRecording && (
@@ -656,6 +719,25 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.md,
+  },
+  speechErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.md,
+    padding: theme.spacing.sm,
+    backgroundColor: theme.colors.error.light,
+    borderRadius: theme.borderRadius.sm,
+    marginHorizontal: theme.spacing.lg,
+  },
+  speechErrorText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    color: theme.colors.error.main,
+    fontFamily: theme.typography.fonts.ui.default,
+    flex: 1,
   },
   waveformContainer: {
     flexDirection: 'row',
