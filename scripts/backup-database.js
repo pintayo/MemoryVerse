@@ -37,7 +37,14 @@ function loadEnv() {
   const env = {};
 
   envContent.split('\n').forEach(line => {
-    const match = line.match(/^([^#][^=]+)=(.*)$/);
+    // Skip empty lines and comments
+    const trimmedLine = line.trim();
+    if (!trimmedLine || trimmedLine.startsWith('#')) {
+      return;
+    }
+
+    // Match KEY=VALUE pattern
+    const match = trimmedLine.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
     if (match) {
       const key = match[1].trim();
       const value = match[2].trim().replace(/^["']|["']$/g, '');
