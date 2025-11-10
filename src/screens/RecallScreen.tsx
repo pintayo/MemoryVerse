@@ -8,11 +8,14 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { verseService } from '../services/verseService';
 import { profileService } from '../services/profileService';
+import { supabase } from '../lib/supabase';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 import { practiceConfig } from '../config/practiceConfig';
 import { speechRecognitionService } from '../services/speechRecognitionService';
+import { spacedRepetitionService } from '../services/spacedRepetitionService';
+import { streakService } from '../services/streakService';
 import { Audio } from 'expo-av';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
@@ -47,6 +50,7 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [verseStartTime, setVerseStartTime] = useState<number>(Date.now());
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
@@ -306,6 +310,54 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
         hints_used: hintsUsed,
         xp_earned: xpEarned,
       });
+
+      // Record review for spaced repetition system
+      const timeSpentSeconds = Math.floor((Date.now() - verseStartTime) / 1000);
+      const accuracyScore = result.accuracy / 100; // Convert to 0-1 scale
+
+      // Get or create user_verse_progress entry
+      const { data: existingProgress } = await supabase
+        .from('user_verse_progress')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('verse_id', verse.id)
+        .maybeSingle();
+
+      if (existingProgress?.id) {
+        // Update existing progress with spaced repetition
+        await spacedRepetitionService.recordReview(
+          existingProgress.id,
+          accuracyScore,
+          timeSpentSeconds
+        );
+      } else {
+        // Create new progress entry
+        const { data: newProgress } = await supabase
+          .from('user_verse_progress')
+          .insert({
+            user_id: user.id,
+            verse_id: verse.id,
+            status: 'learning',
+            accuracy_score: accuracyScore,
+            attempts: 1,
+            last_practiced_at: new Date().toISOString(),
+            next_review_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day from now
+          })
+          .select('id')
+          .single();
+
+        if (newProgress?.id) {
+          await spacedRepetitionService.recordReview(
+            newProgress.id,
+            accuracyScore,
+            timeSpentSeconds
+          );
+        }
+      }
+
+      // Record daily practice for streak tracking
+      await streakService.recordPractice(user.id);
+
     } catch (error: any) {
       // Log but don't block - duplicate key errors are OK (means we already have progress for this verse)
       if (error?.code !== '23505') {
@@ -343,6 +395,7 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       setPartialSpeechText('');
       setRecordingUri(null);
       setIsPlaying(false);
+      setVerseStartTime(Date.now()); // Reset timer for next verse
       feedbackAnim.setValue(0);
 
       // Cleanup audio
