@@ -14,6 +14,7 @@ import { Card } from '../components';
 import { theme } from '../theme';
 import { streakService, StreakData, DayActivity } from '../services/streakService';
 import { useAuth } from '../contexts/AuthContext';
+import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import { logger } from '../utils/logger';
 
 interface StreakCalendarScreenProps {
@@ -24,6 +25,9 @@ const StreakCalendarScreen: React.FC<StreakCalendarScreenProps> = ({ navigation 
   const { user, profile } = useAuth();
   const [streakData, setStreakData] = useState<StreakData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Feature flag for streak freeze
+  const canUseStreakFreeze = useFeatureFlag('streakFreeze');
 
   useEffect(() => {
     loadStreakData();
@@ -287,6 +291,9 @@ const StreakCalendarScreen: React.FC<StreakCalendarScreenProps> = ({ navigation 
 
   const renderStreakFreeze = () => {
     if (!streakData) return null;
+
+    // Check feature flag - don't show if disabled
+    if (!canUseStreakFreeze) return null;
 
     return (
       <Card variant="cream" style={styles.freezeCard}>

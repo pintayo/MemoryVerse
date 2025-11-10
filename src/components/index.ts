@@ -30,4 +30,7 @@ console.log('[components/index] BibleVersePicker exported');
 export { StarButton } from './StarButton';
 console.log('[components/index] StarButton exported');
 
+export { FeatureCard } from './FeatureCard';
+console.log('[components/index] FeatureCard exported');
+
 console.log('[components/index] ALL COMPONENTS EXPORTED');
