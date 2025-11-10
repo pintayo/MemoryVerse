@@ -60,7 +60,7 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
 
       // Load multiple random verses for practice lesson
       for (let i = 0; i < practiceConfig.versesPerLesson; i++) {
-        const verse = await verseService.getRandomVerse('NIV');
+        const verse = await verseService.getRandomVerse('KJV');
         if (verse) loadedVerses.push(verse);
       }
 

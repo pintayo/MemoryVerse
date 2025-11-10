@@ -49,6 +49,7 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
       const { data, error } = await supabase
         .from('verses')
         .select('book')
+        .eq('translation', 'KJV') // Only get KJV translation
         .order('book');
 
       if (error) throw error;
@@ -71,6 +72,7 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
         .from('verses')
         .select('chapter')
         .eq('book', book)
+        .eq('translation', 'KJV') // Only get KJV translation
         .order('chapter');
 
       if (error) throw error;
@@ -96,6 +98,7 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
         .select('id, verse_number, text')
         .eq('book', book)
         .eq('chapter', chapter)
+        .eq('translation', 'KJV') // Only get KJV translation
         .order('verse_number');
 
       if (error) throw error;
