@@ -2,6 +2,8 @@
 
 This guide helps you filter verses to show only meaningful, memorable verses for daily devotionals and memorization.
 
+**Multi-Translation Support:** Currently these queries filter KJV only. Once verified working, we'll update all queries to apply to all translations (ASV, BBE, DBY, WBT, WEB, YLT) so premium users can choose their preferred translation.
+
 ---
 
 ## Step 1: Add Quality Fields to verses Table
@@ -418,15 +420,15 @@ WHERE
   LENGTH(text) >= 25 AND
   LENGTH(text) <= 250 AND
   (
-    text ILIKE '%love%' AND NOT text ILIKE '%beloved%' alone OR
+    -- Famous love chapter (1 Corinthians 13)
+    (book = '1 Corinthians' AND chapter = 13) OR
+    -- Love-related verses
+    text ILIKE '%love%' OR
     text ILIKE '%lovingkindness%' OR
-    text ILIKE '%mercy%' AND text ILIKE '%LORD%' OR
+    (text ILIKE '%mercy%' AND text ILIKE '%LORD%') OR
     text ILIKE '%compassion%' OR
     text ILIKE '%tender%'
-  ) AND
-  -- Famous love chapter
-  (book = '1 Corinthians' AND chapter = 13) OR
-  (LENGTH(text) >= 25 AND text ILIKE '%love%');
+  );
 
 -- Mark New Testament teachings
 UPDATE verses
