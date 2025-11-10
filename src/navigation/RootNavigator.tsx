@@ -18,6 +18,9 @@ console.log('[RootNavigator] UnderstandScreen imported');
 import PrayScreen from '../screens/PrayScreen';
 console.log('[RootNavigator] PrayScreen imported');
 
+import { DownloadsScreen } from '../screens/DownloadsScreen';
+console.log('[RootNavigator] DownloadsScreen imported');
+
 import { theme } from '../theme';
 console.log('[RootNavigator] theme imported');
 
@@ -82,6 +85,14 @@ const RootNavigator = () => {
         component={UnderstandScreen}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Downloads"
+        component={DownloadsScreen}
+        options={{
+          title: 'Offline Downloads',
+          headerBackTitle: 'Back',
         }}
       />
     </Stack.Navigator>

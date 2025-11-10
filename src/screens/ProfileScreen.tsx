@@ -499,6 +499,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           ) : (
             <>
               <Button
+                title="📥 Offline Downloads"
+                onPress={() => navigation.navigate('Downloads')}
+                variant="gold"
+                style={styles.actionButton}
+              />
+              <Button
                 title="Edit Profile"
                 onPress={handleEditProfile}
                 variant="secondary"

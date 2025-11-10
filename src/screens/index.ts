@@ -24,4 +24,7 @@ console.log('[screens/index] LoginScreen exported');
 export { default as SignupScreen } from './SignupScreen';
 console.log('[screens/index] SignupScreen exported');
 
+export { DownloadsScreen } from './DownloadsScreen';
+console.log('[screens/index] DownloadsScreen exported');
+
 console.log('[screens/index] ALL SCREENS EXPORTED SUCCESSFULLY');
