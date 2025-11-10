@@ -55,7 +55,28 @@ CREATE TRIGGER trigger_update_verse_notes_updated_at
   EXECUTE FUNCTION update_verse_notes_updated_at();
 ```
 
-### 1.2 Enable Row Level Security (RLS)
+### 1.2 Create user_favorites Table
+
+Go to Supabase SQL Editor and run this:
+
+```sql
+-- Create user_favorites table for starred/favorited verses
+CREATE TABLE IF NOT EXISTS user_favorites (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  verse_id UUID NOT NULL REFERENCES verses(id) ON DELETE CASCADE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, verse_id)
+);
+
+-- Add indexes for performance
+CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_verse_id ON user_favorites(verse_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_created_at ON user_favorites(created_at DESC);
+```
+
+###1.3 Enable Row Level Security (RLS)
 
 ```sql
 -- Enable RLS on verse_notes
@@ -87,9 +108,39 @@ CREATE POLICY "Users can update own notes"
 CREATE POLICY "Users can delete own notes"
   ON verse_notes FOR DELETE
   USING (auth.uid() = user_id);
+
+-- Enable RLS on user_favorites
+ALTER TABLE user_favorites ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view own favorites" ON user_favorites;
+DROP POLICY IF EXISTS "Users can insert own favorites" ON user_favorites;
+DROP POLICY IF EXISTS "Users can update own favorites" ON user_favorites;
+DROP POLICY IF EXISTS "Users can delete own favorites" ON user_favorites;
+
+-- Policy: Users can only see their own favorites
+CREATE POLICY "Users can view own favorites"
+  ON user_favorites FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Policy: Users can insert their own favorites
+CREATE POLICY "Users can insert own favorites"
+  ON user_favorites FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Policy: Users can update their own favorites
+CREATE POLICY "Users can update own favorites"
+  ON user_favorites FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Policy: Users can delete their own favorites
+CREATE POLICY "Users can delete own favorites"
+  ON user_favorites FOR DELETE
+  USING (auth.uid() = user_id);
 ```
 
-### 1.3 Verify Existing Tables
+### 1.4 Verify Existing Tables
 
 Check that these tables exist and have correct structure:
 
