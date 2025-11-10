@@ -17,6 +17,10 @@ logger.log('[verseService] Importing contextGenerator...');
 import { getOrGenerateContext } from './contextGenerator';
 logger.log('[verseService] contextGenerator imported');
 
+logger.log('[verseService] Importing sentryHelper...');
+import { addDatabaseBreadcrumb, errorHandlers } from '../utils/sentryHelper';
+logger.log('[verseService] sentryHelper imported');
+
 logger.log('[verseService] About to define verseService object...');
 
 /**
@@ -50,20 +54,31 @@ export const verseService = {
    * Get verse by ID
    */
   async getVerseById(verseId: string): Promise<Verse | null> {
-    const result = await supabase
-      .from('verses')
-      .select('*')
-      .eq('id', verseId)
-      .single();
+    try {
+      addDatabaseBreadcrumb('SELECT', 'verses', true, { verseId });
 
-    if (!result) {
-      logger.warn('[verseService] getVerseById returned undefined for verse:', verseId);
-      return null;
+      const result = await supabase
+        .from('verses')
+        .select('*')
+        .eq('id', verseId)
+        .single();
+
+      if (!result) {
+        logger.warn('[verseService] getVerseById returned undefined for verse:', verseId);
+        addDatabaseBreadcrumb('SELECT', 'verses', false, { verseId, reason: 'undefined result' });
+        return null;
+      }
+
+      const { data, error } = result;
+      if (error) {
+        addDatabaseBreadcrumb('SELECT', 'verses', false, { verseId, error: error.message });
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      errorHandlers.handleVerseError(error as Error, verseId);
+      throw error;
     }
-
-    const { data, error } = result;
-    if (error) throw error;
-    return data;
   },
 
   /**
@@ -483,6 +498,8 @@ export const verseService = {
     error?: string;
   }> {
     try {
+      addDatabaseBreadcrumb('SELECT', 'verses', true, { operation: 'getVerseWithContext', verseId });
+
       // Fetch verse
       const verse = await this.getVerseById(verseId);
 
@@ -506,6 +523,7 @@ export const verseService = {
       };
     } catch (error) {
       logger.error('[VerseService] Error in getVerseWithContext:', error);
+      errorHandlers.handleVerseError(error as Error, verseId);
       return {
         verse: null,
         context: null,

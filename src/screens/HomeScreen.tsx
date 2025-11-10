@@ -44,7 +44,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       setError(null);
 
       // Get today's verse with 24-hour caching
-      const verse = await verseService.getTodayVerseWithCache('NIV');
+      const verse = await verseService.getTodayVerseWithCache('KJV');
 
       if (verse) {
         setTodayVerse(verse);

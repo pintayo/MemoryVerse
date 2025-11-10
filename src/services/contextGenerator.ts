@@ -7,6 +7,7 @@
 import { config } from '../config/env';
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
+import { addAPIBreadcrumb, errorHandlers } from '../utils/sentryHelper';
 
 // Types
 export interface Verse {
@@ -285,6 +286,13 @@ export async function generateContext(
       lastError = error as Error;
       logger.error(`[ContextGenerator] Attempt ${attempt + 1} failed:`, error);
 
+      // Track API error in Sentry
+      addAPIBreadcrumb('POST', 'AI Context API', undefined, {
+        provider: config.ai.provider,
+        attempt: attempt + 1,
+        verse: `${verse.book} ${verse.chapter}:${verse.verse_number}`,
+      });
+
       // Wait before retrying (exponential backoff)
       if (attempt < retries) {
         const delay = config.ai.retryDelayMs * Math.pow(2, attempt);
@@ -292,6 +300,15 @@ export async function generateContext(
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
+  }
+
+  // All attempts failed, report to Sentry
+  if (lastError) {
+    errorHandlers.handleAIError(
+      lastError,
+      config.ai.provider,
+      verse.id
+    );
   }
 
   return {
@@ -405,6 +422,11 @@ export async function getOrGenerateContext(verseId: string): Promise<{
 
     } catch (error) {
       logger.error('[ContextGenerator] Error in getOrGenerateContext:', error);
+      errorHandlers.handleAIError(
+        error as Error,
+        config.ai.provider,
+        verseId
+      );
       return {
         context: null,
         isGenerated: false,

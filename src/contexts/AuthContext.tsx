@@ -4,6 +4,7 @@ import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
 import { Profile } from '../types/database';
 import { logger } from '../utils/logger';
+import { setSentryUser, clearSentryUser, addActionBreadcrumb, errorHandlers } from '../utils/sentryHelper';
 
 interface AuthContextType {
   user: User | null;
@@ -35,11 +36,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (profile) {
         setProfile(profile);
         logger.log('[AuthContext] Profile loaded successfully');
+
+        // Set user context in Sentry for error tracking
+        setSentryUser(userId, profile.email, profile.full_name || undefined);
+        addActionBreadcrumb('Profile loaded', { userId });
       } else {
         logger.warn('[AuthContext] No profile found for user:', userId);
       }
     } catch (error) {
       logger.error('[AuthContext] Error loading profile:', error);
+      errorHandlers.handleAuthError(error as Error, 'load_profile');
     }
   };
 
@@ -72,6 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (error) {
         logger.error('[AuthContext] Error initializing auth:', error);
+        errorHandlers.handleAuthError(error as Error, 'initialize_auth');
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -110,8 +117,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setProfile(null);
       setSession(null);
+
+      // Clear user context from Sentry
+      clearSentryUser();
+      addActionBreadcrumb('User signed out');
     } catch (error) {
       logger.error('[AuthContext] Error signing out:', error);
+      errorHandlers.handleAuthError(error as Error, 'sign_out');
       throw error;
     }
   };
