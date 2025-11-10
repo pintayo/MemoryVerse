@@ -1,5 +1,33 @@
 console.log('[App.tsx] Starting module imports...');
 
+// Initialize Sentry FIRST, before any other imports
+import * as Sentry from '@sentry/react-native';
+import { config } from './src/config/env';
+
+// Initialize Sentry if DSN is provided
+if (config.sentry.dsn && config.sentry.enabled) {
+  Sentry.init({
+    dsn: config.sentry.dsn,
+    // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+    // Enable in production only
+    enabled: !__DEV__,
+    // Capture user context
+    beforeSend(event, hint) {
+      // Don't send events in development
+      if (__DEV__) {
+        console.log('[Sentry] Event captured (dev mode, not sent):', event);
+        return null;
+      }
+      return event;
+    },
+  });
+  console.log('[App.tsx] Sentry initialized');
+} else {
+  console.log('[App.tsx] Sentry not configured (missing DSN)');
+}
+
 import React from 'react';
 import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
 console.log('[App.tsx] React Native imports loaded');
@@ -135,4 +163,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+// Wrap with Sentry's error boundary for better error tracking
+export default config.sentry.dsn ? Sentry.wrap(App) : App;

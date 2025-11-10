@@ -27,7 +27,7 @@ export const verseService = {
   /**
    * Get all verses
    */
-  async getAllVerses(translation: string = 'NIV'): Promise<Verse[]> {
+  async getAllVerses(translation: string = 'KJV'): Promise<Verse[]> {
     const result = await supabase
       .from('verses')
       .select('*')
@@ -69,7 +69,7 @@ export const verseService = {
   /**
    * Get verses by category
    */
-  async getVersesByCategory(category: string, translation: string = 'NIV'): Promise<Verse[]> {
+  async getVersesByCategory(category: string, translation: string = 'KJV'): Promise<Verse[]> {
     const result = await supabase
       .from('verses')
       .select('*')
@@ -90,7 +90,7 @@ export const verseService = {
   /**
    * Get verses by difficulty
    */
-  async getVersesByDifficulty(difficulty: number, translation: string = 'NIV'): Promise<Verse[]> {
+  async getVersesByDifficulty(difficulty: number, translation: string = 'KJV'): Promise<Verse[]> {
     const result = await supabase
       .from('verses')
       .select('*')
@@ -110,7 +110,7 @@ export const verseService = {
   /**
    * Get random verse
    */
-  async getRandomVerse(translation: string = 'NIV'): Promise<Verse | null> {
+  async getRandomVerse(translation: string = 'KJV'): Promise<Verse | null> {
     const result = await supabase
       .from('verses')
       .select('*')
@@ -135,7 +135,7 @@ export const verseService = {
    * Get today's verse with 24-hour caching
    * Returns the same verse all day, refreshes at midnight
    */
-  async getTodayVerseWithCache(translation: string = 'NIV'): Promise<Verse | null> {
+  async getTodayVerseWithCache(translation: string = 'KJV'): Promise<Verse | null> {
     try {
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
 
@@ -176,7 +176,7 @@ export const verseService = {
   /**
    * Get today's verse for a user (personalized based on their progress)
    */
-  async getTodaysVerse(userId: string, translation: string = 'NIV'): Promise<Verse | null> {
+  async getTodaysVerse(userId: string, translation: string = 'KJV'): Promise<Verse | null> {
     // Get user's current progress
     const progressResult = await supabase
       .from('user_verse_progress')

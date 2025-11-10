@@ -90,7 +90,7 @@ export function UnderstandScreen({ navigation, route }: Props) {
   };
 
   const handleRandomVerse = async () => {
-    const randomVerse = await verseService.getRandomVerse('NIV');
+    const randomVerse = await verseService.getRandomVerse('KJV');
     if (randomVerse?.id) {
       setCurrentVerseId(randomVerse.id);
     }
