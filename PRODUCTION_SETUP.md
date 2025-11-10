@@ -35,9 +35,9 @@ CREATE TABLE IF NOT EXISTS verse_notes (
 );
 
 -- Add indexes for performance
-CREATE INDEX idx_verse_notes_user_id ON verse_notes(user_id);
-CREATE INDEX idx_verse_notes_verse_id ON verse_notes(verse_id);
-CREATE INDEX idx_verse_notes_updated_at ON verse_notes(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_verse_notes_user_id ON verse_notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_verse_notes_verse_id ON verse_notes(verse_id);
+CREATE INDEX IF NOT EXISTS idx_verse_notes_updated_at ON verse_notes(updated_at DESC);
 
 -- Add trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_verse_notes_updated_at()
@@ -48,6 +48,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_verse_notes_updated_at ON verse_notes;
 CREATE TRIGGER trigger_update_verse_notes_updated_at
   BEFORE UPDATE ON verse_notes
   FOR EACH ROW
@@ -59,6 +60,12 @@ CREATE TRIGGER trigger_update_verse_notes_updated_at
 ```sql
 -- Enable RLS on verse_notes
 ALTER TABLE verse_notes ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view own notes" ON verse_notes;
+DROP POLICY IF EXISTS "Users can insert own notes" ON verse_notes;
+DROP POLICY IF EXISTS "Users can update own notes" ON verse_notes;
+DROP POLICY IF EXISTS "Users can delete own notes" ON verse_notes;
 
 -- Policy: Users can only see their own notes
 CREATE POLICY "Users can view own notes"
@@ -115,12 +122,17 @@ CREATE TABLE IF NOT EXISTS user_verse_progress (
   UNIQUE(user_id, verse_id)
 );
 
-CREATE INDEX idx_user_verse_progress_user_id ON user_verse_progress(user_id);
-CREATE INDEX idx_user_verse_progress_next_review ON user_verse_progress(next_review_at);
-CREATE INDEX idx_user_verse_progress_status ON user_verse_progress(status);
+CREATE INDEX IF NOT EXISTS idx_user_verse_progress_user_id ON user_verse_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_verse_progress_next_review ON user_verse_progress(next_review_at);
+CREATE INDEX IF NOT EXISTS idx_user_verse_progress_status ON user_verse_progress(status);
 
 -- RLS Policies for user_verse_progress
 ALTER TABLE user_verse_progress ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view own progress" ON user_verse_progress;
+DROP POLICY IF EXISTS "Users can insert own progress" ON user_verse_progress;
+DROP POLICY IF EXISTS "Users can update own progress" ON user_verse_progress;
 
 CREATE POLICY "Users can view own progress"
   ON user_verse_progress FOR SELECT
