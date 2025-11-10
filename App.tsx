@@ -28,7 +28,7 @@ if (config.sentry.dsn && config.sentry.enabled) {
   console.log('[App.tsx] Sentry not configured (missing DSN)');
 }
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
 console.log('[App.tsx] React Native imports loaded');
 
@@ -44,6 +44,9 @@ console.log('[App.tsx] GestureHandlerRootView loaded');
 import { createStackNavigator } from '@react-navigation/stack';
 console.log('[App.tsx] createStackNavigator loaded');
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+console.log('[App.tsx] AsyncStorage loaded');
+
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 console.log('[App.tsx] AuthContext loaded');
 
@@ -55,6 +58,9 @@ console.log('[App.tsx] LoginScreen loaded');
 
 import SignupScreen from './src/screens/SignupScreen';
 console.log('[App.tsx] SignupScreen loaded');
+
+import OnboardingScreen from './src/screens/OnboardingScreen';
+console.log('[App.tsx] OnboardingScreen loaded');
 
 import { ErrorBoundary } from './src/components';
 console.log('[App.tsx] ErrorBoundary loaded');
@@ -98,8 +104,27 @@ const AppNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
   console.log('[AppNavigator] useAuth called, isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
+
+  // Check if user has completed onboarding
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('onboarding_completed');
+        setHasCompletedOnboarding(completed === 'true');
+      } catch (error) {
+        console.error('[AppNavigator] Error checking onboarding:', error);
+        setHasCompletedOnboarding(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      checkOnboarding();
+    }
+  }, [isAuthenticated]);
+
+  // Show loading spinner while checking authentication or onboarding
+  if (isLoading || (isAuthenticated && hasCompletedOnboarding === null)) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
@@ -125,7 +150,12 @@ const AppNavigator = () => {
     );
   }
 
-  // Show main app if authenticated
+  // Show onboarding for first-time users
+  if (!hasCompletedOnboarding) {
+    return <OnboardingScreen onComplete={() => setHasCompletedOnboarding(true)} />;
+  }
+
+  // Show main app if authenticated and onboarding completed
   return <RootNavigator />;
 };
 

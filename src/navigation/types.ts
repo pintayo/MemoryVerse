@@ -6,10 +6,12 @@ export type RootStackParamList = {
   Understand: { verseId: string };
   Downloads: undefined;
   NotificationSettings: undefined;
+  StreakCalendar: undefined;
 };
 
 export type BottomTabParamList = {
   Home: undefined;
+  Search: undefined;
   Favorites: undefined;
   Leaderboard: undefined;
   Profile: undefined;

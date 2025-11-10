@@ -30,4 +30,13 @@ console.log('[screens/index] DownloadsScreen exported');
 export { NotificationSettingsScreen } from './NotificationSettingsScreen';
 console.log('[screens/index] NotificationSettingsScreen exported');
 
+export { default as OnboardingScreen } from './OnboardingScreen';
+console.log('[screens/index] OnboardingScreen exported');
+
+export { default as SearchScreen } from './SearchScreen';
+console.log('[screens/index] SearchScreen exported');
+
+export { default as StreakCalendarScreen } from './StreakCalendarScreen';
+console.log('[screens/index] StreakCalendarScreen exported');
+
 console.log('[screens/index] ALL SCREENS EXPORTED SUCCESSFULLY');
