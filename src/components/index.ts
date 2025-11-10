@@ -27,4 +27,7 @@ console.log('[components/index] LessonCompleteModal exported');
 export { BibleVersePicker } from './BibleVersePicker';
 console.log('[components/index] BibleVersePicker exported');
 
+export { StarButton } from './StarButton';
+console.log('[components/index] StarButton exported');
+
 console.log('[components/index] ALL COMPONENTS EXPORTED');
