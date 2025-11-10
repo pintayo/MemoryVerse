@@ -1,13 +1,44 @@
 /**
  * Analytics Service
- * Tracks user behavior and app events using Firebase Analytics
+ * Tracks user behavior and app events
+ * Currently logs locally - Firebase can be added later
  */
 
-import analytics from '@react-native-firebase/analytics';
 import { logger } from '../utils/logger';
 
 // Track if analytics is enabled
 let analyticsEnabled = true;
+let firebaseAnalytics: any = null;
+
+// Try to load Firebase Analytics if available
+try {
+  // Dynamic import to avoid crash if not installed
+  firebaseAnalytics = require('@react-native-firebase/analytics').default;
+  logger.log('[Analytics] Firebase Analytics loaded');
+} catch (error) {
+  logger.log('[Analytics] Firebase not available, using local logging only');
+}
+
+// Create analytics instance (Firebase or mock)
+const analytics = () => {
+  if (firebaseAnalytics) {
+    return firebaseAnalytics();
+  }
+  // Return mock analytics object if Firebase not available
+  return {
+    setUserId: async () => {},
+    setUserProperty: async () => {},
+    logScreenView: async () => {},
+    logSignUp: async () => {},
+    logLogin: async () => {},
+    logEvent: async () => {},
+    logLevelUp: async () => {},
+    logPurchase: async () => {},
+    logSearch: async () => {},
+    logTutorialBegin: async () => {},
+    logTutorialComplete: async () => {},
+  };
+};
 
 // Helper to safely call analytics
 const safeAnalytics = async (fn: () => Promise<void>, eventName: string) => {
@@ -18,7 +49,11 @@ const safeAnalytics = async (fn: () => Promise<void>, eventName: string) => {
 
   try {
     await fn();
-    logger.log(`[Analytics] Tracked: ${eventName}`);
+    if (firebaseAnalytics) {
+      logger.log(`[Analytics] Tracked to Firebase: ${eventName}`);
+    } else {
+      logger.log(`[Analytics] Event logged: ${eventName}`);
+    }
   } catch (error) {
     logger.warn(`[Analytics] Failed to track ${eventName}:`, error);
   }
