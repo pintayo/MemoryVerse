@@ -46,17 +46,20 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
   const loadBooks = async () => {
     try {
       setIsLoading(true);
+      // Increase limit to get all verses (Supabase defaults to 1000 rows max)
       const { data, error } = await supabase
         .from('verses')
         .select('book')
         .eq('translation', 'KJV') // Only get KJV translation
-        .order('book');
+        .order('book')
+        .limit(35000); // Get all ~31k verses to ensure we get all books
 
       if (error) throw error;
 
       // Get unique books
       const uniqueBooks = [...new Set(data.map((item: Book) => item.book))];
-      logger.log(`[BibleVersePicker] Loaded ${uniqueBooks.length} books:`, uniqueBooks.slice(0, 5));
+      logger.log(`[BibleVersePicker] Loaded ${uniqueBooks.length} books from ${data.length} verses`);
+      logger.log(`[BibleVersePicker] Books:`, uniqueBooks);
       setBooks(uniqueBooks);
     } catch (error) {
       logger.error('[BibleVersePicker] Error loading books:', error);

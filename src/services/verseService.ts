@@ -124,13 +124,25 @@ export const verseService = {
 
   /**
    * Get random verse
+   * Filters to only include memorable verses (no genealogies, itineraries, etc.)
    */
   async getRandomVerse(translation: string = 'KJV'): Promise<Verse | null> {
-    const result = await supabase
+    // Try to get memorable verses first (requires is_memorable column)
+    let result = await supabase
       .from('verses')
       .select('*')
       .eq('translation', translation)
+      .eq('is_memorable', true) // Only get memorable verses
       .limit(100); // Get a pool of verses
+
+    // If no memorable verses found (column might not exist yet), try without filter
+    if (!result?.data || result.data.length === 0) {
+      result = await supabase
+        .from('verses')
+        .select('*')
+        .eq('translation', translation)
+        .limit(100);
+    }
 
     if (!result) {
       logger.warn('[verseService] getRandomVerse returned undefined');
