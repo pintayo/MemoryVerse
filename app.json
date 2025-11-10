@@ -11,15 +11,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.memoryverse.app",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "bundleIdentifier": "com.memoryverse.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F5F0E8"
       },
-      "package": "com.memoryverse.app",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.memoryverse.app"
     }
   }
 }
