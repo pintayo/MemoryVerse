@@ -3,14 +3,18 @@
  * Enhanced error tracking with user context, breadcrumbs, and tags
  */
 
+import { ENABLE_NATIVE_MODULES } from '../config/nativeModules';
 import { logger } from './logger';
 
-// Try to load Sentry (optional for testing)
+// Try to load Sentry (only in production builds, not Expo Go)
 let Sentry: any = null;
-try {
-  Sentry = require('@sentry/react-native');
-} catch (error) {
-  // Sentry not available
+
+if (ENABLE_NATIVE_MODULES) {
+  try {
+    Sentry = require('@sentry/react-native');
+  } catch (error) {
+    // Sentry not available
+  }
 }
 
 /**

@@ -4,19 +4,21 @@
  * Currently logs locally - Firebase can be added later
  */
 
+import { ENABLE_NATIVE_MODULES } from '../config/nativeModules';
 import { logger } from '../utils/logger';
 
 // Track if analytics is enabled
 let analyticsEnabled = true;
 let firebaseAnalytics: any = null;
 
-// Try to load Firebase Analytics if available
-try {
-  // Dynamic import to avoid crash if not installed
-  firebaseAnalytics = require('@react-native-firebase/analytics').default;
-  logger.log('[Analytics] Firebase Analytics loaded');
-} catch (error) {
-  logger.log('[Analytics] Firebase not available, using local logging only');
+// Try to load Firebase Analytics (only in production builds, not Expo Go)
+if (ENABLE_NATIVE_MODULES) {
+  try {
+    firebaseAnalytics = require('@react-native-firebase/analytics').default;
+    logger.log('[Analytics] Firebase Analytics loaded');
+  } catch (error) {
+    logger.log('[Analytics] Firebase not available, using local logging only');
+  }
 }
 
 // Create analytics instance (Firebase or mock)

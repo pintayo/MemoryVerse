@@ -3,18 +3,20 @@
  * Handles speech-to-text conversion for verse recitation
  */
 
+import { ENABLE_NATIVE_MODULES } from '../config/nativeModules';
 import { logger } from '../utils/logger';
 
-// Try to load Voice module (optional for testing in Expo Go)
+// Try to load Voice module (only in production builds, not Expo Go)
 let Voice: any = null;
-let SpeechResultsEvent: any = null;
-let SpeechErrorEvent: any = null;
-try {
-  const VoiceModule = require('@react-native-voice/voice');
-  Voice = VoiceModule.default;
-  logger.log('[SpeechRecognition] Voice module loaded');
-} catch (error) {
-  logger.log('[SpeechRecognition] Voice module not available (testing mode)');
+
+if (ENABLE_NATIVE_MODULES) {
+  try {
+    const VoiceModule = require('@react-native-voice/voice');
+    Voice = VoiceModule.default;
+    logger.log('[SpeechRecognition] Voice module loaded');
+  } catch (error) {
+    logger.log('[SpeechRecognition] Voice module not available');
+  }
 }
 
 export interface SpeechRecognitionResult {

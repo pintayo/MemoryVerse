@@ -4,16 +4,21 @@
  * Sends errors to Sentry in production
  */
 
+import { ENABLE_NATIVE_MODULES } from '../config/nativeModules';
+
 const isDevelopment = __DEV__;
 
-// Try to load Sentry (optional for testing)
+// Try to load Sentry (only in production builds, not Expo Go)
 let Sentry: any = null;
 let sentryInitialized = false;
-try {
-  Sentry = require('@sentry/react-native');
-  sentryInitialized = !!Sentry;
-} catch (e) {
-  sentryInitialized = false;
+
+if (ENABLE_NATIVE_MODULES) {
+  try {
+    Sentry = require('@sentry/react-native');
+    sentryInitialized = !!Sentry;
+  } catch (e) {
+    sentryInitialized = false;
+  }
 }
 
 export const logger = {

@@ -1,11 +1,42 @@
 console.log('[App.tsx] Starting module imports...');
 
-// Don't load Sentry at all - it's incompatible with Expo Go
-// Sentry will be enabled when building with EAS Build
-let Sentry: any = null;
-console.log('[App.tsx] Sentry disabled for Expo Go compatibility');
-
+import { ENABLE_NATIVE_MODULES } from './src/config/nativeModules';
 import { config } from './src/config/env';
+
+// Try to load Sentry (only in production builds, not Expo Go)
+let Sentry: any = null;
+if (ENABLE_NATIVE_MODULES) {
+  try {
+    Sentry = require('@sentry/react-native');
+    console.log('[App.tsx] Sentry module loaded');
+
+    // Initialize Sentry if DSN is provided
+    if (config.sentry.dsn && config.sentry.enabled) {
+      try {
+        Sentry.init({
+          dsn: config.sentry.dsn,
+          tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+          enabled: !__DEV__,
+          beforeSend(event, hint) {
+            if (__DEV__) {
+              console.log('[Sentry] Event captured (dev mode, not sent):', event);
+              return null;
+            }
+            return event;
+          },
+        });
+        console.log('[App.tsx] Sentry initialized successfully');
+      } catch (error) {
+        console.log('[App.tsx] Sentry init failed:', error);
+        Sentry = null;
+      }
+    }
+  } catch (error) {
+    console.log('[App.tsx] Sentry not available:', error);
+  }
+} else {
+  console.log('[App.tsx] Sentry disabled (Expo Go mode)');
+}
 
 import React, { useState, useEffect } from 'react';
 import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';

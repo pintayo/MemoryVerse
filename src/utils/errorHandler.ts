@@ -11,15 +11,19 @@
 
 import { Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
+import { ENABLE_NATIVE_MODULES } from '../config/nativeModules';
 import { logger } from './logger';
 import { analyticsService } from '../services/analyticsService';
 
-// Try to load Sentry (optional for testing)
+// Try to load Sentry (only in production builds, not Expo Go)
 let Sentry: any = null;
-try {
-  Sentry = require('@sentry/react-native');
-} catch (error) {
-  // Sentry not available
+
+if (ENABLE_NATIVE_MODULES) {
+  try {
+    Sentry = require('@sentry/react-native');
+  } catch (error) {
+    // Sentry not available
+  }
 }
 
 export interface ErrorHandlerOptions {
