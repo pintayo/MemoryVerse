@@ -27,4 +27,7 @@ console.log('[screens/index] SignupScreen exported');
 export { DownloadsScreen } from './DownloadsScreen';
 console.log('[screens/index] DownloadsScreen exported');
 
+export { NotificationSettingsScreen } from './NotificationSettingsScreen';
+console.log('[screens/index] NotificationSettingsScreen exported');
+
 console.log('[screens/index] ALL SCREENS EXPORTED SUCCESSFULLY');

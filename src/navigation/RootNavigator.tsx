@@ -21,6 +21,9 @@ console.log('[RootNavigator] PrayScreen imported');
 import { DownloadsScreen } from '../screens/DownloadsScreen';
 console.log('[RootNavigator] DownloadsScreen imported');
 
+import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
+console.log('[RootNavigator] NotificationSettingsScreen imported');
+
 import { theme } from '../theme';
 console.log('[RootNavigator] theme imported');
 
@@ -92,6 +95,14 @@ const RootNavigator = () => {
         component={DownloadsScreen}
         options={{
           title: 'Offline Downloads',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{
+          title: 'Daily Reminders',
           headerBackTitle: 'Back',
         }}
       />

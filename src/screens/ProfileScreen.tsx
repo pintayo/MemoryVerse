@@ -499,9 +499,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           ) : (
             <>
               <Button
+                title="🔔 Daily Reminders"
+                onPress={() => navigation.navigate('NotificationSettings')}
+                variant="gold"
+                style={styles.actionButton}
+              />
+              <Button
                 title="📥 Offline Downloads"
                 onPress={() => navigation.navigate('Downloads')}
-                variant="gold"
+                variant="secondary"
                 style={styles.actionButton}
               />
               <Button

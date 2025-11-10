@@ -5,6 +5,7 @@ export type RootStackParamList = {
   Pray: { verseId: string };
   Understand: { verseId: string };
   Downloads: undefined;
+  NotificationSettings: undefined;
 };
 
 export type BottomTabParamList = {
