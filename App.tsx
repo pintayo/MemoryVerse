@@ -1,17 +1,30 @@
-console.log('[App.tsx] Starting module imports...');
+console.log('[App.tsx] =============== Starting module imports ===============');
 
 import { ENABLE_NATIVE_MODULES } from './src/config/nativeModules';
+
+console.log('[App.tsx] ENABLE_NATIVE_MODULES imported:', ENABLE_NATIVE_MODULES);
+console.log('[App.tsx] ENABLE_NATIVE_MODULES type:', typeof ENABLE_NATIVE_MODULES);
+
 import { config } from './src/config/env';
+
+console.log('[App.tsx] config imported');
 
 // Try to load Sentry (only in production builds, not Expo Go)
 let Sentry: any = null;
+
+console.log('[App.tsx] About to check ENABLE_NATIVE_MODULES...');
+console.log('[App.tsx] ENABLE_NATIVE_MODULES value:', ENABLE_NATIVE_MODULES);
+
 if (ENABLE_NATIVE_MODULES) {
+  console.log('[App.tsx] NATIVE MODULES ENABLED - Will try to load Sentry');
   try {
+    console.log('[App.tsx] Attempting to require @sentry/react-native...');
     Sentry = require('@sentry/react-native');
-    console.log('[App.tsx] Sentry module loaded');
+    console.log('[App.tsx] Sentry module loaded successfully');
 
     // Initialize Sentry if DSN is provided
     if (config.sentry.dsn && config.sentry.enabled) {
+      console.log('[App.tsx] Sentry DSN found, attempting to initialize...');
       try {
         Sentry.init({
           dsn: config.sentry.dsn,
@@ -30,13 +43,17 @@ if (ENABLE_NATIVE_MODULES) {
         console.log('[App.tsx] Sentry init failed:', error);
         Sentry = null;
       }
+    } else {
+      console.log('[App.tsx] No Sentry DSN configured or not enabled');
     }
   } catch (error) {
-    console.log('[App.tsx] Sentry not available:', error);
+    console.log('[App.tsx] Sentry require failed:', error);
   }
 } else {
-  console.log('[App.tsx] Sentry disabled (Expo Go mode)');
+  console.log('[App.tsx] ⚠️  NATIVE MODULES DISABLED (Expo Go mode) - Sentry will NOT be loaded');
 }
+
+console.log('[App.tsx] Sentry loading complete. Sentry is:', Sentry === null ? 'NULL' : 'LOADED');
 
 import React, { useState, useEffect } from 'react';
 import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
