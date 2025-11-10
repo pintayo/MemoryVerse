@@ -39,4 +39,10 @@ console.log('[screens/index] SearchScreen exported');
 export { default as StreakCalendarScreen } from './StreakCalendarScreen';
 console.log('[screens/index] StreakCalendarScreen exported');
 
+export { default as ReviewScreen } from './ReviewScreen';
+console.log('[screens/index] ReviewScreen exported');
+
+export { default as NotesScreen } from './NotesScreen';
+console.log('[screens/index] NotesScreen exported');
+
 console.log('[screens/index] ALL SCREENS EXPORTED SUCCESSFULLY');

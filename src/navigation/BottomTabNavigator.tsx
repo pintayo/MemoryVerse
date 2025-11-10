@@ -6,7 +6,7 @@ console.log('[BottomTabNavigator] React imported');
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 console.log('[BottomTabNavigator] createBottomTabNavigator imported');
 
-import { HomeScreen, LeaderboardScreen, ProfileScreen } from '../screens';
+import { HomeScreen, LeaderboardScreen, ProfileScreen, ReviewScreen } from '../screens';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import SearchScreen from '../screens/SearchScreen';
 console.log('[BottomTabNavigator] Screens imported');
@@ -54,6 +54,20 @@ const BottomTabNavigator = () => {
             <Svg width={size} height={size} viewBox="0 0 24 24">
               <Path
                 d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
+                fill={color}
+              />
+            </Svg>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Review"
+        component={ReviewScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Svg width={size} height={size} viewBox="0 0 24 24">
+              <Path
+                d="M12 2 C6.48 2 2 6.48 2 12 C2 17.52 6.48 22 12 22 C17.52 22 22 17.52 22 12 C22 6.48 17.52 2 12 2 Z M16 16 L12 14 L8 16 L8 8 L16 8 L16 16 Z"
                 fill={color}
               />
             </Svg>

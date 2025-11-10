@@ -7,10 +7,12 @@ export type RootStackParamList = {
   Downloads: undefined;
   NotificationSettings: undefined;
   StreakCalendar: undefined;
+  Notes: undefined;
 };
 
 export type BottomTabParamList = {
   Home: undefined;
+  Review: undefined;
   Search: undefined;
   Favorites: undefined;
   Leaderboard: undefined;

@@ -225,6 +225,28 @@ export interface Database {
           xp_earned?: number;
         };
       };
+      verse_notes: {
+        Row: {
+          id: string;
+          user_id: string;
+          verse_id: string;
+          note_text: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          verse_id: string;
+          note_text: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          note_text?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       leaderboard: {
@@ -255,4 +277,5 @@ export type UserVerseProgress = Database['public']['Tables']['user_verse_progres
 export type PracticeSession = Database['public']['Tables']['practice_sessions']['Row'];
 export type Achievement = Database['public']['Tables']['achievements']['Row'];
 export type DailyStreak = Database['public']['Tables']['daily_streaks']['Row'];
+export type VerseNote = Database['public']['Tables']['verse_notes']['Row'];
 export type LeaderboardEntry = Database['public']['Views']['leaderboard']['Row'];

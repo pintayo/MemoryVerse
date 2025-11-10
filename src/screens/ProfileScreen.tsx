@@ -499,9 +499,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           ) : (
             <>
               <Button
+                title="📝 Study Notes"
+                onPress={() => navigation.navigate('Notes')}
+                variant="gold"
+                style={styles.actionButton}
+              />
+              <Button
                 title="🔥 View Streak Calendar"
                 onPress={() => navigation.navigate('StreakCalendar')}
-                variant="gold"
+                variant="secondary"
                 style={styles.actionButton}
               />
               <Button
