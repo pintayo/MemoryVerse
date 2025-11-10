@@ -239,5 +239,5 @@ const styles = StyleSheet.create({
   },
 });
 
-// Wrap with Sentry's error boundary for better error tracking
-export default config.sentry.dsn ? Sentry.wrap(App) : App;
+// Wrap with Sentry's error boundary for better error tracking (only if Sentry is loaded)
+export default (ENABLE_NATIVE_MODULES && Sentry && config.sentry.dsn) ? Sentry.wrap(App) : App;
