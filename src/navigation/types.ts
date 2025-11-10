@@ -8,6 +8,8 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   StreakCalendar: undefined;
   Notes: undefined;
+  PremiumUpgrade: undefined;
+  Settings: undefined;
 };
 
 export type BottomTabParamList = {

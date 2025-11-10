@@ -498,6 +498,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             </>
           ) : (
             <>
+              {/* Premium Upgrade/Manage Button */}
+              <Button
+                title={isPremiumUser ? "⭐ Manage Premium" : "⭐ Upgrade to Premium"}
+                onPress={() => navigation.navigate('PremiumUpgrade')}
+                variant={isPremiumUser ? "secondary" : "gold"}
+                style={styles.actionButton}
+              />
               <Button
                 title="📝 Study Notes"
                 onPress={() => navigation.navigate('Notes')}
@@ -519,6 +526,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               <Button
                 title="📥 Offline Downloads"
                 onPress={() => navigation.navigate('Downloads')}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
+                title="⚙️ Settings"
+                onPress={() => navigation.navigate('Settings')}
                 variant="secondary"
                 style={styles.actionButton}
               />

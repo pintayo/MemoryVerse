@@ -38,6 +38,28 @@ export interface FeatureFlagsConfig {
   dailyReminders: FeatureModule;
   streakFreeze: FeatureModule;
 
+  // MONETIZATION & SETTINGS
+  premiumUpgrade: FeatureModule;
+  settingsScreen: FeatureModule;
+  inAppPurchases: FeatureModule;
+
+  // GROWTH & RETENTION
+  appReviewPrompt: FeatureModule;
+  enhancedAnalytics: FeatureModule;
+  deepLinking: FeatureModule;
+
+  // DATA & EXPORT
+  exportData: FeatureModule;
+  dataBackup: FeatureModule;
+
+  // POLISH & UX
+  betterErrorStates: FeatureModule;
+  hapticFeedback: FeatureModule;
+  loadingSkeletons: FeatureModule;
+  emptyStates: FeatureModule;
+  pullToRefresh: FeatureModule;
+  whatsNewScreen: FeatureModule;
+
   // CONTENT & DISCOVERY
   verseCollections: FeatureModule;
   readingPlans: FeatureModule;
@@ -174,6 +196,129 @@ export const featureFlags: FeatureFlagsConfig = {
     enabled: true,
     premium: true, // Premium only
     description: 'Protect streak once per week',
+    version: 'v1.0',
+  },
+
+  // ============================================
+  // MONETIZATION & SETTINGS (v1.0 - BUILDING NOW)
+  // ============================================
+
+  premiumUpgrade: {
+    enabled: true,
+    premium: false,
+    description: 'Premium subscription upgrade screen',
+    version: 'v1.0',
+  },
+
+  settingsScreen: {
+    enabled: true,
+    premium: false,
+    description: 'Comprehensive settings and preferences',
+    version: 'v1.0',
+  },
+
+  inAppPurchases: {
+    enabled: false, // TODO: Configure IAP
+    premium: false,
+    comingSoon: true,
+    description: 'Apple/Google in-app purchase integration',
+    version: 'v1.0',
+  },
+
+  // ============================================
+  // GROWTH & RETENTION (v1.0 - BUILDING NOW)
+  // ============================================
+
+  appReviewPrompt: {
+    enabled: true,
+    premium: false,
+    description: 'Smart app store review requests',
+    version: 'v1.0',
+  },
+
+  enhancedAnalytics: {
+    enabled: true,
+    premium: false,
+    description: 'Detailed event tracking and funnels',
+    version: 'v1.0',
+  },
+
+  deepLinking: {
+    enabled: false, // TODO: Build this
+    premium: false,
+    comingSoon: true,
+    description: 'Open app from shared links',
+    version: 'v1.0',
+  },
+
+  // ============================================
+  // DATA & EXPORT (v1.0 - FUTURE)
+  // ============================================
+
+  exportData: {
+    enabled: false, // TODO: Build this
+    premium: false,
+    comingSoon: true,
+    description: 'Export notes and progress as PDF/CSV',
+    version: 'v1.0',
+  },
+
+  dataBackup: {
+    enabled: false, // TODO: Build this
+    premium: true,
+    comingSoon: true,
+    description: 'Automatic cloud backup of all data',
+    version: 'v1.0',
+  },
+
+  // ============================================
+  // POLISH & UX (v1.0 - BUILDING NOW)
+  // ============================================
+
+  betterErrorStates: {
+    enabled: true,
+    premium: false,
+    description: 'User-friendly error messages and retry',
+    version: 'v1.0',
+  },
+
+  hapticFeedback: {
+    enabled: false, // TODO: Build this
+    premium: false,
+    comingSoon: true,
+    description: 'Vibration feedback for interactions',
+    version: 'v1.0',
+  },
+
+  loadingSkeletons: {
+    enabled: false, // TODO: Build this
+    premium: false,
+    comingSoon: true,
+    description: 'Skeleton screens while loading',
+    version: 'v1.0',
+  },
+
+  emptyStates: {
+    enabled: false, // TODO: Build this
+    premium: false,
+    comingSoon: true,
+    description: 'Beautiful empty state illustrations',
+    version: 'v1.0',
+  },
+
+  pullToRefresh: {
+    enabled: false, // TODO: Build this
+    premium: false,
+    comingSoon: true,
+    description: 'Pull-to-refresh on all list screens',
+    version: 'v1.0',
+  },
+
+  whatsNewScreen: {
+    enabled: false, // TODO: Build this
+    premium: false,
+    comingSoon: true,
+    description: 'Show new features after updates',
     version: 'v1.0',
   },
 

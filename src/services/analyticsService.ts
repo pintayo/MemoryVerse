@@ -369,6 +369,438 @@ export const analyticsService = {
   },
 
   // ============================================================================
+  // SETTINGS & PREFERENCES EVENTS
+  // ============================================================================
+
+  /**
+   * Track settings screen viewed
+   */
+  async logSettingsViewed() {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('settings_viewed', {});
+      },
+      'settings_viewed'
+    );
+  },
+
+  /**
+   * Track settings changed
+   */
+  async logSettingChanged(settingName: string, value: string | boolean) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('setting_changed', {
+          setting_name: settingName,
+          value: String(value),
+        });
+      },
+      'setting_changed'
+    );
+  },
+
+  /**
+   * Track notification permission granted/denied
+   */
+  async logNotificationPermission(granted: boolean) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('notification_permission', {
+          granted,
+        });
+      },
+      'notification_permission'
+    );
+  },
+
+  // ============================================================================
+  // PREMIUM FUNNEL EVENTS
+  // ============================================================================
+
+  /**
+   * Track premium screen viewed with source
+   */
+  async logPremiumScreenViewed(source: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('premium_screen_viewed', {
+          source, // e.g., 'profile', 'settings', 'feature_lock', 'onboarding'
+        });
+      },
+      'premium_screen_viewed'
+    );
+  },
+
+  /**
+   * Track premium plan selected
+   */
+  async logPremiumPlanSelected(plan: 'monthly' | 'annual') {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('premium_plan_selected', {
+          plan,
+        });
+      },
+      'premium_plan_selected'
+    );
+  },
+
+  /**
+   * Track premium feature locked interaction
+   */
+  async logPremiumFeatureLocked(featureName: string, action: 'viewed' | 'clicked') {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('premium_feature_locked', {
+          feature_name: featureName,
+          action,
+        });
+      },
+      'premium_feature_locked'
+    );
+  },
+
+  // ============================================================================
+  // APP REVIEW EVENTS
+  // ============================================================================
+
+  /**
+   * Track app review prompt shown
+   */
+  async logAppReviewPromptShown() {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('app_review_prompt_shown', {});
+      },
+      'app_review_prompt_shown'
+    );
+  },
+
+  /**
+   * Track app review submitted
+   */
+  async logAppReviewSubmitted() {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('app_review_submitted', {});
+      },
+      'app_review_submitted'
+    );
+  },
+
+  // ============================================================================
+  // SEARCH & DISCOVERY EVENTS
+  // ============================================================================
+
+  /**
+   * Track verse search performed
+   */
+  async logVerseSearch(query: string, resultsCount: number, filters?: object) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logSearch({
+          search_term: query,
+        });
+        await analytics().logEvent('verse_search', {
+          query: query.substring(0, 100), // Limit length
+          results_count: resultsCount,
+          has_filters: !!filters,
+        });
+      },
+      'verse_search'
+    );
+  },
+
+  /**
+   * Track search filter applied
+   */
+  async logSearchFilterApplied(filterType: string, filterValue: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('search_filter_applied', {
+          filter_type: filterType,
+          filter_value: filterValue,
+        });
+      },
+      'search_filter_applied'
+    );
+  },
+
+  // ============================================================================
+  // NOTES & STUDY EVENTS
+  // ============================================================================
+
+  /**
+   * Track note created
+   */
+  async logNoteCreated(verseId: string, noteLength: number) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('note_created', {
+          verse_id: verseId,
+          note_length: noteLength,
+        });
+      },
+      'note_created'
+    );
+  },
+
+  /**
+   * Track note updated
+   */
+  async logNoteUpdated(noteId: string, newLength: number) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('note_updated', {
+          note_id: noteId,
+          note_length: newLength,
+        });
+      },
+      'note_updated'
+    );
+  },
+
+  /**
+   * Track note deleted
+   */
+  async logNoteDeleted(noteId: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('note_deleted', {
+          note_id: noteId,
+        });
+      },
+      'note_deleted'
+    );
+  },
+
+  // ============================================================================
+  // STREAK & ENGAGEMENT EVENTS
+  // ============================================================================
+
+  /**
+   * Track streak freeze used
+   */
+  async logStreakFreezeUsed(streakDays: number) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('streak_freeze_used', {
+          streak_days: streakDays,
+        });
+      },
+      'streak_freeze_used'
+    );
+  },
+
+  /**
+   * Track streak lost
+   */
+  async logStreakLost(previousStreakDays: number) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('streak_lost', {
+          previous_streak_days: previousStreakDays,
+        });
+      },
+      'streak_lost'
+    );
+  },
+
+  /**
+   * Track daily reminder scheduled
+   */
+  async logDailyReminderScheduled(time: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('daily_reminder_scheduled', {
+          time,
+        });
+      },
+      'daily_reminder_scheduled'
+    );
+  },
+
+  // ============================================================================
+  // ONBOARDING EVENTS
+  // ============================================================================
+
+  /**
+   * Track onboarding started
+   */
+  async logOnboardingStarted() {
+    await safeAnalytics(
+      async () => {
+        await analytics().logTutorialBegin();
+        await analytics().logEvent('onboarding_started', {});
+      },
+      'onboarding_started'
+    );
+  },
+
+  /**
+   * Track onboarding step viewed
+   */
+  async logOnboardingStep(stepNumber: number, stepName: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('onboarding_step', {
+          step_number: stepNumber,
+          step_name: stepName,
+        });
+      },
+      'onboarding_step'
+    );
+  },
+
+  /**
+   * Track onboarding completed
+   */
+  async logOnboardingCompleted(timeSpentSeconds: number) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logTutorialComplete();
+        await analytics().logEvent('onboarding_completed', {
+          time_spent_seconds: timeSpentSeconds,
+        });
+      },
+      'onboarding_completed'
+    );
+  },
+
+  /**
+   * Track onboarding skipped
+   */
+  async logOnboardingSkipped(stepNumber: number) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('onboarding_skipped', {
+          step_number: stepNumber,
+        });
+      },
+      'onboarding_skipped'
+    );
+  },
+
+  // ============================================================================
+  // FEATURE FLAGS EVENTS
+  // ============================================================================
+
+  /**
+   * Track feature flag viewed
+   */
+  async logFeatureFlagViewed(featureName: string, isEnabled: boolean, isPremium: boolean) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('feature_flag_viewed', {
+          feature_name: featureName,
+          is_enabled: isEnabled,
+          is_premium: isPremium,
+        });
+      },
+      'feature_flag_viewed'
+    );
+  },
+
+  /**
+   * Track coming soon feature clicked
+   */
+  async logComingSoonFeatureClicked(featureName: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('coming_soon_feature_clicked', {
+          feature_name: featureName,
+        });
+      },
+      'coming_soon_feature_clicked'
+    );
+  },
+
+  // ============================================================================
+  // ERROR & PERFORMANCE EVENTS
+  // ============================================================================
+
+  /**
+   * Track app error
+   */
+  async logError(errorMessage: string, errorStack?: string, screen?: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('app_error', {
+          error_message: errorMessage.substring(0, 100),
+          screen: screen || 'unknown',
+          has_stack: !!errorStack,
+        });
+      },
+      'app_error'
+    );
+  },
+
+  /**
+   * Track API error
+   */
+  async logAPIError(endpoint: string, statusCode: number, errorMessage: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('api_error', {
+          endpoint,
+          status_code: statusCode,
+          error_message: errorMessage.substring(0, 100),
+        });
+      },
+      'api_error'
+    );
+  },
+
+  /**
+   * Track slow performance
+   */
+  async logSlowPerformance(screen: string, loadTimeMs: number) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('slow_performance', {
+          screen,
+          load_time_ms: loadTimeMs,
+        });
+      },
+      'slow_performance'
+    );
+  },
+
+  // ============================================================================
+  // NAVIGATION EVENTS
+  // ============================================================================
+
+  /**
+   * Track tab switched
+   */
+  async logTabSwitched(fromTab: string, toTab: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('tab_switched', {
+          from_tab: fromTab,
+          to_tab: toTab,
+        });
+      },
+      'tab_switched'
+    );
+  },
+
+  /**
+   * Track deep link opened
+   */
+  async logDeepLinkOpened(path: string, source: string) {
+    await safeAnalytics(
+      async () => {
+        await analytics().logEvent('deep_link_opened', {
+          path,
+          source,
+        });
+      },
+      'deep_link_opened'
+    );
+  },
+
+  // ============================================================================
   // CUSTOM EVENTS
   // ============================================================================
 

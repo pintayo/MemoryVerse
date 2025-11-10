@@ -1,7 +1,9 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 import { theme } from '../theme';
 import { logger } from '../utils/logger';
+import { analyticsService } from '../services/analyticsService';
 
 interface Props {
   children: ReactNode;
@@ -34,6 +36,22 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.error('[ErrorBoundary] Caught error:', error);
     logger.error('[ErrorBoundary] Error info:', errorInfo);
+
+    // Log to Sentry
+    Sentry.captureException(error, {
+      contexts: {
+        react: {
+          componentStack: errorInfo.componentStack,
+        },
+      },
+    });
+
+    // Log to Analytics
+    analyticsService.logError(
+      error.message || 'Unknown error',
+      error.stack,
+      'ErrorBoundary'
+    );
 
     this.setState({
       error,

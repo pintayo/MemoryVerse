@@ -16,13 +16,14 @@ import { practiceConfig } from '../config/practiceConfig';
 import { speechRecognitionService } from '../services/speechRecognitionService';
 import { spacedRepetitionService } from '../services/spacedRepetitionService';
 import { streakService } from '../services/streakService';
+import { appReviewService } from '../services/appReviewService';
 import { Audio } from 'expo-av';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
 
 const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const { verseId } = route.params;
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const [verses, setVerses] = useState<Verse[]>([]);
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
@@ -452,6 +453,25 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       xpForNextLevel,
     });
     setShowCompleteModal(true);
+
+    // Check if we should prompt for app review after successful practice
+    if (correctCount > 0 && profile) {
+      try {
+        // Get achievement count (estimate based on badges earned)
+        const achievementsUnlocked =
+          (profile.current_streak || 0) >= 3 ? 1 : 0 + // Consistent learner
+          (profile.verses_memorized || 0) >= 10 ? 1 : 0 + // Memory builder
+          (profile.current_streak || 0) >= 1 ? 1 : 0; // First steps
+
+        await appReviewService.checkAndPromptAfterPositiveEvent(
+          profile.verses_memorized || 0,
+          profile.current_streak || 0,
+          achievementsUnlocked
+        );
+      } catch (error) {
+        logger.error('[RecallScreen] Error checking review prompt:', error);
+      }
+    }
   };
 
   const handleModalClose = () => {

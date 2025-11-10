@@ -68,6 +68,9 @@ console.log('[App.tsx] ErrorBoundary loaded');
 import { theme } from './src/theme';
 console.log('[App.tsx] theme loaded');
 
+import { appReviewService } from './src/services/appReviewService';
+console.log('[App.tsx] appReviewService loaded');
+
 console.log('[App.tsx] ALL IMPORTS COMPLETE!');
 
 console.log('[App.tsx] Setting up global error handlers...');
@@ -122,6 +125,22 @@ const AppNavigator = () => {
       checkOnboarding();
     }
   }, [isAuthenticated]);
+
+  // Track app sessions for review prompt
+  useEffect(() => {
+    const trackSession = async () => {
+      if (isAuthenticated && hasCompletedOnboarding) {
+        try {
+          await appReviewService.incrementSessionCount();
+          console.log('[AppNavigator] Session tracked for review prompt');
+        } catch (error) {
+          console.error('[AppNavigator] Error tracking session:', error);
+        }
+      }
+    };
+
+    trackSession();
+  }, [isAuthenticated, hasCompletedOnboarding]);
 
   // Show loading spinner while checking authentication or onboarding
   if (isLoading || (isAuthenticated && hasCompletedOnboarding === null)) {
