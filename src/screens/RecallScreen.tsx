@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 import { practiceConfig } from '../config/practiceConfig';
 import { speechRecognitionService } from '../services/speechRecognitionService';
+import { Audio } from 'expo-av';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
 
@@ -42,6 +43,10 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   } | null>(null);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const [partialSpeechText, setPartialSpeechText] = useState<string>('');
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [recordingUri, setRecordingUri] = useState<string | null>(null);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
@@ -53,12 +58,18 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
     loadVerses();
   }, [verseId]);
 
-  // Cleanup speech recognition on unmount
+  // Cleanup speech recognition and audio on unmount
   useEffect(() => {
     return () => {
       speechRecognitionService.destroy();
+      if (sound) {
+        sound.unloadAsync();
+      }
+      if (recording) {
+        recording.stopAndUnloadAsync();
+      }
     };
-  }, []);
+  }, [sound, recording]);
 
   const loadVerses = async () => {
     try {
@@ -89,69 +100,93 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
 
   // Microphone recording animation
   const startRecording = async () => {
-    // Clear any previous errors and partial text
-    setSpeechError(null);
-    setPartialSpeechText('');
+    try {
+      // Clear any previous errors and partial text
+      setSpeechError(null);
+      setPartialSpeechText('');
+      setRecordingUri(null);
 
-    // Start animations
-    setIsRecording(true);
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(micPulseAnim, {
-          toValue: 1.2,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(micPulseAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Animate wave height (using numeric value, not height style)
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(waveHeightAnim, {
-          toValue: 40,
-          duration: 400,
-          useNativeDriver: false, // Height cannot use native driver
-        }),
-        Animated.timing(waveHeightAnim, {
-          toValue: 20,
-          duration: 400,
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
-
-    // Start speech recognition
-    const success = await speechRecognitionService.startListening(
-      (result) => {
-        // Handle speech results
-        logger.log('[RecallScreen] Speech result:', result.text, 'isFinal:', result.isFinal);
-
-        if (result.isFinal) {
-          // Final result - update input and stop recording
-          setUserInput(result.text);
-          setPartialSpeechText('');
-          stopRecording();
-        } else {
-          // Partial result - show in UI
-          setPartialSpeechText(result.text);
-        }
-      },
-      (error) => {
-        // Handle speech errors
-        logger.error('[RecallScreen] Speech error:', error);
-        setSpeechError(error);
-        stopRecording();
+      // Request audio permissions
+      const permission = await Audio.requestPermissionsAsync();
+      if (!permission.granted) {
+        setSpeechError('Audio permission not granted');
+        return;
       }
-    );
 
-    // If failed to start, stop recording state
-    if (!success) {
+      // Configure audio mode
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      // Start animations
+      setIsRecording(true);
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(micPulseAnim, {
+            toValue: 1.2,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(micPulseAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Animate wave height (using numeric value, not height style)
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(waveHeightAnim, {
+            toValue: 40,
+            duration: 400,
+            useNativeDriver: false, // Height cannot use native driver
+          }),
+          Animated.timing(waveHeightAnim, {
+            toValue: 20,
+            duration: 400,
+            useNativeDriver: false,
+          }),
+        ])
+      ).start();
+
+      // Start audio recording
+      const { recording: newRecording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecording(newRecording);
+
+      // Start speech recognition
+      const success = await speechRecognitionService.startListening(
+        (result) => {
+          // Handle speech results
+          logger.log('[RecallScreen] Speech result:', result.text, 'isFinal:', result.isFinal);
+
+          if (result.isFinal) {
+            // Final result - update input but DON'T stop automatically
+            setUserInput(result.text);
+            setPartialSpeechText('');
+          } else {
+            // Partial result - show in UI
+            setPartialSpeechText(result.text);
+          }
+        },
+        (error) => {
+          // Handle speech errors
+          logger.error('[RecallScreen] Speech error:', error);
+          setSpeechError(error);
+        }
+      );
+
+      // If failed to start speech recognition, still continue with audio
+      if (!success) {
+        logger.warn('[RecallScreen] Speech recognition failed to start, continuing with audio only');
+      }
+    } catch (error) {
+      logger.error('[RecallScreen] Error starting recording:', error);
+      setSpeechError('Failed to start recording');
       setIsRecording(false);
       micPulseAnim.stopAnimation();
       waveHeightAnim.stopAnimation();
@@ -161,17 +196,77 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const stopRecording = async () => {
-    setIsRecording(false);
-    micPulseAnim.stopAnimation();
-    waveHeightAnim.stopAnimation();
-    micPulseAnim.setValue(1);
-    waveHeightAnim.setValue(20);
+    try {
+      setIsRecording(false);
+      micPulseAnim.stopAnimation();
+      waveHeightAnim.stopAnimation();
+      micPulseAnim.setValue(1);
+      waveHeightAnim.setValue(20);
 
-    // Stop speech recognition
-    await speechRecognitionService.stopListening();
+      // Stop speech recognition
+      await speechRecognitionService.stopListening();
 
-    // Clear partial text
-    setPartialSpeechText('');
+      // Stop and save audio recording
+      if (recording) {
+        await recording.stopAndUnloadAsync();
+        const uri = recording.getURI();
+        setRecordingUri(uri);
+        setRecording(null);
+        logger.log('[RecallScreen] Recording stopped, saved to:', uri);
+      }
+
+      // Clear partial text
+      setPartialSpeechText('');
+    } catch (error) {
+      logger.error('[RecallScreen] Error stopping recording:', error);
+    }
+  };
+
+  const playRecording = async () => {
+    if (!recordingUri) return;
+
+    try {
+      // Unload any existing sound
+      if (sound) {
+        await sound.unloadAsync();
+      }
+
+      // Load and play the recording
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: recordingUri },
+        { shouldPlay: true }
+      );
+      setSound(newSound);
+      setIsPlaying(true);
+
+      // Set up playback status update
+      newSound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setIsPlaying(false);
+        }
+      });
+
+      logger.log('[RecallScreen] Playing recording');
+    } catch (error) {
+      logger.error('[RecallScreen] Error playing recording:', error);
+      setSpeechError('Failed to play recording');
+    }
+  };
+
+  const stopPlayback = async () => {
+    if (sound) {
+      await sound.stopAsync();
+      setIsPlaying(false);
+    }
+  };
+
+  const deleteRecording = () => {
+    setRecordingUri(null);
+    setUserInput('');
+    if (sound) {
+      sound.unloadAsync();
+      setSound(null);
+    }
   };
 
   const checkAnswer = async (answer: string) => {
@@ -246,7 +341,15 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       setHasAnswered(false);
       setSpeechError(null);
       setPartialSpeechText('');
+      setRecordingUri(null);
+      setIsPlaying(false);
       feedbackAnim.setValue(0);
+
+      // Cleanup audio
+      if (sound) {
+        sound.unloadAsync();
+        setSound(null);
+      }
     } else {
       // Show lesson summary
       showLessonSummary();
@@ -313,6 +416,10 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
     } else {
       startRecording();
     }
+  };
+
+  const handleRecordAgain = () => {
+    deleteRecording();
   };
 
   // Show loading state
@@ -475,6 +582,45 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
                   ]}
                 />
               ))}
+            </View>
+          )}
+
+          {/* Playback controls (when recording exists) */}
+          {recordingUri && !isRecording && (
+            <View style={styles.playbackControls}>
+              <TouchableOpacity
+                style={styles.playbackButton}
+                onPress={isPlaying ? stopPlayback : playRecording}
+              >
+                <Svg width="24" height="24" viewBox="0 0 24 24">
+                  {isPlaying ? (
+                    <Path
+                      d="M6 6H10V18H6V6ZM14 6H18V18H14V6Z"
+                      fill={theme.colors.secondary.lightGold}
+                    />
+                  ) : (
+                    <Path
+                      d="M8 5V19L19 12L8 5Z"
+                      fill={theme.colors.secondary.lightGold}
+                    />
+                  )}
+                </Svg>
+                <Text style={styles.playbackButtonText}>
+                  {isPlaying ? 'Stop Playback' : 'Play Recording'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleRecordAgain}
+              >
+                <Svg width="20" height="20" viewBox="0 0 24 24">
+                  <Path
+                    d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                    fill={theme.colors.error.main}
+                  />
+                </Svg>
+                <Text style={styles.deleteButtonText}>Re-record</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -752,6 +898,46 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.success.celebratoryGold,
     borderRadius: 2,
     opacity: 0.6,
+  },
+  playbackControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+  },
+  playbackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.background.lightCream,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.secondary.lightGold,
+  },
+  playbackButtonText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.error.light,
+    borderRadius: theme.borderRadius.md,
+  },
+  deleteButtonText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    fontWeight: '600',
+    color: theme.colors.error.main,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   feedbackContainer: {
     flexDirection: 'row',
