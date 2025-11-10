@@ -4,15 +4,13 @@
  * Sends errors to Sentry in production
  */
 
-import * as Sentry from '@sentry/react-native';
-
 const isDevelopment = __DEV__;
 
-// Helper to check if Sentry is properly initialized
+// Try to load Sentry (optional for testing)
+let Sentry: any = null;
 let sentryInitialized = false;
 try {
-  // Sentry will be initialized in App.tsx
-  // This just checks if it's available
+  Sentry = require('@sentry/react-native');
   sentryInitialized = !!Sentry;
 } catch (e) {
   sentryInitialized = false;

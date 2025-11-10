@@ -3,14 +3,22 @@
  * Enhanced error tracking with user context, breadcrumbs, and tags
  */
 
-import * as Sentry from '@sentry/react-native';
 import { logger } from './logger';
+
+// Try to load Sentry (optional for testing)
+let Sentry: any = null;
+try {
+  Sentry = require('@sentry/react-native');
+} catch (error) {
+  // Sentry not available
+}
 
 /**
  * Set user context in Sentry
  * Call this after user logs in
  */
 export const setSentryUser = (userId: string, email?: string, username?: string) => {
+  if (!Sentry) return;
   try {
     Sentry.setUser({
       id: userId,
@@ -28,6 +36,7 @@ export const setSentryUser = (userId: string, email?: string, username?: string)
  * Call this after user logs out
  */
 export const clearSentryUser = () => {
+  if (!Sentry) return;
   try {
     Sentry.setUser(null);
     logger.log('[Sentry] User context cleared');
@@ -40,6 +49,7 @@ export const clearSentryUser = () => {
  * Add breadcrumb for navigation
  */
 export const addNavigationBreadcrumb = (screenName: string, params?: any) => {
+  if (!Sentry) return;
   try {
     Sentry.addBreadcrumb({
       category: 'navigation',
@@ -56,6 +66,7 @@ export const addNavigationBreadcrumb = (screenName: string, params?: any) => {
  * Add breadcrumb for user actions
  */
 export const addActionBreadcrumb = (action: string, data?: any) => {
+  if (!Sentry) return;
   try {
     Sentry.addBreadcrumb({
       category: 'user-action',
@@ -77,6 +88,7 @@ export const addAPIBreadcrumb = (
   status?: number,
   data?: any
 ) => {
+  if (!Sentry) return;
   try {
     Sentry.addBreadcrumb({
       category: 'http',
@@ -104,6 +116,7 @@ export const addDatabaseBreadcrumb = (
   success: boolean,
   data?: any
 ) => {
+  if (!Sentry) return;
   try {
     Sentry.addBreadcrumb({
       category: 'database',
@@ -125,6 +138,7 @@ export const addDatabaseBreadcrumb = (
  * Set custom tags for better error categorization
  */
 export const setSentryTag = (key: string, value: string) => {
+  if (!Sentry) return;
   try {
     Sentry.setTag(key, value);
   } catch (error) {
@@ -136,6 +150,7 @@ export const setSentryTag = (key: string, value: string) => {
  * Set custom context for an error
  */
 export const setSentryContext = (key: string, context: { [key: string]: any }) => {
+  if (!Sentry) return;
   try {
     Sentry.setContext(key, context);
   } catch (error) {
@@ -154,6 +169,7 @@ export const captureException = (
     level?: 'fatal' | 'error' | 'warning' | 'info' | 'debug';
   }
 ) => {
+  if (!Sentry) return;
   try {
     Sentry.withScope((scope) => {
       // Set level
@@ -196,6 +212,7 @@ export const captureMessage = (
     extra?: { [key: string]: any };
   }
 ) => {
+  if (!Sentry) return;
   try {
     Sentry.withScope((scope) => {
       // Set level
@@ -231,6 +248,7 @@ export const captureMessage = (
  * Track performance
  */
 export const startTransaction = (name: string, operation: string) => {
+  if (!Sentry) return null;
   try {
     return Sentry.startTransaction({
       name,
