@@ -294,6 +294,39 @@ WHERE
   -- Exclude genealogies in Job
   NOT (text ~ '([A-Z][a-z]+,?\s+){3,}');
 
+-- Mark major teaching sections (work better as ranges but marking individually)
+UPDATE verses
+SET is_memorable = true,
+    verse_category = 'teaching',
+    memorization_difficulty = CASE
+      WHEN LENGTH(text) <= 150 THEN 'easy'
+      WHEN LENGTH(text) <= 250 THEN 'medium'
+      ELSE 'hard'
+    END
+WHERE
+  translation = 'KJV' AND
+  LENGTH(text) >= 25 AND
+  LENGTH(text) <= 400 AND
+  (
+    -- Sermon on the Mount (Matthew 5-7)
+    (book = 'Matthew' AND chapter BETWEEN 5 AND 7) OR
+    -- Romans (major theological teaching)
+    (book = 'Romans' AND chapter BETWEEN 1 AND 8) OR
+    (book = 'Romans' AND chapter = 12) OR
+    -- 1 Corinthians 13 (Love chapter)
+    (book = '1 Corinthians' AND chapter = 13) OR
+    -- Ephesians (theology and practice)
+    (book = 'Ephesians' AND chapter BETWEEN 1 AND 6) OR
+    -- James (practical wisdom)
+    (book = 'James') OR
+    -- 1 John (love and assurance)
+    (book = '1 John') OR
+    -- Colossians (Christ's supremacy)
+    (book = 'Colossians') OR
+    -- Philippians (joy and Christ-centeredness)
+    (book = 'Philippians')
+  );
+
 -- Mark famous verses
 UPDATE verses
 SET is_memorable = true,
@@ -513,6 +546,105 @@ const { data, error } = await supabase
 const randomIndex = Math.floor(Math.random() * data.length);
 return data[randomIndex];
 ```
+
+---
+
+## Step 5: Apply to Other Translations (ASV, BBE, DBY, WBT, WEB, YLT)
+
+Once you've verified the KJV filtering works well, apply structure-based filtering to all translations. This uses book/chapter ranges that work regardless of English translation differences.
+
+**Run Part 1 for All Translations:**
+
+Replace `WHERE translation = 'KJV'` with:
+```sql
+WHERE translation IN ('ASV', 'BBE', 'DBY', 'WBT', 'WEB', 'YLT')
+```
+
+**Run Part 2 Structure-Based Filtering for All Translations:**
+
+This focuses on book/chapter ranges and famous verse references that work across all translations:
+
+```sql
+-- Mark Psalms, Proverbs, and wisdom books (all translations)
+UPDATE verses
+SET is_memorable = true,
+    verse_category = CASE
+      WHEN book = 'Psalms' THEN 'praise'
+      WHEN book = 'Proverbs' THEN 'wisdom'
+      ELSE 'wisdom'
+    END,
+    memorization_difficulty = CASE
+      WHEN LENGTH(text) <= 150 THEN 'easy'
+      WHEN LENGTH(text) <= 250 THEN 'medium'
+      ELSE 'hard'
+    END
+WHERE
+  translation IN ('ASV', 'BBE', 'DBY', 'WBT', 'WEB', 'YLT') AND
+  book IN ('Psalms', 'Proverbs', 'Ecclesiastes', 'Song of Solomon') AND
+  LENGTH(text) >= 20 AND
+  LENGTH(text) <= 400;
+
+-- Mark major teaching sections (all translations)
+UPDATE verses
+SET is_memorable = true,
+    verse_category = 'teaching',
+    memorization_difficulty = CASE
+      WHEN LENGTH(text) <= 150 THEN 'easy'
+      WHEN LENGTH(text) <= 250 THEN 'medium'
+      ELSE 'hard'
+    END
+WHERE
+  translation IN ('ASV', 'BBE', 'DBY', 'WBT', 'WEB', 'YLT') AND
+  LENGTH(text) >= 25 AND
+  LENGTH(text) <= 400 AND
+  (
+    (book = 'Matthew' AND chapter BETWEEN 5 AND 7) OR
+    (book = 'Romans' AND chapter BETWEEN 1 AND 8) OR
+    (book = 'Romans' AND chapter = 12) OR
+    (book = '1 Corinthians' AND chapter = 13) OR
+    (book = 'Ephesians' AND chapter BETWEEN 1 AND 6) OR
+    (book = 'James') OR
+    (book = '1 John') OR
+    (book = 'Colossians') OR
+    (book = 'Philippians')
+  );
+
+-- Mark famous verses (all translations - these references work everywhere)
+UPDATE verses
+SET is_memorable = true,
+    verse_category = 'famous',
+    memorization_difficulty = 'easy'
+WHERE
+  translation IN ('ASV', 'BBE', 'DBY', 'WBT', 'WEB', 'YLT') AND
+  (
+    (book = 'John' AND chapter = 3 AND verse_number = 16) OR
+    (book = 'Jeremiah' AND chapter = 29 AND verse_number = 11) OR
+    (book = 'Philippians' AND chapter = 4 AND verse_number = 13) OR
+    (book = 'Psalms' AND chapter = 23) OR
+    (book = 'Romans' AND chapter = 8 AND verse_number = 28) OR
+    (book = 'Proverbs' AND chapter = 3 AND verse_number IN (5,6)) OR
+    (book = 'Joshua' AND chapter = 1 AND verse_number = 9) OR
+    (book = 'Isaiah' AND chapter = 40 AND verse_number = 31) OR
+    (book = 'Matthew' AND chapter = 28 AND verse_number = 19) OR
+    (book = 'Genesis' AND chapter = 1 AND verse_number = 1) OR
+    (book = 'Romans' AND chapter = 3 AND verse_number = 23) OR
+    (book = 'Romans' AND chapter = 6 AND verse_number = 23) OR
+    (book = 'Ephesians' AND chapter = 2 AND verse_number IN (8,9))
+  );
+
+-- Mark Gospel teachings (all translations)
+UPDATE verses
+SET is_memorable = true,
+    verse_category = 'gospel',
+    memorization_difficulty = 'medium'
+WHERE
+  translation IN ('ASV', 'BBE', 'DBY', 'WBT', 'WEB', 'YLT') AND
+  book IN ('Matthew', 'Mark', 'Luke', 'John') AND
+  LENGTH(text) >= 30 AND
+  LENGTH(text) <= 300;
+```
+
+**Note:** Translation-specific word patterns (like ILIKE '%lovingkindness%') are NOT included in multi-translation filtering because different translations use different vocabulary.
 
 ---
 
