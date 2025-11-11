@@ -33,6 +33,9 @@ console.log('[RootNavigator] ComingSoonScreen imported');
 import { ChapterContextScreen } from '../screens/ChapterContextScreen';
 console.log('[RootNavigator] ChapterContextScreen imported');
 
+import { DailyPrayerScreen } from '../screens/DailyPrayerScreen';
+console.log('[RootNavigator] DailyPrayerScreen imported');
+
 import { PremiumUpgradeScreen } from '../screens/PremiumUpgradeScreen';
 console.log('[RootNavigator] PremiumUpgradeScreen imported');
 
@@ -96,6 +99,13 @@ const RootNavigator = () => {
         options={{
           title: 'Prayer Training',
           headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="DailyPrayer"
+        component={DailyPrayerScreen}
+        options={{
+          headerShown: false,
         }}
       />
       <Stack.Screen
