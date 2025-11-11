@@ -24,8 +24,8 @@ console.log('[RootNavigator] DownloadsScreen imported');
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 console.log('[RootNavigator] NotificationSettingsScreen imported');
 
-import { StreakCalendarScreen, NotesScreen } from '../screens';
-console.log('[RootNavigator] StreakCalendarScreen and NotesScreen imported');
+import { StreakCalendarScreen, NotesScreen, ReviewScreen } from '../screens';
+console.log('[RootNavigator] StreakCalendarScreen, NotesScreen, and ReviewScreen imported');
 
 import { PremiumUpgradeScreen } from '../screens/PremiumUpgradeScreen';
 console.log('[RootNavigator] PremiumUpgradeScreen imported');
@@ -125,6 +125,13 @@ const RootNavigator = () => {
       <Stack.Screen
         name="Notes"
         component={NotesScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Review"
+        component={ReviewScreen}
         options={{
           headerShown: false,
         }}
