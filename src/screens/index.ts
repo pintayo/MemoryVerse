@@ -45,4 +45,7 @@ console.log('[screens/index] ReviewScreen exported');
 export { default as NotesScreen } from './NotesScreen';
 console.log('[screens/index] NotesScreen exported');
 
+export { BibleScreen } from './BibleScreen';
+console.log('[screens/index] BibleScreen exported');
+
 console.log('[screens/index] ALL SCREENS EXPORTED SUCCESSFULLY');

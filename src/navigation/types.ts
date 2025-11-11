@@ -14,9 +14,7 @@ export type RootStackParamList = {
 
 export type BottomTabParamList = {
   Home: undefined;
-  Review: undefined;
-  Search: undefined;
-  Favorites: undefined;
+  Bible: undefined;
   Leaderboard: undefined;
   Profile: undefined;
 };

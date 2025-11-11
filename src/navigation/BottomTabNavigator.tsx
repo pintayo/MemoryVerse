@@ -6,9 +6,7 @@ console.log('[BottomTabNavigator] React imported');
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 console.log('[BottomTabNavigator] createBottomTabNavigator imported');
 
-import { HomeScreen, LeaderboardScreen, ProfileScreen, ReviewScreen } from '../screens';
-import { FavoritesScreen } from '../screens/FavoritesScreen';
-import SearchScreen from '../screens/SearchScreen';
+import { HomeScreen, LeaderboardScreen, ProfileScreen, BibleScreen } from '../screens';
 console.log('[BottomTabNavigator] Screens imported');
 
 import { theme } from '../theme';
@@ -61,41 +59,13 @@ const BottomTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Review"
-        component={ReviewScreen}
+        name="Bible"
+        component={BibleScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size}) => (
             <Svg width={size} height={size} viewBox="0 0 24 24">
               <Path
-                d="M12 2 C6.48 2 2 6.48 2 12 C2 17.52 6.48 22 12 22 C17.52 22 22 17.52 22 12 C22 6.48 17.52 2 12 2 Z M16 16 L12 14 L8 16 L8 8 L16 8 L16 16 Z"
-                fill={color}
-              />
-            </Svg>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Search"
-        component={SearchScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Svg width={size} height={size} viewBox="0 0 24 24">
-              <Path
-                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                fill={color}
-              />
-            </Svg>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Favorites"
-        component={FavoritesScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Svg width={size} height={size} viewBox="0 0 24 24">
-              <Path
-                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 4h2v5l-1-.75L9 9V4zm9 16H6V4h1v9l3-2.25L13 13V4h5v16z"
                 fill={color}
               />
             </Svg>
