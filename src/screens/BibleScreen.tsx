@@ -13,6 +13,7 @@ import Svg, { Path } from 'react-native-svg';
 import { theme } from '../theme';
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BibleScreenProps {
   navigation: any;
@@ -52,6 +53,9 @@ const NEW_TESTAMENT = [
 const ALL_BOOKS = [...OLD_TESTAMENT, ...NEW_TESTAMENT];
 
 export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
+  const { profile } = useAuth();
+  const isPremiumUser = profile?.is_premium || false;
+
   const [mode, setMode] = useState<ScreenMode>('books');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBook, setSelectedBook] = useState<string | null>(null);
@@ -220,9 +224,20 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
   };
 
   const handleRequestChapterContext = () => {
-    // TODO: Implement premium feature for chapter context
+    if (!selectedBook || !selectedChapter) return;
+
     logger.log('[BibleScreen] Request context for chapter:', selectedBook, selectedChapter);
-    navigation.navigate('PremiumUpgrade');
+
+    if (isPremiumUser) {
+      // Premium users can access chapter context feature
+      navigation.navigate('ChapterContext', {
+        book: selectedBook,
+        chapter: selectedChapter,
+      });
+    } else {
+      // Non-premium users see upgrade prompt
+      navigation.navigate('PremiumUpgrade');
+    }
   };
 
   const handleRequestVerseContext = (verseId: string) => {

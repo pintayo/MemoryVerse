@@ -30,6 +30,9 @@ console.log('[RootNavigator] StreakCalendarScreen and ReviewScreen imported');
 import { ComingSoonScreen } from '../screens/ComingSoonScreen';
 console.log('[RootNavigator] ComingSoonScreen imported');
 
+import { ChapterContextScreen } from '../screens/ChapterContextScreen';
+console.log('[RootNavigator] ChapterContextScreen imported');
+
 import { PremiumUpgradeScreen } from '../screens/PremiumUpgradeScreen';
 console.log('[RootNavigator] PremiumUpgradeScreen imported');
 
@@ -142,6 +145,13 @@ const RootNavigator = () => {
         options={{
           title: 'Review Verses',
           headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="ChapterContext"
+        component={ChapterContextScreen}
+        options={{
+          headerShown: false,
         }}
       />
       <Stack.Screen

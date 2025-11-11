@@ -32,8 +32,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [editedName, setEditedName] = useState(profile?.full_name || '');
 
-  // TODO: Implement actual premium user check when premium features are added
-  const isPremiumUser = false;
+  // Check premium status from profile
+  const isPremiumUser = profile?.is_premium || false;
 
   // Update edited values when profile changes
   useEffect(() => {
