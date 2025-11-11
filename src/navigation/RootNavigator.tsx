@@ -24,8 +24,11 @@ console.log('[RootNavigator] DownloadsScreen imported');
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 console.log('[RootNavigator] NotificationSettingsScreen imported');
 
-import { StreakCalendarScreen, NotesScreen, ReviewScreen } from '../screens';
-console.log('[RootNavigator] StreakCalendarScreen, NotesScreen, and ReviewScreen imported');
+import { StreakCalendarScreen, ReviewScreen } from '../screens';
+console.log('[RootNavigator] StreakCalendarScreen and ReviewScreen imported');
+
+import { ComingSoonScreen } from '../screens/ComingSoonScreen';
+console.log('[RootNavigator] ComingSoonScreen imported');
 
 import { PremiumUpgradeScreen } from '../screens/PremiumUpgradeScreen';
 console.log('[RootNavigator] PremiumUpgradeScreen imported');
@@ -124,9 +127,13 @@ const RootNavigator = () => {
       />
       <Stack.Screen
         name="Notes"
-        component={NotesScreen}
+        component={ComingSoonScreen}
         options={{
           headerShown: false,
+        }}
+        initialParams={{
+          title: 'Study Notes',
+          message: 'The Study Notes feature will allow you to create and save personal notes on Bible verses and chapters.',
         }}
       />
       <Stack.Screen

@@ -209,15 +209,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, onLoginSuccess })
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Test Account Info (for development) */}
-          {__DEV__ && (
-            <View style={styles.testAccountInfo}>
-              <Text style={styles.testAccountTitle}>Test Account:</Text>
-              <Text style={styles.testAccountText}>pintayo@memoryverse.app</Text>
-              <Text style={styles.testAccountText}>Tijdelijk123</Text>
-            </View>
-          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -379,26 +370,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.body.fontSize,
     fontWeight: '700',
     color: theme.colors.secondary.lightGold,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  testAccountInfo: {
-    marginTop: theme.spacing.xl,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.background.lightCream,
-    borderRadius: theme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.warning.main,
-  },
-  testAccountTitle: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.xs,
-  },
-  testAccountText: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
   },
 });

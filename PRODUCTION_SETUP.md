@@ -76,7 +76,7 @@ CREATE INDEX IF NOT EXISTS idx_user_favorites_verse_id ON user_favorites(verse_i
 CREATE INDEX IF NOT EXISTS idx_user_favorites_created_at ON user_favorites(created_at DESC);
 ```
 
-###1.3 Fix Missing Columns in profiles Table
+### 1.3 Fix Missing Columns in profiles Table
 
 The profiles table is missing some columns that are required by the app:
 
@@ -91,7 +91,42 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verses_memorized INTEGER DEFAULT 0
 UPDATE profiles SET level = FLOOR(total_xp / 100) + 1 WHERE level IS NULL OR level = 0;
 ```
 
-### 1.4 Enable Row Level Security (RLS)
+### 1.4 Fix Missing Columns in practice_sessions Table
+
+The practice_sessions table needs a completed_at column:
+
+```sql
+-- Add completed_at column to practice_sessions
+ALTER TABLE practice_sessions ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Update existing rows to have completed_at same as created_at if null
+UPDATE practice_sessions SET completed_at = created_at WHERE completed_at IS NULL;
+```
+
+### 1.5 Create downloaded_books Table
+
+For offline functionality, create the downloaded_books table:
+
+```sql
+-- Create downloaded_books table for offline verse storage
+CREATE TABLE IF NOT EXISTS downloaded_books (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  book_name TEXT NOT NULL,
+  translation TEXT NOT NULL DEFAULT 'KJV',
+  download_date TIMESTAMPTZ DEFAULT NOW(),
+  last_accessed TIMESTAMPTZ DEFAULT NOW(),
+  verse_count INTEGER NOT NULL,
+  UNIQUE(user_id, book_name, translation)
+);
+
+-- Add indexes for performance
+CREATE INDEX IF NOT EXISTS idx_downloaded_books_user_id ON downloaded_books(user_id);
+CREATE INDEX IF NOT EXISTS idx_downloaded_books_book_name ON downloaded_books(book_name);
+CREATE INDEX IF NOT EXISTS idx_downloaded_books_translation ON downloaded_books(translation);
+```
+
+### 1.6 Enable Row Level Security (RLS)
 
 ```sql
 -- Enable RLS on verse_notes
@@ -142,6 +177,36 @@ CREATE POLICY "Users can view own favorites"
 CREATE POLICY "Users can insert own favorites"
   ON user_favorites FOR INSERT
   WITH CHECK (auth.uid() = user_id);
+
+-- Enable RLS on downloaded_books
+ALTER TABLE downloaded_books ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view own downloads" ON downloaded_books;
+DROP POLICY IF EXISTS "Users can insert own downloads" ON downloaded_books;
+DROP POLICY IF EXISTS "Users can update own downloads" ON downloaded_books;
+DROP POLICY IF EXISTS "Users can delete own downloads" ON downloaded_books;
+
+-- Policy: Users can only see their own downloads
+CREATE POLICY "Users can view own downloads"
+  ON downloaded_books FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Policy: Users can insert their own downloads
+CREATE POLICY "Users can insert own downloads"
+  ON downloaded_books FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Policy: Users can update their own downloads
+CREATE POLICY "Users can update own downloads"
+  ON downloaded_books FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Policy: Users can delete their own downloads
+CREATE POLICY "Users can delete own downloads"
+  ON downloaded_books FOR DELETE
+  USING (auth.uid() = user_id);
 
 -- Policy: Users can update their own favorites
 CREATE POLICY "Users can update own favorites"
