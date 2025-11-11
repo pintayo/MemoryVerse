@@ -164,7 +164,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Good morning!</Text>
             <View style={styles.statsRow}>
-              <View style={styles.statItem}>
+              <TouchableOpacity
+                style={styles.statItem}
+                onPress={() => navigation.navigate('StreakCalendar')}
+                activeOpacity={0.7}
+              >
                 <Svg width="20" height="24" viewBox="0 0 16 20">
                   <Path
                     d="M8 0 C8 0 4 5 4 9 C4 12.3 5.8 15 8 15 C10.2 15 12 12.3 12 9 C12 5 8 0 8 0 Z"
@@ -176,7 +180,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   />
                 </Svg>
                 <Text style={styles.statText}>{streak} day streak</Text>
-              </View>
+              </TouchableOpacity>
               <View style={styles.statItem}>
                 <Svg width="20" height="20" viewBox="0 0 20 20">
                   <Path

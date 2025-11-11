@@ -237,8 +237,8 @@ export const SettingsScreen = () => {
             title="Profile"
             subtitle={profile?.full_name || 'Edit your profile'}
             onPress={() => {
-              // Go back to profile screen
-              navigation.goBack();
+              // Navigate to Profile tab
+              navigation.navigate('Main', { screen: 'Profile' });
             }}
           />
 
