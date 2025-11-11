@@ -493,15 +493,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 style={styles.actionButton}
               />
               <Button
-                title="Daily Prayer"
-                onPress={() => navigation.navigate('DailyPrayer')}
-                variant="gold"
-                style={styles.actionButton}
-              />
-              <Button
                 title="Study Notes"
                 onPress={() => navigation.navigate('Notes')}
-                variant="secondary"
+                variant="gold"
                 style={styles.actionButton}
               />
               <Button

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, VerseReference } from '../components';
 import { theme } from '../theme';
@@ -10,12 +10,18 @@ import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 import { logger } from '../utils/logger';
 import { generatePrayerGuidance, getFallbackPrayerGuide, PrayerGuide } from '../services/prayerCoachingService';
+import { useAuth } from '../contexts/AuthContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pray'>;
 
+type PrayMode = 'verse' | 'daily';
+
 const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
   const { verseId } = route.params;
+  const { profile } = useAuth();
+  const isPremiumUser = profile?.is_premium || false;
 
+  const [mode, setMode] = useState<PrayMode>('verse');
   const [verse, setVerse] = useState<Verse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +31,12 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
   const [prayerGuide, setPrayerGuide] = useState<PrayerGuide | null>(null);
   const [isGeneratingGuide, setIsGeneratingGuide] = useState(false);
   const [useAIGuide, setUseAIGuide] = useState(false);
+
+  // Daily prayer state
+  const [dayStory, setDayStory] = useState('');
+  const [transcribedText, setTranscribedText] = useState('');
+  const [generatedPrayer, setGeneratedPrayer] = useState('');
+  const [isGeneratingPrayer, setIsGeneratingPrayer] = useState(false);
 
   // Animation values
   const micPulseAnim = useRef(new Animated.Value(1)).current;
@@ -122,15 +134,77 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
     waveAnim.stopAnimation();
     micPulseAnim.setValue(1);
     waveAnim.setValue(0);
-    // In real app, process and save recording here
+
+    if (mode === 'daily') {
+      // Simulate voice-to-text transcription
+      // TODO: Implement actual voice recognition
+      const simulatedTranscript = "I had a wonderful day filled with blessings...";
+      setTranscribedText(simulatedTranscript);
+      setDayStory(dayStory + (dayStory ? ' ' : '') + simulatedTranscript);
+      logger.log('[PrayScreen] Voice transcribed (simulated)');
+    }
   };
 
   const toggleRecording = () => {
+    if (mode === 'daily' && !isPremiumUser) {
+      Alert.alert(
+        'Premium Feature',
+        'Voice prayer generation is a premium feature. Upgrade to access this and more!',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => navigation.navigate('PremiumUpgrade') },
+        ]
+      );
+      return;
+    }
+
     if (isRecording) {
       stopRecording();
     } else {
       startRecording();
     }
+  };
+
+  const handleGenerateDailyPrayer = async () => {
+    if (!dayStory.trim()) {
+      Alert.alert('Tell Us More', 'Please share something about your day first.');
+      return;
+    }
+
+    if (!isPremiumUser) {
+      Alert.alert(
+        'Premium Feature',
+        'AI-generated daily prayers are a premium feature. Upgrade to access this and more!',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => navigation.navigate('PremiumUpgrade') },
+        ]
+      );
+      return;
+    }
+
+    try {
+      setIsGeneratingPrayer(true);
+      logger.log('[PrayScreen] Generating prayer from day story');
+
+      // TODO: Implement actual AI prayer generation API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setGeneratedPrayer(
+        `Heavenly Father,\n\nThank You for this day and all its moments. ${dayStory}\n\nI lift up these experiences to You, trusting in Your perfect plan and timing. Help me to see Your hand in every situation and to grow closer to You through both joys and challenges.\n\nIn Jesus' name I pray, Amen.`
+      );
+    } catch (error) {
+      logger.error('[PrayScreen] Error generating prayer:', error);
+      Alert.alert('Error', 'Failed to generate prayer. Please try again.');
+    } finally {
+      setIsGeneratingPrayer(false);
+    }
+  };
+
+  const handleResetDailyPrayer = () => {
+    setDayStory('');
+    setTranscribedText('');
+    setGeneratedPrayer('');
   };
 
   // Show loading state
@@ -168,7 +242,7 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   }
 
-  const verseReference = `${verse.book} ${verse.chapter}:${verse.verse_number}`;
+  const verseReference = verse ? `${verse.book} ${verse.chapter}:${verse.verse_number}` : '';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -177,11 +251,41 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Prayer Training</Text>
-          <Text style={styles.subtitle}>Practice praying this verse aloud</Text>
+        {/* Mode Toggle */}
+        <View style={styles.modeToggle}>
+          <TouchableOpacity
+            style={[styles.modeButton, mode === 'verse' && styles.modeButtonActive]}
+            onPress={() => setMode('verse')}
+          >
+            <Text style={[styles.modeButtonText, mode === 'verse' && styles.modeButtonTextActive]}>
+              Pray with Verse
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modeButton, mode === 'daily' && styles.modeButtonActive]}
+            onPress={() => setMode('daily')}
+          >
+            <Text style={[styles.modeButtonText, mode === 'daily' && styles.modeButtonTextActive]}>
+              Tell About Your Day
+            </Text>
+            {isPremiumUser && (
+              <Svg width="16" height="16" viewBox="0 0 24 24" style={{ marginLeft: 4 }}>
+                <Path
+                  d="M12 2 L15 9 L22 9 L17 14 L19 21 L12 17 L5 21 L7 14 L2 9 L9 9 Z"
+                  fill={theme.colors.secondary.lightGold}
+                />
+              </Svg>
+            )}
+          </TouchableOpacity>
         </View>
+
+        {mode === 'verse' ? (
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Prayer Training</Text>
+              <Text style={styles.subtitle}>Practice praying this verse aloud</Text>
+            </View>
 
         {/* Verse Card */}
         <Card variant="warm" style={styles.verseCard}>
@@ -396,6 +500,122 @@ const PrayScreen: React.FC<Props> = ({ navigation, route }) => {
             />
           </View>
         )}
+          </>
+        ) : (
+          <>
+            {/* Daily Prayer Mode */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Tell About Your Day</Text>
+              <Text style={styles.subtitle}>Share your thoughts and let's create a prayer together</Text>
+            </View>
+
+            {/* Text Input */}
+            <Card variant="warm" style={styles.dailyInputCard}>
+              <Text style={styles.inputLabel}>How was your day?</Text>
+              <TextInput
+                style={styles.dailyTextArea}
+                value={dayStory}
+                onChangeText={setDayStory}
+                placeholder="Share your thoughts, feelings, joys, struggles, or gratitude..."
+                placeholderTextColor={theme.colors.text.tertiary}
+                multiline
+                numberOfLines={6}
+                textAlignVertical="top"
+                maxLength={1000}
+                editable={!isGeneratingPrayer}
+              />
+              <Text style={styles.charCount}>
+                {dayStory.length} / 1000 characters
+              </Text>
+
+              {/* Voice Input Button */}
+              <View style={styles.voiceInputSection}>
+                <View style={styles.voiceDivider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or speak</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.voiceButton, isRecording && styles.voiceButtonActive]}
+                  onPress={toggleRecording}
+                  activeOpacity={0.8}
+                >
+                  <Svg width="32" height="32" viewBox="0 0 24 24">
+                    {isRecording ? (
+                      <Path
+                        d="M6 6H18V18H6V6Z"
+                        fill={theme.colors.text.onDark}
+                      />
+                    ) : (
+                      <Path
+                        d="M12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14ZM12 16C8.69 16 6 13.31 6 10H4C4 14.42 7.58 18 12 18C16.42 18 20 14.42 20 10H18C18 13.31 15.31 16 12 16Z"
+                        fill={isRecording ? theme.colors.text.onDark : theme.colors.secondary.warmTerracotta}
+                      />
+                    )}
+                  </Svg>
+                  <Text style={[styles.voiceButtonText, isRecording && styles.voiceButtonTextActive]}>
+                    {isRecording ? 'Stop Recording' : 'Tap to Speak'}
+                  </Text>
+                </TouchableOpacity>
+
+                {transcribedText && (
+                  <View style={styles.transcriptNotice}>
+                    <Text style={styles.transcriptText}>Voice added to your story</Text>
+                  </View>
+                )}
+              </View>
+            </Card>
+
+            {/* Generate Prayer Button */}
+            <Button
+              title={isGeneratingPrayer ? 'Crafting Your Prayer...' : 'Generate Prayer'}
+              onPress={handleGenerateDailyPrayer}
+              variant="gold"
+              style={styles.generateButton}
+              disabled={isGeneratingPrayer}
+            />
+
+            {/* Generated Prayer */}
+            {generatedPrayer && (
+              <Card variant="parchment" style={styles.generatedPrayerCard}>
+                <View style={styles.prayerHeader}>
+                  <Text style={styles.prayerTitle}>Your Prayer</Text>
+                  <TouchableOpacity onPress={handleResetDailyPrayer}>
+                    <Text style={styles.newPrayerText}>New Prayer</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.generatedPrayerText}>{generatedPrayer}</Text>
+
+                {/* Coming Soon Notice */}
+                <View style={styles.comingSoonNotice}>
+                  <Svg width="14" height="14" viewBox="0 0 24 24">
+                    <Path
+                      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"
+                      fill={theme.colors.secondary.lightGold}
+                    />
+                  </Svg>
+                  <Text style={styles.comingSoonText}>
+                    AI-powered prayer generation coming soon! This is a sample.
+                  </Text>
+                </View>
+              </Card>
+            )}
+
+            {/* Info Card */}
+            {!generatedPrayer && (
+              <Card variant="cream" style={styles.infoCard}>
+                <Text style={styles.infoTitle}>How It Works</Text>
+                <Text style={styles.infoText}>
+                  1. Type or speak about your day{'\n'}
+                  2. Share your joys, challenges, or thoughts{'\n'}
+                  3. Let AI help turn it into a meaningful prayer{'\n'}
+                  4. Use it as inspiration for your own prayers
+                </Text>
+              </Card>
+            )}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -596,6 +816,182 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.background.lightCream,
+    borderRadius: theme.borderRadius.md,
+    padding: 4,
+    marginBottom: theme.spacing.lg,
+    gap: 4,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+  },
+  modeButtonActive: {
+    backgroundColor: theme.colors.secondary.lightGold,
+  },
+  modeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  modeButtonTextActive: {
+    color: theme.colors.text.onDark,
+  },
+  dailyInputCard: {
+    marginBottom: theme.spacing.lg,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+  },
+  dailyTextArea: {
+    backgroundColor: theme.colors.background.cream,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    fontSize: 15,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    minHeight: 140,
+    borderWidth: 1,
+    borderColor: theme.colors.primary.mutedStone,
+    marginBottom: theme.spacing.xs,
+  },
+  charCount: {
+    fontSize: 12,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'right',
+    marginBottom: theme.spacing.md,
+  },
+  voiceInputSection: {
+    marginTop: theme.spacing.sm,
+  },
+  voiceDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.primary.mutedStone,
+  },
+  dividerText: {
+    fontSize: 12,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginHorizontal: theme.spacing.sm,
+  },
+  voiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background.lightCream,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.secondary.warmTerracotta,
+    gap: theme.spacing.sm,
+  },
+  voiceButtonActive: {
+    backgroundColor: theme.colors.secondary.warmTerracotta,
+    borderColor: theme.colors.secondary.warmTerracotta,
+  },
+  voiceButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.secondary.warmTerracotta,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  voiceButtonTextActive: {
+    color: theme.colors.text.onDark,
+  },
+  transcriptNotice: {
+    marginTop: theme.spacing.sm,
+    padding: theme.spacing.xs,
+    backgroundColor: theme.colors.success.celebratoryGold + '20',
+    borderRadius: theme.borderRadius.sm,
+    alignItems: 'center',
+  },
+  transcriptText: {
+    fontSize: 12,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  generateButton: {
+    marginBottom: theme.spacing.lg,
+  },
+  generatedPrayerCard: {
+    marginBottom: theme.spacing.lg,
+  },
+  prayerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  prayerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  newPrayerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.secondary.lightGold,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  generatedPrayerText: {
+    fontSize: 16,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.scripture.default,
+    lineHeight: 26,
+    marginBottom: theme.spacing.md,
+  },
+  comingSoonNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: theme.colors.background.lightCream,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    gap: theme.spacing.xs,
+  },
+  comingSoonText: {
+    flex: 1,
+    fontSize: 11,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    lineHeight: 15,
+  },
+  infoCard: {
+    marginBottom: theme.spacing.lg,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+  },
+  infoText: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    lineHeight: 22,
   },
 });
 
