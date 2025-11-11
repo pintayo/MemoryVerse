@@ -2,11 +2,45 @@
 
 This guide helps you filter verses to show only meaningful, memorable verses for daily devotionals and memorization.
 
-**Multi-Translation Support:** Currently these queries filter KJV only. Once verified working, we'll update all queries to apply to all translations (ASV, BBE, DBY, WBT, WEB, YLT) so premium users can choose their preferred translation.
+## Quick Start: Automated Script (Recommended)
+
+We've created an automated script that applies all the filtering logic at once. This is the easiest and fastest way to set up verse quality filtering.
+
+**Prerequisites:**
+1. Make sure you have `DATABASE_URL` set in your `.env` file
+2. Install dependencies: `npm install postgres dotenv` (should already be installed)
+
+**Usage:**
+
+```bash
+# Apply to all translations (KJV, ASV, BBE, DBY, WBT, WEB, YLT)
+node scripts/applyVerseQualityFiltering.js
+
+# Apply to specific translation only
+node scripts/applyVerseQualityFiltering.js KJV
+
+# Apply to multiple translations
+node scripts/applyVerseQualityFiltering.js KJV,ASV,WEB
+```
+
+**What it does:**
+- ✅ Filters out genealogies, census data, and lists
+- ✅ Marks Psalms, Proverbs, and wisdom literature as memorable
+- ✅ Marks major teaching sections (Sermon on the Mount, Romans, etc.)
+- ✅ Marks famous verses, Gospel narratives, promises, and commands
+- ✅ Shows you statistics when done
+- ✅ Works across all translations
+- ✅ Can be re-run anytime to update filtering logic
+
+**Note:** The first time you run this, you need to add the quality fields to your database (see Step 1 below).
 
 ---
 
-## Step 1: Add Quality Fields to verses Table
+## Manual Setup (Alternative)
+
+If you prefer to run the SQL queries manually, follow the steps below.
+
+### Step 1: Add Quality Fields to verses Table
 
 Run this SQL in Supabase SQL Editor:
 
@@ -24,7 +58,7 @@ CREATE INDEX IF NOT EXISTS idx_verses_category ON verses(verse_category);
 
 ---
 
-## Step 2: Mark Low-Quality Verses as Not Memorable
+### Step 2: Apply Filtering (Manual Method)
 
 **IMPORTANT:** Run these queries in order! Part 1 filters out low-quality verses, then Part 2 marks high-quality ones.
 
@@ -493,7 +527,7 @@ WHERE
 
 ---
 
-## Step 3: Verify the Results
+### Step 3: Verify the Results
 
 Check how many verses are marked as memorable:
 
@@ -525,31 +559,30 @@ LIMIT 20;
 
 ---
 
-## Step 4: Update App to Use Quality Filters
+## App Integration
 
-The app already uses quality filtering! Check these files:
-- `src/services/verseService.ts` - Random verse selection
+The app already uses verse quality filtering automatically! Once you've run the script (or manual SQL queries), the following features will automatically show only memorable verses:
+
+**Files that use filtering:**
+- `src/services/verseService.ts` - Random verse selection with `is_memorable` filter
 - `src/screens/HomeScreen.tsx` - Today's verse
 
-### Example: Filter Random Verses
-
+**How it works:**
 ```typescript
-// In verseService.ts, update getRandomVerse to filter memorable verses:
+// The app filters memorable verses automatically
 const { data, error } = await supabase
   .from('verses')
   .select('*')
   .eq('translation', translation)
   .eq('is_memorable', true) // Only get memorable verses
-  .limit(100); // Get a pool of verses
-
-// Then randomly select one from the pool
-const randomIndex = Math.floor(Math.random() * data.length);
-return data[randomIndex];
+  .limit(100);
 ```
 
 ---
 
-## Step 5: Apply to Other Translations (ASV, BBE, DBY, WBT, WEB, YLT)
+## Multi-Translation Support
+
+**Note:** The automated script (`applyVerseQualityFiltering.js`) handles all translations automatically. This section is only needed if you're running SQL queries manually.
 
 Once you've verified the KJV filtering works well, apply structure-based filtering to all translations. This uses book/chapter ranges that work regardless of English translation differences.
 
