@@ -254,7 +254,6 @@ export const SettingsScreen = () => {
               }
               title="Upgrade to Premium"
               subtitle="Unlock all features"
-              badge="⭐"
               onPress={() => navigation.navigate('PremiumUpgrade')}
             />
           )}
@@ -505,7 +504,7 @@ export const SettingsScreen = () => {
 
         {/* Footer */}
         <Text style={styles.footer}>
-          Made with ❤️ for Bible memorization
+          Made for Bible memorization
         </Text>
       </ScrollView>
     </SafeAreaView>
