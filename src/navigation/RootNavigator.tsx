@@ -133,7 +133,8 @@ const RootNavigator = () => {
         name="Review"
         component={ReviewScreen}
         options={{
-          headerShown: false,
+          title: 'Review Verses',
+          headerBackTitle: 'Back',
         }}
       />
       <Stack.Screen

@@ -76,7 +76,22 @@ CREATE INDEX IF NOT EXISTS idx_user_favorites_verse_id ON user_favorites(verse_i
 CREATE INDEX IF NOT EXISTS idx_user_favorites_created_at ON user_favorites(created_at DESC);
 ```
 
-###1.3 Enable Row Level Security (RLS)
+###1.3 Fix Missing Columns in profiles Table
+
+The profiles table is missing some columns that are required by the app:
+
+```sql
+-- Add missing level column to profiles
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS level INTEGER DEFAULT 1;
+
+-- Add missing verses_memorized column (if not exists)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verses_memorized INTEGER DEFAULT 0;
+
+-- Update level based on XP (optional - calculates level from existing XP)
+UPDATE profiles SET level = FLOOR(total_xp / 100) + 1 WHERE level IS NULL OR level = 0;
+```
+
+### 1.4 Enable Row Level Security (RLS)
 
 ```sql
 -- Enable RLS on verse_notes

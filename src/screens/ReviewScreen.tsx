@@ -242,27 +242,19 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
           <Text style={styles.loadingText}>Loading reviews...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   const totalReviews = reviewsByUrgency.overdue.length + reviewsByUrgency.dueToday.length + reviewsByUrgency.dueSoon.length;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Review</Text>
-        <Text style={styles.subtitle}>
-          {totalReviews === 0 ? 'All caught up!' : `${totalReviews} verses to review`}
-        </Text>
-      </View>
-
+    <View style={styles.container}>
       {/* Content */}
       <ScrollView
         style={styles.scrollView}
@@ -341,7 +333,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
