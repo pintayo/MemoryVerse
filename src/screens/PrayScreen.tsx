@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card } from '../components';
@@ -46,6 +46,25 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
   const [isGeneratingPrayer, setIsGeneratingPrayer] = useState(false);
 
   const micPulseAnim = useRef(new Animated.Value(1)).current;
+
+  useLayoutEffect(() => {
+    if (selectedCategory === 'daily') {
+      navigation.setOptions({
+        headerTitle: 'Tell About Your Day',
+        headerBackVisible: true,
+      });
+    } else if (selectedCategory) {
+      navigation.setOptions({
+        headerTitle: prayerOptions.find(o => o.id === selectedCategory)?.title || 'Prayer',
+        headerBackVisible: true,
+      });
+    } else {
+      navigation.setOptions({
+        headerTitle: 'Prayer Training',
+        headerBackVisible: true,
+      });
+    }
+  }, [selectedCategory, navigation]);
 
   const handleCategorySelect = (category: PrayerCategory | 'daily') => {
     if (category === 'daily') {
@@ -143,12 +162,6 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-          <TouchableOpacity onPress={handleBackToCategories} style={styles.inlineBackButton}>
-            <Ionicons name="arrow-back" size={20} color={theme.colors.text.secondary} />
-            <Text style={styles.inlineBackText}>Back to Categories</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.screenTitle}>Tell About Your Day</Text>
           {isPremiumUser && (
             <View style={styles.premiumBadge}>
               <Svg width="16" height="16" viewBox="0 0 24 24">
@@ -239,21 +252,11 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.comingSoonContainer}>
-          <TouchableOpacity onPress={handleBackToCategories} style={styles.inlineBackButtonTop}>
-            <Ionicons name="arrow-back" size={20} color={theme.colors.text.secondary} />
-            <Text style={styles.inlineBackText}>Back to Categories</Text>
-          </TouchableOpacity>
           <Ionicons name="time" size={64} color={theme.colors.secondary.lightGold} />
           <Text style={styles.comingSoonTitle}>Coming Soon</Text>
           <Text style={styles.comingSoonDescription}>
             Guided prayers for different occasions are being developed. Check back soon!
           </Text>
-          <Button
-            title="Back to Categories"
-            onPress={handleBackToCategories}
-            variant="secondary"
-            style={styles.backToCategoriesButton}
-          />
         </View>
       </SafeAreaView>
     );
@@ -470,17 +473,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: theme.spacing.md,
   },
   categoryCard: {
-    width: '48%',
+    width: '47.5%',
     backgroundColor: theme.colors.background.lightCream,
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: theme.colors.primary.mutedStone + '60',
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
