@@ -37,7 +37,8 @@ export const PremiumUpgradeScreen = () => {
     analyticsService.logPremiumScreenViewed(source);
   }, []);
 
-  const premiumFeatureKeys = getPremiumFeatures();
+  // Get premium features excluding 'originalLanguage'
+  const premiumFeatureKeys = getPremiumFeatures().filter(key => key !== 'originalLanguage');
 
   // Pricing configuration
   const pricing = {
@@ -111,12 +112,20 @@ export const PremiumUpgradeScreen = () => {
             <Text style={styles.sectionTitle}>Your Premium Features</Text>
             {premiumFeatureKeys.map((key) => {
               const feature = featureFlags[key as keyof typeof featureFlags];
+              const isAvailable = feature.enabled;
+
               return (
-                <View key={key} style={styles.featureRow}>
+                <View
+                  key={key}
+                  style={[
+                    styles.featureRow,
+                    !isAvailable && styles.featureRowDisabled
+                  ]}
+                >
                   <Svg width="24" height="24" viewBox="0 0 24 24" style={styles.checkmark}>
                     <Path
                       d="M5 12 L10 17 L20 7"
-                      stroke={theme.colors.success.green}
+                      stroke={isAvailable ? theme.colors.success.green : theme.colors.text.tertiary}
                       strokeWidth="2.5"
                       fill="none"
                       strokeLinecap="round"
@@ -124,10 +133,25 @@ export const PremiumUpgradeScreen = () => {
                     />
                   </Svg>
                   <View style={styles.featureText}>
-                    <Text style={styles.featureName}>
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    <View style={styles.featureNameRow}>
+                      <Text style={[
+                        styles.featureName,
+                        !isAvailable && styles.featureNameDisabled
+                      ]}>
+                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                      </Text>
+                      {!isAvailable && (
+                        <View style={styles.comingSoonBadge}>
+                          <Text style={styles.comingSoonText}>Coming Soon</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={[
+                      styles.featureDescription,
+                      !isAvailable && styles.featureDescriptionDisabled
+                    ]}>
+                      {feature.description}
                     </Text>
-                    <Text style={styles.featureDescription}>{feature.description}</Text>
                   </View>
                 </View>
               );
@@ -211,12 +235,20 @@ export const PremiumUpgradeScreen = () => {
           <Text style={styles.sectionTitle}>Premium Features</Text>
           {premiumFeatureKeys.map((key) => {
             const feature = featureFlags[key as keyof typeof featureFlags];
+            const isAvailable = feature.enabled;
+
             return (
-              <View key={key} style={styles.featureRow}>
+              <View
+                key={key}
+                style={[
+                  styles.featureRow,
+                  !isAvailable && styles.featureRowDisabled
+                ]}
+              >
                 <Svg width="24" height="24" viewBox="0 0 24 24" style={styles.checkmark}>
                   <Path
                     d="M5 12 L10 17 L20 7"
-                    stroke={theme.colors.accent.burnishedGold}
+                    stroke={isAvailable ? theme.colors.accent.burnishedGold : theme.colors.text.tertiary}
                     strokeWidth="2.5"
                     fill="none"
                     strokeLinecap="round"
@@ -224,10 +256,25 @@ export const PremiumUpgradeScreen = () => {
                   />
                 </Svg>
                 <View style={styles.featureText}>
-                  <Text style={styles.featureName}>
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                  <View style={styles.featureNameRow}>
+                    <Text style={[
+                      styles.featureName,
+                      !isAvailable && styles.featureNameDisabled
+                    ]}>
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </Text>
+                    {!isAvailable && (
+                      <View style={styles.comingSoonBadge}>
+                        <Text style={styles.comingSoonText}>Coming Soon</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[
+                    styles.featureDescription,
+                    !isAvailable && styles.featureDescriptionDisabled
+                  ]}>
+                    {feature.description}
                   </Text>
-                  <Text style={styles.featureDescription}>{feature.description}</Text>
                 </View>
               </View>
             );
@@ -365,6 +412,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: theme.spacing.md,
   },
+  featureRowDisabled: {
+    opacity: 0.5,
+  },
   checkmark: {
     marginRight: theme.spacing.sm,
     marginTop: 2,
@@ -372,19 +422,46 @@ const styles = StyleSheet.create({
   featureText: {
     flex: 1,
   },
+  featureNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    marginBottom: 2,
+    flexWrap: 'wrap',
+  },
   featureName: {
     fontSize: theme.typography.ui.body.fontSize,
     fontWeight: '600',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 2,
     textTransform: 'capitalize',
+  },
+  featureNameDisabled: {
+    color: theme.colors.text.tertiary,
+  },
+  comingSoonBadge: {
+    backgroundColor: theme.colors.secondary.lightGold + '30',
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.secondary.lightGold + '50',
+  },
+  comingSoonText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: theme.colors.secondary.lightGold,
+    fontFamily: theme.typography.fonts.ui.default,
+    textTransform: 'uppercase',
   },
   featureDescription: {
     fontSize: theme.typography.ui.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     lineHeight: 20,
+  },
+  featureDescriptionDisabled: {
+    color: theme.colors.text.tertiary,
   },
   upgradeButton: {
     backgroundColor: theme.colors.accent.burnishedGold,
