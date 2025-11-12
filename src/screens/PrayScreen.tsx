@@ -257,10 +257,10 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
               <Text style={styles.prayerText}>{generatedPrayer}</Text>
-              <View style={styles.comingSoonNotice}>
+              <View style={styles.aiGeneratedNotice}>
                 <Ionicons name="sparkles" size={14} color={theme.colors.secondary.lightGold} />
-                <Text style={styles.comingSoonText}>
-                  This prayer was crafted with AI just for you
+                <Text style={styles.aiGeneratedText}>
+                  Crafted with AI just for you ✨
                 </Text>
               </View>
             </Card>
@@ -690,19 +690,22 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     marginBottom: theme.spacing.md,
   },
-  comingSoonNotice: {
+  aiGeneratedNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background.lightCream,
+    backgroundColor: theme.colors.secondary.lightGold + '15',
     padding: theme.spacing.sm,
     borderRadius: theme.borderRadius.sm,
     gap: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.secondary.lightGold + '30',
   },
-  comingSoonText: {
+  aiGeneratedText: {
     flex: 1,
     fontSize: 11,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600',
   },
   comingSoonContainer: {
     flex: 1,
