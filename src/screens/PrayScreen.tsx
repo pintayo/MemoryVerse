@@ -9,6 +9,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../utils/logger';
+import { generateDailyPrayer, getFallbackDailyPrayer } from '../services/dailyPrayerService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pray'>;
 
@@ -131,15 +132,37 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       setIsGeneratingPrayer(true);
       logger.log('[PrayScreen] Generating prayer from day story');
 
-      // TODO: Implement actual AI prayer generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Generate AI-powered prayer
+      const result = await generateDailyPrayer(dayStory);
 
-      setGeneratedPrayer(
-        `Heavenly Father,\n\nThank You for this day and all its moments. ${dayStory}\n\nI lift up these experiences to You, trusting in Your perfect plan and timing. Help me to see Your hand in every situation and to grow closer to You through both joys and challenges.\n\nIn Jesus' name I pray, Amen.`
-      );
+      if (result.success && result.prayer) {
+        setGeneratedPrayer(result.prayer);
+        logger.log('[PrayScreen] Prayer generated successfully');
+      } else {
+        // Use fallback prayer if AI fails
+        logger.warn('[PrayScreen] AI generation failed, using fallback:', result.error);
+        const fallbackPrayer = getFallbackDailyPrayer(dayStory);
+        setGeneratedPrayer(fallbackPrayer);
+
+        // Optionally notify user that we used a fallback
+        Alert.alert(
+          'Prayer Generated',
+          'We created a prayer for you. AI enhancement is temporarily unavailable.',
+          [{ text: 'OK' }]
+        );
+      }
     } catch (error) {
       logger.error('[PrayScreen] Error generating prayer:', error);
-      Alert.alert('Error', 'Failed to generate prayer. Please try again.');
+
+      // Use fallback prayer on error
+      const fallbackPrayer = getFallbackDailyPrayer(dayStory);
+      setGeneratedPrayer(fallbackPrayer);
+
+      Alert.alert(
+        'Prayer Created',
+        'We created a prayer for you. AI services are temporarily unavailable.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setIsGeneratingPrayer(false);
     }
@@ -235,9 +258,9 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
               </View>
               <Text style={styles.prayerText}>{generatedPrayer}</Text>
               <View style={styles.comingSoonNotice}>
-                <Ionicons name="information-circle" size={14} color={theme.colors.secondary.lightGold} />
+                <Ionicons name="sparkles" size={14} color={theme.colors.secondary.lightGold} />
                 <Text style={styles.comingSoonText}>
-                  AI-powered prayer generation coming soon!
+                  This prayer was crafted with AI just for you
                 </Text>
               </View>
             </Card>

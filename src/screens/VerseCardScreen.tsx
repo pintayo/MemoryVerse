@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card, VerseText, VerseReference, StarButton } from '../components';
+import { Button, Card, VerseText, VerseReference, StarButton, ChapterContext } from '../components';
 import { theme } from '../theme';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
@@ -302,6 +302,11 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                   <View style={styles.decorativeBorder} />
 
                   <View style={styles.cardContent}>
+                    <ChapterContext
+                      book={currentVerse.book}
+                      chapter={currentVerse.chapter}
+                      verseNumber={currentVerse.verse_number}
+                    />
                     <VerseText size="large" style={styles.verse}>
                       {currentVerse.text}
                     </VerseText>
@@ -334,6 +339,11 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
 
                   <View style={styles.cardContent}>
                     <Text style={styles.contextLabel}>CONTEXT</Text>
+                    <ChapterContext
+                      book={currentVerse.book}
+                      chapter={currentVerse.chapter}
+                      verseNumber={currentVerse.verse_number}
+                    />
                     <VerseReference style={[styles.reference, styles.contextReference]}>
                       {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
                     </VerseReference>
