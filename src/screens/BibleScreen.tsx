@@ -14,6 +14,7 @@ import { theme } from '../theme';
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
 import { useAuth } from '../contexts/AuthContext';
+import { StarButton } from '../components';
 
 interface BibleScreenProps {
   navigation: any;
@@ -479,12 +480,15 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
           <View style={styles.chapterTextContainer}>
             {filteredVerses.map((verse, index) => (
               <View key={verse.id} style={styles.verseInlineContainer}>
-                <TouchableOpacity
-                  style={styles.verseNumberButton}
-                  onPress={() => handleRequestVerseContext(verse.id)}
-                >
-                  <Text style={styles.verseNumberInline}>{verse.verse_number}</Text>
-                </TouchableOpacity>
+                <View style={styles.verseNumberWithStar}>
+                  <TouchableOpacity
+                    style={styles.verseNumberButton}
+                    onPress={() => handleRequestVerseContext(verse.id)}
+                  >
+                    <Text style={styles.verseNumberInline}>{verse.verse_number}</Text>
+                  </TouchableOpacity>
+                  <StarButton verseId={verse.id} size={16} />
+                </View>
                 <Text style={styles.verseContinuousText}>
                   {verse.text}
                   {index < filteredVerses.length - 1 ? ' ' : ''}
@@ -790,8 +794,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginBottom: 8,
   },
-  verseNumberButton: {
+  verseNumberWithStar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     marginRight: 6,
+  },
+  verseNumberButton: {
     marginTop: 2,
   },
   verseNumberInline: {
