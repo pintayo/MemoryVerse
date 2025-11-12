@@ -21,6 +21,7 @@ import VerseText from '../components/VerseText';
 import VerseReference from '../components/VerseReference';
 import BibleCompanion from '../components/BibleCompanion';
 import { BibleVersePicker } from '../components/BibleVersePicker';
+import { StarButton } from '../components/StarButton';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
 import { logger } from '../utils/logger';
@@ -90,7 +91,7 @@ export function UnderstandScreen({ navigation, route }: Props) {
   };
 
   const handleRandomVerse = async () => {
-    const randomVerse = await verseService.getRandomVerse('NIV');
+    const randomVerse = await verseService.getRandomVerse('KJV');
     if (randomVerse?.id) {
       setCurrentVerseId(randomVerse.id);
     }
@@ -158,12 +159,15 @@ export function UnderstandScreen({ navigation, route }: Props) {
           <Ionicons name="arrow-back" size={24} color={colors.primary.mutedStone} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Understanding</Text>
-        <TouchableOpacity
-          onPress={() => setShowVersePicker(true)}
-          style={styles.bibleButton}
-        >
-          <Ionicons name="book" size={24} color={colors.accent.gold} />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <StarButton verseId={currentVerseId} size={28} />
+          <TouchableOpacity
+            onPress={() => setShowVersePicker(true)}
+            style={styles.bibleButton}
+          >
+            <Ionicons name="book" size={24} color={colors.accent.gold} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -333,6 +337,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: typography.fonts.scripture.default,
     color: colors.primary.mutedStone,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   bibleButton: {
     padding: spacing.xs,

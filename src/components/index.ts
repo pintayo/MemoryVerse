@@ -27,4 +27,13 @@ console.log('[components/index] LessonCompleteModal exported');
 export { BibleVersePicker } from './BibleVersePicker';
 console.log('[components/index] BibleVersePicker exported');
 
+export { StarButton } from './StarButton';
+console.log('[components/index] StarButton exported');
+
+export { FeatureCard } from './FeatureCard';
+console.log('[components/index] FeatureCard exported');
+
+export { default as ChapterContext } from './ChapterContext';
+console.log('[components/index] ChapterContext exported');
+
 console.log('[components/index] ALL COMPONENTS EXPORTED');

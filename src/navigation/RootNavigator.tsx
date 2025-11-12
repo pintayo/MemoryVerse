@@ -18,6 +18,27 @@ console.log('[RootNavigator] UnderstandScreen imported');
 import PrayScreen from '../screens/PrayScreen';
 console.log('[RootNavigator] PrayScreen imported');
 
+import { DownloadsScreen } from '../screens/DownloadsScreen';
+console.log('[RootNavigator] DownloadsScreen imported');
+
+import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
+console.log('[RootNavigator] NotificationSettingsScreen imported');
+
+import { StreakCalendarScreen, ReviewScreen } from '../screens';
+console.log('[RootNavigator] StreakCalendarScreen and ReviewScreen imported');
+
+import { ComingSoonScreen } from '../screens/ComingSoonScreen';
+console.log('[RootNavigator] ComingSoonScreen imported');
+
+import { ChapterContextScreen } from '../screens/ChapterContextScreen';
+console.log('[RootNavigator] ChapterContextScreen imported');
+
+import { PremiumUpgradeScreen } from '../screens/PremiumUpgradeScreen';
+console.log('[RootNavigator] PremiumUpgradeScreen imported');
+
+import { SettingsScreen } from '../screens/SettingsScreen';
+console.log('[RootNavigator] SettingsScreen imported');
+
 import { theme } from '../theme';
 console.log('[RootNavigator] theme imported');
 
@@ -82,6 +103,71 @@ const RootNavigator = () => {
         component={UnderstandScreen}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Downloads"
+        component={DownloadsScreen}
+        options={{
+          title: 'Offline Downloads',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{
+          title: 'Daily Reminders',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="StreakCalendar"
+        component={StreakCalendarScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Notes"
+        component={ComingSoonScreen}
+        options={{
+          headerShown: false,
+        }}
+        initialParams={{
+          title: 'Study Notes',
+          message: 'The Study Notes feature will allow you to create and save personal notes on Bible verses and chapters.',
+        }}
+      />
+      <Stack.Screen
+        name="Review"
+        component={ReviewScreen}
+        options={{
+          title: 'Review Verses',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="ChapterContext"
+        component={ChapterContextScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="PremiumUpgrade"
+        component={PremiumUpgradeScreen}
+        options={{
+          title: 'Premium',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: 'Settings',
+          headerBackTitle: 'Back',
         }}
       />
     </Stack.Navigator>

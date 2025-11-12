@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card, VerseText, VerseReference } from '../components';
+import { Button, Card, VerseText, VerseReference, StarButton } from '../components';
 import { theme } from '../theme';
 import { verseService } from '../services/verseService';
 import { Verse } from '../types/database';
@@ -49,7 +49,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
       // Load 5 random verses for the card deck
       const loadedVerses: Verse[] = [];
       for (let i = 0; i < 5; i++) {
-        const verse = await verseService.getRandomVerse('NIV');
+        const verse = await verseService.getRandomVerse('KJV');
         if (verse) {
           loadedVerses.push(verse);
         }
@@ -302,12 +302,15 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                   <View style={styles.decorativeBorder} />
 
                   <View style={styles.cardContent}>
-                    <VerseText size="large" style={styles.verse} numberOfLines={15}>
+                    <VerseText size="large" style={styles.verse}>
                       {currentVerse.text}
                     </VerseText>
-                    <VerseReference style={styles.reference}>
-                      {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
-                    </VerseReference>
+                    <View style={styles.referenceRow}>
+                      <VerseReference style={styles.reference}>
+                        {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
+                      </VerseReference>
+                      <StarButton verseId={currentVerse.id || ''} size={24} />
+                    </View>
                   </View>
 
                   <View style={[styles.decorativeBorder, styles.decorativeBorderBottom]} />
@@ -343,7 +346,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                         </Text>
                       </View>
                     ) : currentVerse.context ? (
-                      <Text style={styles.contextText} numberOfLines={10} ellipsizeMode="tail">
+                      <Text style={styles.contextText}>
                         {currentVerse.context}
                       </Text>
                     ) : (
@@ -493,8 +496,15 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
     textAlign: 'center',
   },
-  reference: {
+  referenceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  reference: {
+    marginTop: 0,
     textAlign: 'center',
   },
   contextReference: {

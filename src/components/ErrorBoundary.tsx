@@ -1,7 +1,20 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { ENABLE_NATIVE_MODULES } from '../config/nativeModules';
 import { theme } from '../theme';
 import { logger } from '../utils/logger';
+import { analyticsService } from '../services/analyticsService';
+
+// Try to load Sentry (only in production builds, not Expo Go)
+let Sentry: any = null;
+
+if (ENABLE_NATIVE_MODULES) {
+  try {
+    Sentry = require('@sentry/react-native');
+  } catch (error) {
+    // Sentry not available
+  }
+}
 
 interface Props {
   children: ReactNode;
@@ -34,6 +47,24 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.error('[ErrorBoundary] Caught error:', error);
     logger.error('[ErrorBoundary] Error info:', errorInfo);
+
+    // Log to Sentry (if available)
+    if (Sentry) {
+      Sentry.captureException(error, {
+        contexts: {
+          react: {
+            componentStack: errorInfo.componentStack,
+          },
+        },
+      });
+    }
+
+    // Log to Analytics
+    analyticsService.logError(
+      error.message || 'Unknown error',
+      error.stack,
+      'ErrorBoundary'
+    );
 
     this.setState({
       error,

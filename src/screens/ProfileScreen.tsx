@@ -31,13 +31,14 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editedName, setEditedName] = useState(profile?.full_name || '');
-  const [editedAvatar, setEditedAvatar] = useState(profile?.avatar_url || '😊');
+
+  // Check premium status from profile
+  const isPremiumUser = profile?.is_premium || false;
 
   // Update edited values when profile changes
   useEffect(() => {
     if (profile) {
       setEditedName(profile.full_name || '');
-      setEditedAvatar(profile.avatar_url || '😊');
     }
   }, [profile]);
 
@@ -96,7 +97,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleCancelEdit = () => {
     // Reset to original values
     setEditedName(profile?.full_name || '');
-    setEditedAvatar(profile?.avatar_url || '😊');
     setIsEditMode(false);
   };
 
@@ -115,7 +115,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       setIsSaving(true);
       await profileService.updateProfile(user.id, {
         full_name: editedName.trim(),
-        avatar_url: editedAvatar,
       });
 
       // Refresh profile from AuthContext
@@ -133,8 +132,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }
   };
 
-  // Common emoji avatars for selection
-  const avatarOptions = ['😊', '😃', '🙂', '😇', '🤗', '😎', '🥰', '🙏', '✨', '🌟', '⭐', '💫'];
+  // Helper function to get user initials
+  const getUserInitials = (name: string): string => {
+    const parts = name.trim().split(' ').filter(Boolean);
+    if (parts.length === 0) return 'U';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  };
 
   // Calculate user stats from profile
   const totalStreak = profile?.current_streak || 0;
@@ -358,27 +362,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             <View style={styles.profileHeader}>
               <Text style={styles.editSectionTitle}>Edit Profile</Text>
 
-              {/* Avatar Selection */}
-              <Text style={styles.editLabel}>Select Avatar</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.avatarScroll}
-                contentContainerStyle={styles.avatarScrollContent}
-              >
-                {avatarOptions.map((emoji) => (
-                  <TouchableOpacity
-                    key={emoji}
-                    style={[
-                      styles.avatarOption,
-                      editedAvatar === emoji && styles.avatarOptionSelected,
-                    ]}
-                    onPress={() => setEditedAvatar(emoji)}
-                  >
-                    <Text style={styles.avatarOptionText}>{emoji}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              {/* Avatar Display */}
+              <View style={styles.avatarLarge}>
+                <Text style={styles.avatarInitials}>{getUserInitials(editedName || 'User')}</Text>
+              </View>
 
               {/* Name Input */}
               <Text style={styles.editLabel}>Full Name</Text>
@@ -395,7 +382,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             /* View Mode */
             <View style={styles.profileHeader}>
               <View style={styles.avatarLarge}>
-                <Text style={styles.avatarLargeText}>{profile?.avatar_url || '😊'}</Text>
+                <Text style={styles.avatarInitials}>{getUserInitials(profile?.full_name || 'User')}</Text>
               </View>
               <Text style={styles.userName}>{profile?.full_name || 'User'}</Text>
               <View style={styles.levelBadge}>
@@ -498,6 +485,43 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             </>
           ) : (
             <>
+              {/* Premium Upgrade/Manage Button */}
+              <Button
+                title={isPremiumUser ? "Manage Premium" : "Upgrade to Premium"}
+                onPress={() => navigation.navigate('PremiumUpgrade')}
+                variant={isPremiumUser ? "secondary" : "gold"}
+                style={styles.actionButton}
+              />
+              <Button
+                title="Study Notes"
+                onPress={() => navigation.navigate('Notes')}
+                variant="gold"
+                style={styles.actionButton}
+              />
+              <Button
+                title="View Streak Calendar"
+                onPress={() => navigation.navigate('StreakCalendar')}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
+                title="Daily Reminders"
+                onPress={() => navigation.navigate('NotificationSettings')}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
+                title="Offline Downloads"
+                onPress={() => navigation.navigate('Downloads')}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
+                title="Settings"
+                onPress={() => navigation.navigate('Settings')}
+                variant="secondary"
+                style={styles.actionButton}
+              />
               <Button
                 title="Edit Profile"
                 onPress={handleEditProfile}
@@ -553,8 +577,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.md,
   },
-  avatarLargeText: {
-    fontSize: 40,
+  avatarInitials: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   userName: {
     fontSize: theme.typography.ui.title.fontSize,
@@ -719,30 +746,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
     marginTop: theme.spacing.sm,
     alignSelf: 'flex-start',
-  },
-  avatarScroll: {
-    marginBottom: theme.spacing.md,
-  },
-  avatarScrollContent: {
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
-  },
-  avatarOption: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: theme.colors.background.lightCream,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  avatarOptionSelected: {
-    borderColor: theme.colors.secondary.lightGold,
-    backgroundColor: theme.colors.background.warmParchment,
-  },
-  avatarOptionText: {
-    fontSize: 28,
   },
   textInput: {
     height: 48,

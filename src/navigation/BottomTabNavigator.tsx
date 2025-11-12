@@ -6,7 +6,7 @@ console.log('[BottomTabNavigator] React imported');
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 console.log('[BottomTabNavigator] createBottomTabNavigator imported');
 
-import { HomeScreen, LeaderboardScreen, ProfileScreen } from '../screens';
+import { HomeScreen, LeaderboardScreen, ProfileScreen, BibleScreen } from '../screens';
 console.log('[BottomTabNavigator] Screens imported');
 
 import { theme } from '../theme';
@@ -52,6 +52,20 @@ const BottomTabNavigator = () => {
             <Svg width={size} height={size} viewBox="0 0 24 24">
               <Path
                 d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
+                fill={color}
+              />
+            </Svg>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Bible"
+        component={BibleScreen}
+        options={{
+          tabBarIcon: ({ color, size}) => (
+            <Svg width={size} height={size} viewBox="0 0 24 24">
+              <Path
+                d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 4h2v5l-1-.75L9 9V4zm9 16H6V4h1v9l3-2.25L13 13V4h5v16z"
                 fill={color}
               />
             </Svg>

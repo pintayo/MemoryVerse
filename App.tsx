@@ -1,6 +1,61 @@
-console.log('[App.tsx] Starting module imports...');
+console.log('[App.tsx] =============== Starting module imports ===============');
 
-import React from 'react';
+import { ENABLE_NATIVE_MODULES } from './src/config/nativeModules';
+
+console.log('[App.tsx] ENABLE_NATIVE_MODULES imported:', ENABLE_NATIVE_MODULES);
+console.log('[App.tsx] ENABLE_NATIVE_MODULES type:', typeof ENABLE_NATIVE_MODULES);
+
+import { config } from './src/config/env';
+
+console.log('[App.tsx] config imported');
+
+// Try to load Sentry (only in production builds, not Expo Go)
+let Sentry: any = null;
+
+console.log('[App.tsx] About to check ENABLE_NATIVE_MODULES...');
+console.log('[App.tsx] ENABLE_NATIVE_MODULES value:', ENABLE_NATIVE_MODULES);
+
+if (ENABLE_NATIVE_MODULES) {
+  console.log('[App.tsx] NATIVE MODULES ENABLED - Will try to load Sentry');
+  try {
+    console.log('[App.tsx] Attempting to require @sentry/react-native...');
+    Sentry = require('@sentry/react-native');
+    console.log('[App.tsx] Sentry module loaded successfully');
+
+    // Initialize Sentry if DSN is provided
+    if (config.sentry.dsn && config.sentry.enabled) {
+      console.log('[App.tsx] Sentry DSN found, attempting to initialize...');
+      try {
+        Sentry.init({
+          dsn: config.sentry.dsn,
+          tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+          enabled: !__DEV__,
+          beforeSend(event, hint) {
+            if (__DEV__) {
+              console.log('[Sentry] Event captured (dev mode, not sent):', event);
+              return null;
+            }
+            return event;
+          },
+        });
+        console.log('[App.tsx] Sentry initialized successfully');
+      } catch (error) {
+        console.log('[App.tsx] Sentry init failed:', error);
+        Sentry = null;
+      }
+    } else {
+      console.log('[App.tsx] No Sentry DSN configured or not enabled');
+    }
+  } catch (error) {
+    console.log('[App.tsx] Sentry require failed:', error);
+  }
+} else {
+  console.log('[App.tsx] ⚠️  NATIVE MODULES DISABLED (Expo Go mode) - Sentry will NOT be loaded');
+}
+
+console.log('[App.tsx] Sentry loading complete. Sentry is:', Sentry === null ? 'NULL' : 'LOADED');
+
+import React, { useState, useEffect } from 'react';
 import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
 console.log('[App.tsx] React Native imports loaded');
 
@@ -16,6 +71,9 @@ console.log('[App.tsx] GestureHandlerRootView loaded');
 import { createStackNavigator } from '@react-navigation/stack';
 console.log('[App.tsx] createStackNavigator loaded');
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+console.log('[App.tsx] AsyncStorage loaded');
+
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 console.log('[App.tsx] AuthContext loaded');
 
@@ -28,11 +86,17 @@ console.log('[App.tsx] LoginScreen loaded');
 import SignupScreen from './src/screens/SignupScreen';
 console.log('[App.tsx] SignupScreen loaded');
 
+import OnboardingScreen from './src/screens/OnboardingScreen';
+console.log('[App.tsx] OnboardingScreen loaded');
+
 import { ErrorBoundary } from './src/components';
 console.log('[App.tsx] ErrorBoundary loaded');
 
 import { theme } from './src/theme';
 console.log('[App.tsx] theme loaded');
+
+import { appReviewService } from './src/services/appReviewService';
+console.log('[App.tsx] appReviewService loaded');
 
 console.log('[App.tsx] ALL IMPORTS COMPLETE!');
 
@@ -70,8 +134,43 @@ const AppNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
   console.log('[AppNavigator] useAuth called, isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
+
+  // Check if user has completed onboarding
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('onboarding_completed');
+        setHasCompletedOnboarding(completed === 'true');
+      } catch (error) {
+        console.error('[AppNavigator] Error checking onboarding:', error);
+        setHasCompletedOnboarding(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      checkOnboarding();
+    }
+  }, [isAuthenticated]);
+
+  // Track app sessions for review prompt
+  useEffect(() => {
+    const trackSession = async () => {
+      if (isAuthenticated && hasCompletedOnboarding) {
+        try {
+          await appReviewService.incrementSessionCount();
+          console.log('[AppNavigator] Session tracked for review prompt');
+        } catch (error) {
+          console.error('[AppNavigator] Error tracking session:', error);
+        }
+      }
+    };
+
+    trackSession();
+  }, [isAuthenticated, hasCompletedOnboarding]);
+
+  // Show loading spinner while checking authentication or onboarding
+  if (isLoading || (isAuthenticated && hasCompletedOnboarding === null)) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
@@ -97,7 +196,12 @@ const AppNavigator = () => {
     );
   }
 
-  // Show main app if authenticated
+  // Show onboarding for first-time users
+  if (!hasCompletedOnboarding) {
+    return <OnboardingScreen onComplete={() => setHasCompletedOnboarding(true)} />;
+  }
+
+  // Show main app if authenticated and onboarding completed
   return <RootNavigator />;
 };
 
@@ -135,4 +239,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+// Wrap with Sentry's error boundary for better error tracking (only if Sentry is loaded)
+export default (ENABLE_NATIVE_MODULES && Sentry && config.sentry.dsn) ? Sentry.wrap(App) : App;

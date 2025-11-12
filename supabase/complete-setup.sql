@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     longest_streak INTEGER DEFAULT 0 NOT NULL,
     verses_memorized INTEGER DEFAULT 0 NOT NULL,
     -- Preferences
-    preferred_translation TEXT DEFAULT 'NIV' NOT NULL,
+    preferred_translation TEXT DEFAULT 'KJV' NOT NULL,
     daily_goal INTEGER DEFAULT 1 NOT NULL,
     reminder_enabled BOOLEAN DEFAULT true NOT NULL,
     reminder_time TIME DEFAULT '09:00:00',
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS public.verses (
     chapter INTEGER NOT NULL,
     verse_number INTEGER NOT NULL,
     text TEXT NOT NULL,
-    translation TEXT DEFAULT 'NIV' NOT NULL,
+    translation TEXT DEFAULT 'KJV' NOT NULL,
     category TEXT,
     difficulty INTEGER DEFAULT 1 NOT NULL,
     context TEXT,

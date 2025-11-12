@@ -17,6 +17,10 @@ logger.log('[verseService] Importing contextGenerator...');
 import { getOrGenerateContext } from './contextGenerator';
 logger.log('[verseService] contextGenerator imported');
 
+logger.log('[verseService] Importing sentryHelper...');
+import { addDatabaseBreadcrumb, errorHandlers } from '../utils/sentryHelper';
+logger.log('[verseService] sentryHelper imported');
+
 logger.log('[verseService] About to define verseService object...');
 
 /**
@@ -27,7 +31,7 @@ export const verseService = {
   /**
    * Get all verses
    */
-  async getAllVerses(translation: string = 'NIV'): Promise<Verse[]> {
+  async getAllVerses(translation: string = 'KJV'): Promise<Verse[]> {
     const result = await supabase
       .from('verses')
       .select('*')
@@ -50,26 +54,37 @@ export const verseService = {
    * Get verse by ID
    */
   async getVerseById(verseId: string): Promise<Verse | null> {
-    const result = await supabase
-      .from('verses')
-      .select('*')
-      .eq('id', verseId)
-      .single();
+    try {
+      addDatabaseBreadcrumb('SELECT', 'verses', true, { verseId });
 
-    if (!result) {
-      logger.warn('[verseService] getVerseById returned undefined for verse:', verseId);
-      return null;
+      const result = await supabase
+        .from('verses')
+        .select('*')
+        .eq('id', verseId)
+        .single();
+
+      if (!result) {
+        logger.warn('[verseService] getVerseById returned undefined for verse:', verseId);
+        addDatabaseBreadcrumb('SELECT', 'verses', false, { verseId, reason: 'undefined result' });
+        return null;
+      }
+
+      const { data, error } = result;
+      if (error) {
+        addDatabaseBreadcrumb('SELECT', 'verses', false, { verseId, error: error.message });
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      errorHandlers.handleVerseError(error as Error, verseId);
+      throw error;
     }
-
-    const { data, error } = result;
-    if (error) throw error;
-    return data;
   },
 
   /**
    * Get verses by category
    */
-  async getVersesByCategory(category: string, translation: string = 'NIV'): Promise<Verse[]> {
+  async getVersesByCategory(category: string, translation: string = 'KJV'): Promise<Verse[]> {
     const result = await supabase
       .from('verses')
       .select('*')
@@ -90,7 +105,7 @@ export const verseService = {
   /**
    * Get verses by difficulty
    */
-  async getVersesByDifficulty(difficulty: number, translation: string = 'NIV'): Promise<Verse[]> {
+  async getVersesByDifficulty(difficulty: number, translation: string = 'KJV'): Promise<Verse[]> {
     const result = await supabase
       .from('verses')
       .select('*')
@@ -109,13 +124,25 @@ export const verseService = {
 
   /**
    * Get random verse
+   * Filters to only include memorable verses (no genealogies, itineraries, etc.)
    */
-  async getRandomVerse(translation: string = 'NIV'): Promise<Verse | null> {
-    const result = await supabase
+  async getRandomVerse(translation: string = 'KJV'): Promise<Verse | null> {
+    // Try to get memorable verses first (requires is_memorable column)
+    let result = await supabase
       .from('verses')
       .select('*')
       .eq('translation', translation)
+      .eq('is_memorable', true) // Only get memorable verses
       .limit(100); // Get a pool of verses
+
+    // If no memorable verses found (column might not exist yet), try without filter
+    if (!result?.data || result.data.length === 0) {
+      result = await supabase
+        .from('verses')
+        .select('*')
+        .eq('translation', translation)
+        .limit(100);
+    }
 
     if (!result) {
       logger.warn('[verseService] getRandomVerse returned undefined');
@@ -135,7 +162,7 @@ export const verseService = {
    * Get today's verse with 24-hour caching
    * Returns the same verse all day, refreshes at midnight
    */
-  async getTodayVerseWithCache(translation: string = 'NIV'): Promise<Verse | null> {
+  async getTodayVerseWithCache(translation: string = 'KJV'): Promise<Verse | null> {
     try {
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
 
@@ -176,7 +203,7 @@ export const verseService = {
   /**
    * Get today's verse for a user (personalized based on their progress)
    */
-  async getTodaysVerse(userId: string, translation: string = 'NIV'): Promise<Verse | null> {
+  async getTodaysVerse(userId: string, translation: string = 'KJV'): Promise<Verse | null> {
     // Get user's current progress
     const progressResult = await supabase
       .from('user_verse_progress')
@@ -483,6 +510,8 @@ export const verseService = {
     error?: string;
   }> {
     try {
+      addDatabaseBreadcrumb('SELECT', 'verses', true, { operation: 'getVerseWithContext', verseId });
+
       // Fetch verse
       const verse = await this.getVerseById(verseId);
 
@@ -506,6 +535,7 @@ export const verseService = {
       };
     } catch (error) {
       logger.error('[VerseService] Error in getVerseWithContext:', error);
+      errorHandlers.handleVerseError(error as Error, verseId);
       return {
         verse: null,
         context: null,

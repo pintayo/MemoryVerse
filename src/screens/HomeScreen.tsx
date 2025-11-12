@@ -44,7 +44,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       setError(null);
 
       // Get today's verse with 24-hour caching
-      const verse = await verseService.getTodayVerseWithCache('NIV');
+      const verse = await verseService.getTodayVerseWithCache('KJV');
 
       if (verse) {
         setTodayVerse(verse);
@@ -120,6 +120,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       },
     },
     {
+      id: 'review',
+      title: 'Review',
+      icon: 'refresh',
+      description: 'Review learned verses',
+      onPress: () => {
+        navigation.navigate('Review');
+      },
+    },
+    {
       id: 'practice',
       title: 'Practice',
       icon: 'brain',
@@ -155,7 +164,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Good morning!</Text>
             <View style={styles.statsRow}>
-              <View style={styles.statItem}>
+              <TouchableOpacity
+                style={styles.statItem}
+                onPress={() => navigation.navigate('StreakCalendar')}
+                activeOpacity={0.7}
+              >
                 <Svg width="20" height="24" viewBox="0 0 16 20">
                   <Path
                     d="M8 0 C8 0 4 5 4 9 C4 12.3 5.8 15 8 15 C10.2 15 12 12.3 12 9 C12 5 8 0 8 0 Z"
@@ -167,7 +180,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   />
                 </Svg>
                 <Text style={styles.statText}>{streak} day streak</Text>
-              </View>
+              </TouchableOpacity>
               <View style={styles.statItem}>
                 <Svg width="20" height="20" viewBox="0 0 20 20">
                   <Path
@@ -280,6 +293,7 @@ const getActionColor = (id: string): string => {
   const colors: { [key: string]: string } = {
     read: theme.colors.secondary.softClay,
     understand: theme.colors.secondary.lightGold,
+    review: theme.colors.primary.sageGreen,
     practice: theme.colors.success.mutedOlive,
     pray: theme.colors.secondary.warmTerracotta,
   };
@@ -304,6 +318,15 @@ const renderActionIcon = (iconName: string) => {
         <Svg width="24" height="24" viewBox="0 0 24 24">
           <Path
             d="M12 2C8.69 2 6 4.69 6 8C6 10.5 7.33 12.68 9.3 13.91V17C9.3 17.55 9.75 18 10.3 18H13.7C14.25 18 14.7 17.55 14.7 17V13.91C16.67 12.68 18 10.5 18 8C18 4.69 15.31 2 12 2ZM11 20V19H13V20H11ZM11 22V21H13V22H11Z"
+            fill={iconColor}
+          />
+        </Svg>
+      );
+    case 'refresh':
+      return (
+        <Svg width="24" height="24" viewBox="0 0 24 24">
+          <Path
+            d="M12 6V9L16 5L12 1V4C7.58 4 4 7.58 4 12C4 13.57 4.46 15.03 5.24 16.26L6.7 14.8C6.25 13.97 6 13.01 6 12C6 8.69 8.69 6 12 6ZM18.76 7.74L17.3 9.2C17.75 10.03 18 10.99 18 12C18 15.31 15.31 18 12 18V15L8 19L12 23V20C16.42 20 20 16.42 20 12C20 10.43 19.54 8.97 18.76 7.74Z"
             fill={iconColor}
           />
         </Svg>

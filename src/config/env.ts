@@ -20,6 +20,17 @@ export const config = {
     anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
   },
 
+  // Sentry Error Tracking
+  sentry: {
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || env.EXPO_PUBLIC_SENTRY_DSN || '',
+    enabled: process.env.EXPO_PUBLIC_SENTRY_ENABLED !== 'false', // Enabled by default unless explicitly disabled
+  },
+
+  // Firebase Analytics
+  firebase: {
+    enabled: process.env.EXPO_PUBLIC_FIREBASE_ENABLED !== 'false', // Enabled by default unless explicitly disabled
+  },
+
   // AI Context Generation
   ai: {
     provider: (process.env.EXPO_PUBLIC_AI_PROVIDER || env.EXPO_PUBLIC_AI_PROVIDER || 'anthropic') as 'openai' | 'anthropic' | 'perplexity',
