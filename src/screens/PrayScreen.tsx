@@ -266,16 +266,51 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Prayer Training</Text>
-        <View style={styles.placeholder} />
-      </View>
-
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.subtitle}>Choose a prayer type</Text>
+        {/* Tell About Your Day - Premium Feature at Top */}
+        <TouchableOpacity
+          style={styles.premiumFeatureCard}
+          onPress={() => handleCategorySelect('daily')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.premiumFeatureHeader}>
+            <View style={styles.premiumIconContainer}>
+              <Svg width="36" height="36" viewBox="0 0 24 24">
+                <Path
+                  d="M12 2 L15 9 L22 9 L17 14 L19 21 L12 17 L5 21 L7 14 L2 9 L9 9 Z"
+                  fill={theme.colors.secondary.lightGold}
+                />
+              </Svg>
+            </View>
+            <View style={styles.premiumFeatureTextContainer}>
+              <Text style={styles.premiumFeatureTitle}>Tell About Your Day</Text>
+              <Text style={styles.premiumFeatureSubtitle}>AI-powered personal prayer just for you</Text>
+            </View>
+            {isPremiumUser ? (
+              <View style={styles.premiumAccessBadge}>
+                <Ionicons name="checkmark-circle" size={20} color={theme.colors.success.celebratoryGold} />
+              </View>
+            ) : (
+              <View style={styles.upgradeButton}>
+                <Text style={styles.upgradeButtonText}>UPGRADE</Text>
+                <Ionicons name="arrow-forward" size={14} color={theme.colors.text.onDark} />
+              </View>
+            )}
+          </View>
+          {!isPremiumUser && (
+            <View style={styles.premiumFeatureFooter}>
+              <Text style={styles.premiumFeatureFooterText}>
+                Share your day and receive a personalized prayer crafted with AI
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.sectionDivider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.sectionTitle}>Prayer Categories</Text>
+          <View style={styles.dividerLine} />
+        </View>
 
         <View style={styles.categoriesGrid}>
           {prayerOptions.map((option) => (
@@ -286,40 +321,12 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
               activeOpacity={0.7}
             >
               <View style={[styles.categoryIcon, { backgroundColor: option.color + '20' }]}>
-                <Ionicons name={option.icon as any} size={32} color={option.color} />
+                <Ionicons name={option.icon as any} size={28} color={option.color} />
               </View>
               <Text style={styles.categoryTitle}>{option.title}</Text>
               <Text style={styles.categorySubtitle}>{option.subtitle}</Text>
             </TouchableOpacity>
           ))}
-
-          {/* Tell About Your Day - Premium Button */}
-          <TouchableOpacity
-            style={[styles.categoryCard, styles.premiumCard]}
-            onPress={() => handleCategorySelect('daily')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.categoryIcon, { backgroundColor: theme.colors.secondary.lightGold + '20' }]}>
-              <Svg width="32" height="32" viewBox="0 0 24 24">
-                <Path
-                  d="M12 2 L15 9 L22 9 L17 14 L19 21 L12 17 L5 21 L7 14 L2 9 L9 9 Z"
-                  fill={theme.colors.secondary.lightGold}
-                />
-              </Svg>
-            </View>
-            <Text style={styles.categoryTitle}>Tell About Your Day</Text>
-            <Text style={styles.categorySubtitle}>AI-generated personal prayer</Text>
-            {isPremiumUser && (
-              <View style={styles.premiumLabel}>
-                <Text style={styles.premiumLabelText}>PREMIUM</Text>
-              </View>
-            )}
-            {!isPremiumUser && (
-              <View style={styles.upgradeLabel}>
-                <Text style={styles.upgradeLabelText}>UPGRADE</Text>
-              </View>
-            )}
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -358,12 +365,99 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: theme.spacing.lg,
   },
-  subtitle: {
-    fontSize: 16,
+  premiumFeatureCard: {
+    backgroundColor: theme.colors.background.warmParchment,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 2,
+    borderColor: theme.colors.secondary.lightGold,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.xl,
+    shadowColor: theme.colors.secondary.lightGold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  premiumFeatureHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
+  premiumIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.secondary.lightGold + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  premiumFeatureTextContainer: {
+    flex: 1,
+  },
+  premiumFeatureTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 4,
+  },
+  premiumFeatureSubtitle: {
+    fontSize: 13,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.lg,
+    lineHeight: 18,
+  },
+  premiumAccessBadge: {
+    padding: theme.spacing.sm,
+  },
+  upgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+    gap: 4,
+  },
+  upgradeButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: theme.colors.text.onDark,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  premiumFeatureFooter: {
+    backgroundColor: theme.colors.secondary.lightGold + '15',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.secondary.lightGold + '30',
+  },
+  premiumFeatureFooterText: {
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
+    lineHeight: 18,
+  },
+  sectionDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.primary.mutedStone + '40',
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   categoriesGrid: {
     flexDirection: 'row',
@@ -377,25 +471,25 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.primary.mutedStone,
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary.mutedStone + '60',
     marginBottom: theme.spacing.sm,
-  },
-  premiumCard: {
-    borderWidth: 2,
-    borderColor: theme.colors.secondary.lightGold,
-    backgroundColor: theme.colors.background.warmParchment,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   categoryIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.md,
   },
   categoryTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
@@ -403,11 +497,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   categorySubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 15,
   },
   premiumBadge: {
     flexDirection: 'row',
