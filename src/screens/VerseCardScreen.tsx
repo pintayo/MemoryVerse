@@ -302,7 +302,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                   <View style={styles.decorativeBorder} />
 
                   <View style={styles.cardContent}>
-                    <VerseText size="large" style={styles.verse} numberOfLines={15}>
+                    <VerseText size="large" style={styles.verse}>
                       {currentVerse.text}
                     </VerseText>
                     <View style={styles.referenceRow}>
@@ -346,7 +346,7 @@ const VerseCardScreen: React.FC<VerseCardScreenProps> = ({ navigation }) => {
                         </Text>
                       </View>
                     ) : currentVerse.context ? (
-                      <Text style={styles.contextText} numberOfLines={10} ellipsizeMode="tail">
+                      <Text style={styles.contextText}>
                         {currentVerse.context}
                       </Text>
                     ) : (
