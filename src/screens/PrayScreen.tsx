@@ -142,15 +142,13 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
   if (selectedCategory === 'daily') {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBackToCategories} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Tell About Your Day</Text>
-          <View style={styles.placeholder} />
-        </View>
-
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <TouchableOpacity onPress={handleBackToCategories} style={styles.inlineBackButton}>
+            <Ionicons name="arrow-back" size={20} color={theme.colors.text.secondary} />
+            <Text style={styles.inlineBackText}>Back to Categories</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.screenTitle}>Tell About Your Day</Text>
           {isPremiumUser && (
             <View style={styles.premiumBadge}>
               <Svg width="16" height="16" viewBox="0 0 24 24">
@@ -240,14 +238,11 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
     // Coming soon for other categories
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBackToCategories} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{prayerOptions.find(o => o.id === selectedCategory)?.title}</Text>
-          <View style={styles.placeholder} />
-        </View>
         <View style={styles.comingSoonContainer}>
+          <TouchableOpacity onPress={handleBackToCategories} style={styles.inlineBackButtonTop}>
+            <Ionicons name="arrow-back" size={20} color={theme.colors.text.secondary} />
+            <Text style={styles.inlineBackText}>Back to Categories</Text>
+          </TouchableOpacity>
           <Ionicons name="time" size={64} color={theme.colors.secondary.lightGold} />
           <Text style={styles.comingSoonTitle}>Coming Soon</Text>
           <Text style={styles.comingSoonDescription}>
@@ -275,7 +270,7 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
         >
           <View style={styles.premiumFeatureHeader}>
             <View style={styles.premiumIconContainer}>
-              <Svg width="36" height="36" viewBox="0 0 24 24">
+              <Svg width="28" height="28" viewBox="0 0 24 24">
                 <Path
                   d="M12 2 L15 9 L22 9 L17 14 L19 21 L12 17 L5 21 L7 14 L2 9 L9 9 Z"
                   fill={theme.colors.secondary.lightGold}
@@ -338,57 +333,69 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.offWhiteParchment,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.primary.mutedStone,
-  },
-  backButton: {
-    padding: theme.spacing.xs,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  placeholder: {
-    width: 40,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: theme.spacing.lg,
   },
+  inlineBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginBottom: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+  },
+  inlineBackButtonTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginBottom: theme.spacing.xl,
+    paddingVertical: theme.spacing.xs,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  inlineBackText: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '500',
+  },
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.lg,
+    textAlign: 'center',
+  },
   premiumFeatureCard: {
     backgroundColor: theme.colors.background.warmParchment,
-    borderRadius: theme.borderRadius.xl,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 2,
     borderColor: theme.colors.secondary.lightGold,
     overflow: 'hidden',
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
     shadowColor: theme.colors.secondary.lightGold,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   premiumFeatureHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   premiumIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme.colors.secondary.lightGold + '20',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.secondary.lightGold + '25',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -396,27 +403,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   premiumFeatureTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   premiumFeatureSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
-    lineHeight: 18,
+    lineHeight: 16,
   },
   premiumAccessBadge: {
-    padding: theme.spacing.sm,
+    padding: theme.spacing.xs,
   },
   upgradeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.secondary.lightGold,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: theme.borderRadius.full,
     gap: 4,
   },
@@ -427,18 +434,18 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.ui.default,
   },
   premiumFeatureFooter: {
-    backgroundColor: theme.colors.secondary.lightGold + '15',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.secondary.lightGold + '12',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.secondary.lightGold + '30',
+    borderTopColor: theme.colors.secondary.lightGold + '25',
   },
   premiumFeatureFooterText: {
-    fontSize: 12,
+    fontSize: 11,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
   },
   sectionDivider: {
     flexDirection: 'row',
