@@ -53,11 +53,21 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       navigation.setOptions({
         headerTitle: 'Tell About Your Day',
         headerBackVisible: true,
+        headerLeft: () => (
+          <TouchableOpacity onPress={handleBackToCategories} style={{ paddingLeft: 16 }}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+        ),
       });
     } else if (selectedCategory) {
       navigation.setOptions({
         headerTitle: prayerOptions.find(o => o.id === selectedCategory)?.title || 'Prayer',
         headerBackVisible: true,
+        headerLeft: () => (
+          <TouchableOpacity onPress={handleBackToCategories} style={{ paddingLeft: 16 }}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+          </TouchableOpacity>
+        ),
       });
     } else {
       navigation.setOptions({
@@ -271,16 +281,122 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   if (selectedCategory) {
-    // Coming soon for other categories
+    // Category-specific prayers
+    const selectedOption = prayerOptions.find(o => o.id === selectedCategory);
+
+    // Get category-specific prayer
+    const getCategoryPrayer = (category: PrayerCategory): string => {
+      const prayers = {
+        morning: `Heavenly Father,
+
+Thank You for the gift of this new day. As the morning light breaks, I come before You with a grateful heart.
+
+Guide my steps today. Help me to walk in Your ways, to speak words of kindness, and to act with love in all I do.
+
+Fill me with Your strength and wisdom for the challenges ahead. May Your presence be my comfort and Your Word be my guide.
+
+In Jesus' name I pray, Amen.`,
+
+        evening: `Dear Lord,
+
+As this day comes to a close, I thank You for Your faithfulness and Your constant presence with me.
+
+I reflect on the moments of today - the joys, the challenges, and the lessons learned. Thank You for walking beside me through it all.
+
+As I prepare for rest, grant me peaceful sleep. Renew my strength for tomorrow and help me to wake with a heart ready to serve You.
+
+In Jesus' name, Amen.`,
+
+        mealtime: `Gracious God,
+
+We thank You for this food before us, for the hands that prepared it, and for Your provision in our lives.
+
+Bless this meal to nourish our bodies, and bless this time together. May we always remember those who have less and inspire us to share generously.
+
+We are grateful for Your abundance and Your loving care.
+
+In Jesus' name, Amen.`,
+
+        bedtime: `Loving Father,
+
+As I lay down to sleep, I place myself in Your caring hands. Thank You for being with me throughout this day.
+
+Watch over me through the night. Grant me restful sleep and peaceful dreams. Calm any worries and renew my spirit.
+
+May I wake tomorrow refreshed and ready to serve You with joy.
+
+In Jesus' name I pray, Amen.`,
+
+        gratitude: `Dear God,
+
+My heart overflows with gratitude for Your countless blessings. Thank You for Your love that never fails and Your mercy that is new every morning.
+
+Thank You for my family, my friends, my health, and the simple joys of life. Thank You for the challenges that help me grow and the victories that remind me of Your goodness.
+
+Help me to live each day with a thankful heart, never taking Your blessings for granted.
+
+In Jesus' name, Amen.`,
+
+        comfort: `Compassionate Father,
+
+In this difficult time, I come to You seeking comfort and peace. You are close to the brokenhearted and save those who are crushed in spirit.
+
+Wrap Your loving arms around me. Heal my hurts, calm my fears, and restore my hope. Remind me that You are always with me, even in the darkest valleys.
+
+Give me strength for today and hope for tomorrow. Help me to trust in Your perfect plan, even when I don't understand.
+
+In Jesus' name I pray, Amen.`,
+
+        guidance: `Wise and Loving God,
+
+I come before You seeking Your guidance and direction. I don't always know the right path to take, but I trust that You do.
+
+Illuminate my way with Your wisdom. Open doors that should be opened and close those that should remain shut. Give me discernment to make decisions that honor You.
+
+Help me to listen for Your voice and to follow where You lead. May Your will be done in my life.
+
+In Jesus' name, Amen.`,
+
+        forgiveness: `Merciful Father,
+
+I come before You acknowledging my sins and mistakes. I have fallen short of Your glory and strayed from Your path.
+
+I ask for Your forgiveness. Cleanse me from all unrighteousness and create in me a clean heart. Help me to forgive others as You have forgiven me.
+
+Thank You for Your grace that covers my sins and Your love that never gives up on me. Help me to walk in Your ways and to live a life that honors You.
+
+In Jesus' name I pray, Amen.`,
+      };
+
+      return prayers[category];
+    };
+
+    const categoryPrayer = getCategoryPrayer(selectedCategory);
+
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.comingSoonContainer}>
-          <Ionicons name="time" size={64} color={theme.colors.secondary.lightGold} />
-          <Text style={styles.comingSoonTitle}>Coming Soon</Text>
-          <Text style={styles.comingSoonDescription}>
-            Guided prayers for different occasions are being developed. Check back soon!
-          </Text>
-        </View>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.categoryPrayerContainer}>
+            <View style={[styles.categoryIconLarge, { backgroundColor: selectedOption?.color + '20' }]}>
+              <Ionicons
+                name={selectedOption?.icon as any}
+                size={48}
+                color={selectedOption?.color}
+              />
+            </View>
+
+            <Text style={styles.categoryPrayerTitle}>{selectedOption?.title}</Text>
+            <Text style={styles.categoryPrayerSubtitle}>{selectedOption?.subtitle}</Text>
+
+            <Card variant="parchment" style={styles.prayerCard}>
+              <Text style={styles.prayerText}>{categoryPrayer}</Text>
+            </Card>
+
+            <Text style={styles.prayerInstructions}>
+              Read this prayer aloud or silently, making it your own. Let it guide your conversation with God.
+            </Text>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -730,6 +846,42 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   backToCategoriesButton: {
+    marginTop: theme.spacing.md,
+  },
+  categoryPrayerContainer: {
+    alignItems: 'center',
+    paddingTop: theme.spacing.lg,
+  },
+  categoryIconLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  categoryPrayerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.xs,
+    textAlign: 'center',
+  },
+  categoryPrayerSubtitle: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.xl,
+    textAlign: 'center',
+  },
+  prayerInstructions: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingHorizontal: theme.spacing.lg,
     marginTop: theme.spacing.md,
   },
 });
