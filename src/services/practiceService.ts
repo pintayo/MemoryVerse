@@ -105,6 +105,48 @@ class PracticeService {
     return shuffled;
   }
 
+  // Generate fill-in-the-blanks question
+  generateBlanks(verse: Verse, otherVerses: Verse[] = []): BlankQuestion {
+    const words = verse.text.split(/\s+/);
+    const totalWords = words.length;
+
+    // Calculate number of blanks (20-40% of verse)
+    const minBlanks = Math.max(2, Math.floor(totalWords * 0.2));
+    const maxBlanks = Math.min(10, Math.floor(totalWords * 0.4));
+    const numBlanks = Math.floor(Math.random() * (maxBlanks - minBlanks + 1)) + minBlanks;
+
+    // Select important words to blank out
+    const blankIndices = this.selectImportantWords(words, numBlanks);
+
+    // Create blank objects with options
+    const blanks: BlankWord[] = blankIndices.map(index => {
+      const correctWord = this.cleanWord(words[index]);
+      const options = this.generateWordOptions(correctWord, words, otherVerses);
+
+      return {
+        index,
+        correctWord,
+        options,
+        userAnswer: null,
+      };
+    });
+
+    // Generate display text with blanks
+    const displayWords = words.map((word, index) => {
+      if (blankIndices.includes(index)) {
+        return '_____';
+      }
+      return word;
+    });
+
+    return {
+      verseId: verse.id,
+      verseText: verse.text,
+      blanks,
+      displayText: displayWords.join(' '),
+    };
+  }
+
   // Generate multiple choice question
   generateMultipleChoice(verse: Verse, otherVerses: Verse[]): MultipleChoiceQuestion {
     const words = verse.text.split(/\s+/);
@@ -138,6 +180,107 @@ class PracticeService {
       options: shuffled,
       correctIndex,
     };
+  }
+
+  // Select important words to blank out (prioritize theological terms, nouns, verbs)
+  private selectImportantWords(words: string[], count: number): number[] {
+    const skipWords = new Set([
+      'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'be',
+      'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+      'would', 'could', 'should', 'may', 'might', 'must', 'can', 'shall',
+    ]);
+
+    // Score each word by importance
+    const scoredWords = words.map((word, index) => {
+      const cleaned = this.cleanWord(word).toLowerCase();
+
+      // Skip very short words and common words
+      if (cleaned.length < 3 || skipWords.has(cleaned)) {
+        return { index, score: 0 };
+      }
+
+      // Higher score for longer words
+      let score = cleaned.length;
+
+      // Boost theological/important words
+      const importantWords = [
+        'god', 'lord', 'jesus', 'christ', 'spirit', 'holy', 'father',
+        'love', 'faith', 'grace', 'mercy', 'salvation', 'heaven', 'sin',
+        'righteous', 'blessed', 'glory', 'kingdom', 'eternal', 'truth',
+      ];
+      if (importantWords.includes(cleaned)) {
+        score += 10;
+      }
+
+      // Boost capitalized words (likely nouns/proper names)
+      if (word[0] === word[0].toUpperCase()) {
+        score += 3;
+      }
+
+      return { index, score };
+    });
+
+    // Sort by score and take top N
+    const sorted = scoredWords
+      .filter(w => w.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    // Select top scored words, but add some randomness
+    const selected: number[] = [];
+    const availableIndices = sorted.map(w => w.index);
+
+    while (selected.length < count && availableIndices.length > 0) {
+      // Bias towards higher scored words (top 50%)
+      const maxIndex = Math.max(
+        0,
+        Math.floor(availableIndices.length * 0.5)
+      );
+      const randomIndex = Math.floor(Math.random() * Math.max(1, maxIndex + 1));
+      selected.push(availableIndices[randomIndex]);
+      availableIndices.splice(randomIndex, 1);
+    }
+
+    return selected.sort((a, b) => a - b); // Sort by position
+  }
+
+  // Generate word options for a blank
+  private generateWordOptions(
+    correctWord: string,
+    verseWords: string[],
+    otherVerses: Verse[]
+  ): string[] {
+    const numOptions = Math.floor(Math.random() * 3) + 2; // 2-4 options
+    const options: string[] = [correctWord];
+
+    // Get all words from other verses for distractors
+    const allWords = otherVerses
+      .flatMap(v => v.text.split(/\s+/))
+      .map(w => this.cleanWord(w))
+      .filter(w => w.length >= 3);
+
+    // Also use words from same verse as distractors
+    const sameVerseWords = verseWords
+      .map(w => this.cleanWord(w))
+      .filter(w => w.length >= 3 && w !== correctWord);
+
+    const candidateWords = [...allWords, ...sameVerseWords];
+
+    // Generate distractors
+    while (options.length < numOptions && candidateWords.length > 0) {
+      const randomIndex = Math.floor(Math.random() * candidateWords.length);
+      const word = candidateWords[randomIndex];
+
+      // Avoid duplicates
+      if (!options.includes(word)) {
+        options.push(word);
+      }
+
+      candidateWords.splice(randomIndex, 1);
+    }
+
+    // Shuffle options
+    return this.shuffleArray(options);
   }
 
   // Generate plausible wrong verse continuations
