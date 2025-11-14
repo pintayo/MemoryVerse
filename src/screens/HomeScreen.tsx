@@ -7,8 +7,8 @@ import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../comp
 import { theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
 import { verseService } from '../services/verseService';
-// Temporarily disable practiceService import to debug
-// import { practiceService } from '../services/practiceService';
+// Re-enable practiceService with minimal version
+import { practiceService } from '../services/practiceService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';

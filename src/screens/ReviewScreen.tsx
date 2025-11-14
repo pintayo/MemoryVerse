@@ -13,8 +13,8 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { Card } from '../components';
 import { theme } from '../theme';
 import { spacedRepetitionService, ReviewVerse, ReviewStats } from '../services/spacedRepetitionService';
-// Temporarily disable practiceService import to debug
-// import { practiceService } from '../services/practiceService';
+// Re-enable practiceService with minimal version
+import { practiceService } from '../services/practiceService';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 
