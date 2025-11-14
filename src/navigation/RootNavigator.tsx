@@ -12,13 +12,9 @@ console.log('[RootNavigator] BottomTabNavigator imported');
 import { VerseCardScreen, RecallScreen } from '../screens';
 console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
 
-// Disable FillInBlanks - it causes bundler crash
+// Both screens disabled - files renamed to .disabled
 // import FillInBlanksMode from '../screens/FillInBlanksMode';
-// console.log('[RootNavigator] FillInBlanksMode imported');
-
-// Test MultipleChoice instead
-import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
-console.log('[RootNavigator] MultipleChoiceScreen imported');
+// import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
 
 import { UnderstandScreen } from '../screens/UnderstandScreen';
 console.log('[RootNavigator] UnderstandScreen imported');
@@ -101,7 +97,7 @@ const RootNavigator = () => {
           headerBackTitle: 'Back',
         }}
       />
-      {/* Disable FillInBlanks - causes bundler crash
+      {/* Both screens disabled - files renamed to .disabled
       <Stack.Screen
         name="FillInBlanks"
         component={FillInBlanksMode}
@@ -109,7 +105,6 @@ const RootNavigator = () => {
           headerShown: false,
         }}
       />
-      */}
       <Stack.Screen
         name="MultipleChoice"
         component={MultipleChoiceScreen}
@@ -117,6 +112,7 @@ const RootNavigator = () => {
           headerShown: false,
         }}
       />
+      */}
       <Stack.Screen
         name="Pray"
         component={PrayScreen}
