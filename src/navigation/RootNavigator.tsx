@@ -12,9 +12,9 @@ console.log('[RootNavigator] BottomTabNavigator imported');
 import { VerseCardScreen, RecallScreen } from '../screens';
 console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
 
-// Both screens disabled - files renamed to .disabled
-// import FillInBlanksMode from '../screens/FillInBlanksMode';
-// import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
+// Testing with different filename
+import BlanksScreen from '../screens/BlanksScreen';
+console.log('[RootNavigator] BlanksScreen imported');
 
 import { UnderstandScreen } from '../screens/UnderstandScreen';
 console.log('[RootNavigator] UnderstandScreen imported');
@@ -97,22 +97,13 @@ const RootNavigator = () => {
           headerBackTitle: 'Back',
         }}
       />
-      {/* Both screens disabled - files renamed to .disabled
       <Stack.Screen
         name="FillInBlanks"
-        component={FillInBlanksMode}
+        component={BlanksScreen}
         options={{
           headerShown: false,
         }}
       />
-      <Stack.Screen
-        name="MultipleChoice"
-        component={MultipleChoiceScreen}
-        options={{
-          headerShown: false,
-        }}
-      />
-      */}
       <Stack.Screen
         name="Pray"
         component={PrayScreen}
