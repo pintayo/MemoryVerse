@@ -15,6 +15,7 @@ import { spacedRepetitionService } from '../services/spacedRepetitionService';
 import { streakService } from '../services/streakService';
 import { appReviewService } from '../services/appReviewService';
 import { practiceService, BlankQuestion, BlankWord } from '../services/practiceService';
+import { supabase } from '../lib/supabase';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FillInBlanks'>;
 
