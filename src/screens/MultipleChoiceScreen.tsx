@@ -271,13 +271,9 @@ const MultipleChoiceScreen: React.FC<Props> = ({ navigation, route }) => {
 
         {/* Question Card */}
         <Card variant="warm" elevated style={styles.questionCard}>
-          <VerseReference
-            book={currentVerse.book}
-            chapter={currentVerse.chapter}
-            verse={currentVerse.verse_number}
-            size="medium"
-            style={styles.verseReference}
-          />
+          <VerseReference style={styles.verseReference}>
+            {`${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`}
+          </VerseReference>
 
           <View style={styles.promptContainer}>
             <Text style={styles.promptLabel}>This verse begins with:</Text>
