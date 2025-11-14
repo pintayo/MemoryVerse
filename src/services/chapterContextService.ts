@@ -55,7 +55,14 @@ Please provide:
 4. Practical Applications for Daily Life (2-3 actionable insights)
 5. Cross-References to Related Passages (3-4 related Bible passages)
 
-Format your response as a clear, structured summary suitable for Bible study.`;
+IMPORTANT:
+- Format your response as clear, natural text
+- DO NOT include citations, references, or source numbers like [1], [2], [3]
+- DO NOT use markdown formatting (**, __, etc.)
+- Write in plain, natural text only
+- Use simple paragraph breaks to separate sections
+- Keep it under 500 words total
+- Speak directly to the reader in second person ("you") when appropriate`;
 
     // Try Perplexity first (preferred provider)
     const perplexityResult = await tryPerplexity(prompt);
@@ -116,7 +123,7 @@ async function tryPerplexity(prompt: string): Promise<GenerateChapterContextResu
         messages: [
           {
             role: 'system',
-            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries.',
+            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries. Write in plain, natural text without markdown formatting or citations.',
           },
           {
             role: 'user',
@@ -178,7 +185,7 @@ async function tryOpenAI(prompt: string): Promise<GenerateChapterContextResult> 
         messages: [
           {
             role: 'system',
-            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries.',
+            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries. Write in plain, natural text without markdown formatting or citations.',
           },
           {
             role: 'user',
