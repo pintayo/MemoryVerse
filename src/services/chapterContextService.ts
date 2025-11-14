@@ -279,6 +279,9 @@ async function tryAnthropic(prompt: string): Promise<GenerateChapterContextResul
  * Parse AI response into structured chapter context
  */
 function parseChapterContext(text: string): ChapterContext {
+  // Strip markdown formatting
+  const cleanText = stripMarkdown(text);
+
   // Simple parsing - in production, you'd want more sophisticated parsing
   const sections = {
     main_themes: '',
@@ -289,7 +292,7 @@ function parseChapterContext(text: string): ChapterContext {
   };
 
   // Try to extract sections based on common patterns
-  const lines = text.split('\n');
+  const lines = cleanText.split('\n');
   let currentSection = '';
 
   for (const line of lines) {
@@ -313,12 +316,35 @@ function parseChapterContext(text: string): ChapterContext {
     book: '',
     chapter: 0,
     translation: 'KJV',
-    main_themes: sections.main_themes.trim() || text,
+    main_themes: sections.main_themes.trim() || cleanText,
     historical_context: sections.historical_context.trim(),
     key_verses: sections.key_verses.trim(),
     practical_applications: sections.practical_applications.trim(),
     cross_references: sections.cross_references.trim(),
   };
+}
+
+/**
+ * Strip markdown formatting from text
+ */
+function stripMarkdown(text: string): string {
+  return text
+    // Remove bold/italic: **text** or __text__ or *text* or _text_
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(\*|_)(.*?)\1/g, '$2')
+    // Remove headers: # Header or ## Header
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove inline code: `code`
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove links: [text](url)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove citations: [1], [2], etc.
+    .replace(/\[\d+\]/g, '')
+    // Remove list markers at start of line: - item or * item
+    .replace(/^[\*\-]\s+/gm, '')
+    // Clean up extra whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /**
