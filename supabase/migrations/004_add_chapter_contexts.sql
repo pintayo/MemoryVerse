@@ -49,6 +49,11 @@ COMMENT ON COLUMN public.chapter_contexts.cross_references IS 'Related Bible pas
 -- Enable RLS
 ALTER TABLE public.chapter_contexts ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Anyone can view chapter contexts" ON public.chapter_contexts;
+DROP POLICY IF EXISTS "Authenticated users can insert chapter contexts" ON public.chapter_contexts;
+DROP POLICY IF EXISTS "Authenticated users can update chapter contexts" ON public.chapter_contexts;
+
 -- RLS Policy - anyone can read chapter contexts
 CREATE POLICY "Anyone can view chapter contexts" ON public.chapter_contexts
     FOR SELECT USING (true);
