@@ -57,7 +57,13 @@ Please provide:
 
 Format your response as a clear, structured summary suitable for Bible study.`;
 
-    // Try OpenAI first
+    // Try Perplexity first (preferred provider)
+    const perplexityResult = await tryPerplexity(prompt);
+    if (perplexityResult.success && perplexityResult.context) {
+      return perplexityResult;
+    }
+
+    // Try OpenAI as fallback
     const openaiResult = await tryOpenAI(prompt);
     if (openaiResult.success && openaiResult.context) {
       return openaiResult;
@@ -80,6 +86,72 @@ Format your response as a clear, structured summary suitable for Bible study.`;
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to generate chapter context',
+    };
+  }
+}
+
+/**
+ * Try generating context with Perplexity
+ */
+async function tryPerplexity(prompt: string): Promise<GenerateChapterContextResult> {
+  try {
+    const apiKey = process.env.EXPO_PUBLIC_PERPLEXITY_API_KEY;
+    const model = process.env.EXPO_PUBLIC_PERPLEXITY_MODEL || 'sonar';
+
+    if (!apiKey) {
+      logger.warn('[ChapterContextService] Perplexity API key not configured');
+      return { success: false, error: 'Perplexity not configured' };
+    }
+
+    logger.log('[ChapterContextService] Trying Perplexity API...');
+
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error('[ChapterContextService] Perplexity API error:', response.status, errorText);
+      throw new Error(`Perplexity API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const contextText = data.choices[0]?.message?.content || '';
+
+    if (!contextText) {
+      return { success: false, error: 'Empty response from Perplexity' };
+    }
+
+    logger.log('[ChapterContextService] Successfully generated context with Perplexity');
+
+    return {
+      success: true,
+      context: parseChapterContext(contextText),
+    };
+  } catch (error) {
+    logger.error('[ChapterContextService] Perplexity error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Perplexity failed',
     };
   }
 }
