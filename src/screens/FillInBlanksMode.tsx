@@ -3,6 +3,13 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { Button } from '../components';
+import { theme } from '../theme';
+import { verseService } from '../services/verseService';
+import { Verse } from '../types/database';
+import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
+import { practiceConfig } from '../config/practiceConfig';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FillInBlanks'>;
 
