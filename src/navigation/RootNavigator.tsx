@@ -12,12 +12,13 @@ console.log('[RootNavigator] BottomTabNavigator imported');
 import { VerseCardScreen, RecallScreen } from '../screens';
 console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
 
-import FillInBlanksMode from '../screens/FillInBlanksMode';
-console.log('[RootNavigator] FillInBlanksMode imported');
+// Disable FillInBlanks - it causes bundler crash
+// import FillInBlanksMode from '../screens/FillInBlanksMode';
+// console.log('[RootNavigator] FillInBlanksMode imported');
 
-// Keep MultipleChoice disabled for now
-// import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
-// console.log('[RootNavigator] MultipleChoiceScreen imported');
+// Test MultipleChoice instead
+import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
+console.log('[RootNavigator] MultipleChoiceScreen imported');
 
 import { UnderstandScreen } from '../screens/UnderstandScreen';
 console.log('[RootNavigator] UnderstandScreen imported');
@@ -100,6 +101,7 @@ const RootNavigator = () => {
           headerBackTitle: 'Back',
         }}
       />
+      {/* Disable FillInBlanks - causes bundler crash
       <Stack.Screen
         name="FillInBlanks"
         component={FillInBlanksMode}
@@ -107,7 +109,7 @@ const RootNavigator = () => {
           headerShown: false,
         }}
       />
-      {/* Keep MultipleChoice disabled for now
+      */}
       <Stack.Screen
         name="MultipleChoice"
         component={MultipleChoiceScreen}
@@ -115,7 +117,6 @@ const RootNavigator = () => {
           headerShown: false,
         }}
       />
-      */}
       <Stack.Screen
         name="Pray"
         component={PrayScreen}
