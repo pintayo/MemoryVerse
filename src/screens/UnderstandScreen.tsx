@@ -90,8 +90,8 @@ export function UnderstandScreen({ navigation, route }: Props) {
     setCurrentVerseId(newVerseId);
   };
 
-  const handleRandomVerse = async () => {
-    const randomVerse = await verseService.getRandomVerse('KJV');
+  const handleRandomVerse = async (book?: string, chapter?: number) => {
+    const randomVerse = await verseService.getRandomVerse('KJV', book, chapter);
     if (randomVerse?.id) {
       setCurrentVerseId(randomVerse.id);
     }

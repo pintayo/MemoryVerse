@@ -125,24 +125,43 @@ export const verseService = {
   /**
    * Get random verse
    * Filters to only include memorable verses (no genealogies, itineraries, etc.)
+   * Optionally filter by book and/or chapter
    */
-  async getRandomVerse(translation: string = 'KJV'): Promise<Verse | null> {
-    // Try to get memorable verses first (requires is_memorable column)
-    let result = await supabase
+  async getRandomVerse(
+    translation: string = 'KJV',
+    book?: string,
+    chapter?: number
+  ): Promise<Verse | null> {
+    // Build query with optional filters
+    let query = supabase
       .from('verses')
       .select('*')
-      .eq('translation', translation)
-      .eq('is_memorable', true) // Only get memorable verses
-      .limit(100); // Get a pool of verses
+      .eq('translation', translation);
 
-    // If no memorable verses found (column might not exist yet), try without filter
-    if (!result?.data || result.data.length === 0) {
-      result = await supabase
-        .from('verses')
-        .select('*')
-        .eq('translation', translation)
-        .limit(100);
+    // Add book filter if provided
+    if (book) {
+      query = query.eq('book', book);
     }
+
+    // Add chapter filter if provided
+    if (chapter !== undefined) {
+      query = query.eq('chapter', chapter);
+    }
+
+    // Try to get memorable verses first (if no specific filters)
+    if (!book && !chapter) {
+      let result = await query.eq('is_memorable', true).limit(100);
+
+      // If memorable verses found, use them
+      if (result?.data && result.data.length > 0) {
+        const randomIndex = Math.floor(Math.random() * result.data.length);
+        return result.data[randomIndex];
+      }
+    }
+
+    // Get verses without memorable filter
+    query = query.limit(100);
+    const result = await query;
 
     if (!result) {
       logger.warn('[verseService] getRandomVerse returned undefined');
