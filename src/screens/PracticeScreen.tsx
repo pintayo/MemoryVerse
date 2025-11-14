@@ -19,6 +19,7 @@ interface VerseWithMode {
   mode: PracticeMode;
   blankQuestion?: BlankQuestion;
   mcQuestion?: MultipleChoiceQuestion;
+  wasCorrect?: boolean; // Track if user answered correctly
 }
 
 const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
@@ -30,6 +31,13 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
   const [error, setError] = useState<string | null>(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [selectedMCIndex, setSelectedMCIndex] = useState<number | null>(null);
+  const [isComplete, setIsComplete] = useState(false);
+  const [sessionResults, setSessionResults] = useState<{
+    totalXP: number;
+    accuracy: number;
+    correctCount: number;
+    totalCount: number;
+  } | null>(null);
 
   useEffect(() => {
     loadVerses();
@@ -40,32 +48,35 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
       setIsLoading(true);
       setError(null);
 
-      const loadedVerses: Verse[] = [];
+      // Load all verses in parallel for better performance
+      const numPracticeVerses = practiceConfig.versesPerLesson;
+      const numExtraVerses = 30;
 
-      for (let i = 0; i < practiceConfig.versesPerLesson; i++) {
-        const verse = await verseService.getRandomVerse('KJV');
-        if (verse) loadedVerses.push(verse);
-      }
+      const [practiceVersePromises, extraVersePromises] = [
+        Array(numPracticeVerses).fill(null).map(() => verseService.getRandomVerse('KJV')),
+        Array(numExtraVerses).fill(null).map(() => verseService.getRandomVerse('KJV'))
+      ];
+
+      const [practiceVerses, extraVerses] = await Promise.all([
+        Promise.all(practiceVersePromises),
+        Promise.all(extraVersePromises)
+      ]);
+
+      const loadedVerses = practiceVerses.filter((v): v is Verse => v !== null);
+      const loadedExtraVerses = extraVerses.filter((v): v is Verse => v !== null);
 
       if (loadedVerses.length > 0) {
         // Assign a random mode to each verse and generate questions
         const userLevel = profile?.level || 1;
-
-        // Load extra verses for generating wrong answers in multiple choice
-        const extraVerses: Verse[] = [];
-        for (let i = 0; i < 30; i++) {
-          const verse = await verseService.getRandomVerse('KJV');
-          if (verse) extraVerses.push(verse);
-        }
 
         const withModes: VerseWithMode[] = loadedVerses.map(verse => {
           const mode = practiceService.selectModeForUser(userLevel);
           const item: VerseWithMode = { verse, mode };
 
           if (mode === 'fill-in-blanks') {
-            item.blankQuestion = practiceService.generateBlanks(verse, extraVerses);
+            item.blankQuestion = practiceService.generateBlanks(verse, loadedExtraVerses);
           } else if (mode === 'multiple-choice') {
-            item.mcQuestion = practiceService.generateMultipleChoice(verse, extraVerses);
+            item.mcQuestion = practiceService.generateMultipleChoice(verse, loadedExtraVerses);
           }
 
           return item;
@@ -101,9 +112,26 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
   const handleMCSelect = (index: number) => {
     if (hasAnswered) return;
     setSelectedMCIndex(index);
+
+    // Auto-check answer for MC (immediate feedback)
+    const current = versesWithModes[currentIndex];
+    if (current.mode === 'multiple-choice' && current.mcQuestion) {
+      current.wasCorrect = index === current.mcQuestion.correctIndex;
+      setHasAnswered(true);
+    }
   };
 
   const handleCheckAnswer = () => {
+    const current = versesWithModes[currentIndex];
+
+    // Mark if the answer was correct
+    if (current.mode === 'fill-in-blanks' && current.blankQuestion) {
+      const result = practiceService.checkBlanksAnswer(current.blankQuestion.blanks);
+      current.wasCorrect = result.isCorrect;
+    } else if (current.mode === 'multiple-choice' && current.mcQuestion) {
+      current.wasCorrect = selectedMCIndex === current.mcQuestion.correctIndex;
+    }
+
     setHasAnswered(true);
   };
 
@@ -113,9 +141,47 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
       setHasAnswered(false);
       setSelectedMCIndex(null);
     } else {
-      // Practice complete
-      navigation.goBack();
+      // Calculate session results
+      calculateSessionResults();
+      setIsComplete(true);
     }
+  };
+
+  const calculateSessionResults = () => {
+    let totalCorrect = 0;
+    let totalQuestions = 0;
+    let totalXP = 0;
+
+    versesWithModes.forEach(({ mode, blankQuestion, wasCorrect }) => {
+      if (mode === 'fill-in-blanks' && blankQuestion) {
+        const result = practiceService.checkBlanksAnswer(blankQuestion.blanks);
+        totalCorrect += result.correctCount;
+        totalQuestions += result.totalCount;
+        totalXP += practiceService.calculateXP(result.accuracy, mode);
+      } else if (mode === 'multiple-choice') {
+        totalQuestions += 1;
+        if (wasCorrect) {
+          totalCorrect += 1;
+          totalXP += practiceService.calculateXP(100, mode);
+        } else {
+          totalXP += practiceService.calculateXP(0, mode);
+        }
+      } else if (mode === 'recall') {
+        // Recall mode - assume full credit (no validation yet)
+        totalQuestions += 1;
+        totalCorrect += 1;
+        totalXP += practiceService.calculateXP(100, mode);
+      }
+    });
+
+    const accuracy = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
+
+    setSessionResults({
+      totalXP,
+      accuracy,
+      correctCount: totalCorrect,
+      totalCount: totalQuestions,
+    });
   };
 
   if (isLoading) {
@@ -146,6 +212,33 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.center}>
           <Text style={styles.errorText}>No verses available</Text>
           <Button title="Go Back" onPress={() => navigation.goBack()} variant="olive" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show completion screen
+  if (isComplete && sessionResults) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.completionContainer}>
+          <Text style={styles.completionTitle}>Practice Complete!</Text>
+
+          <Card variant="warm" style={styles.resultsCard}>
+            <Text style={styles.xpText}>+{sessionResults.totalXP} XP</Text>
+            <Text style={styles.accuracyText}>
+              {Math.round(sessionResults.accuracy)}% Accuracy
+            </Text>
+            <Text style={styles.statsText}>
+              {sessionResults.correctCount} / {sessionResults.totalCount} correct
+            </Text>
+          </Card>
+
+          <Button
+            title="Continue"
+            onPress={() => navigation.goBack()}
+            variant="olive"
+          />
         </View>
       </SafeAreaView>
     );
@@ -290,10 +383,6 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
               {isCorrect ? '✓ Correct!' : '✗ Try again next time'}
             </Text>
           </Card>
-        )}
-
-        {!hasAnswered && selectedMCIndex !== null && (
-          <Button title="Check Answer" onPress={handleCheckAnswer} variant="olive" />
         )}
       </ScrollView>
     );
@@ -533,6 +622,45 @@ const styles = StyleSheet.create({
     color: theme.colors.error.main,
     marginBottom: 20,
     textAlign: 'center',
+  },
+  completionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.screen.horizontal,
+  },
+  completionTitle: {
+    fontSize: theme.typography.ui.title.fontSize,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xl,
+    textAlign: 'center',
+  },
+  resultsCard: {
+    width: '100%',
+    padding: theme.spacing.xl,
+    marginBottom: theme.spacing.xl,
+    alignItems: 'center',
+  },
+  xpText: {
+    fontSize: 48,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '700' as const,
+    color: theme.colors.secondary.lightGold,
+    marginBottom: theme.spacing.md,
+  },
+  accuracyText: {
+    fontSize: theme.typography.ui.heading.fontSize,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+  statsText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontFamily: theme.typography.fonts.ui.default,
+    color: theme.colors.text.secondary,
   },
 });
 
