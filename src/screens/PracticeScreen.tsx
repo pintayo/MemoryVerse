@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -7,6 +7,7 @@ import { Button, Card } from '../components';
 import { theme } from '../theme';
 import { verseService } from '../services/verseService';
 import { practiceService, PracticeMode, BlankQuestion, MultipleChoiceQuestion } from '../services/practiceService';
+import { profileService } from '../services/profileService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
@@ -23,7 +24,7 @@ interface VerseWithMode {
 }
 
 const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
 
   const [versesWithModes, setVersesWithModes] = useState<VerseWithMode[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -31,6 +32,7 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
   const [error, setError] = useState<string | null>(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [selectedMCIndex, setSelectedMCIndex] = useState<number | null>(null);
+  const [writtenVerseAnswer, setWrittenVerseAnswer] = useState('');
   const [isComplete, setIsComplete] = useState(false);
   const [sessionResults, setSessionResults] = useState<{
     totalXP: number;
@@ -130,24 +132,28 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
       current.wasCorrect = result.isCorrect;
     } else if (current.mode === 'multiple-choice' && current.mcQuestion) {
       current.wasCorrect = selectedMCIndex === current.mcQuestion.correctIndex;
+    } else if (current.mode === 'write-entire-verse') {
+      const result = practiceService.checkWriteEntireVerseAnswer(writtenVerseAnswer, current.verse.text);
+      current.wasCorrect = result.isCorrect;
     }
 
     setHasAnswered(true);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentIndex < versesWithModes.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setHasAnswered(false);
       setSelectedMCIndex(null);
+      setWrittenVerseAnswer('');
     } else {
-      // Calculate session results
-      calculateSessionResults();
+      // Calculate session results and award XP
+      await calculateSessionResults();
       setIsComplete(true);
     }
   };
 
-  const calculateSessionResults = () => {
+  const calculateSessionResults = async () => {
     let totalCorrect = 0;
     let totalQuestions = 0;
     let totalXP = 0;
@@ -159,6 +165,14 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
         totalQuestions += result.totalCount;
         totalXP += practiceService.calculateXP(result.accuracy, mode);
       } else if (mode === 'multiple-choice') {
+        totalQuestions += 1;
+        if (wasCorrect) {
+          totalCorrect += 1;
+          totalXP += practiceService.calculateXP(100, mode);
+        } else {
+          totalXP += practiceService.calculateXP(0, mode);
+        }
+      } else if (mode === 'write-entire-verse') {
         totalQuestions += 1;
         if (wasCorrect) {
           totalCorrect += 1;
@@ -182,6 +196,20 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
       correctCount: totalCorrect,
       totalCount: totalQuestions,
     });
+
+    // Award XP to user's profile
+    if (user && totalXP > 0) {
+      try {
+        await profileService.addXP(user.id, totalXP);
+        logger.info('[PracticeScreen] Successfully awarded XP:', totalXP);
+
+        // Refresh profile to update UI with new XP and level
+        await refreshProfile();
+        logger.info('[PracticeScreen] Profile refreshed with updated XP');
+      } catch (err) {
+        logger.error('[PracticeScreen] Error awarding XP:', err);
+      }
+    }
   };
 
   if (isLoading) {
@@ -270,17 +298,31 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
     const allAnswered = blankQuestion.blanks.every(b => b.userAnswer !== null);
     const result = hasAnswered ? practiceService.checkBlanksAnswer(blankQuestion.blanks) : null;
 
+    // Create filled-in verse text after answering
+    const getDisplayText = () => {
+      if (!hasAnswered) {
+        return blankQuestion.displayText;
+      }
+
+      // Replace each blank with the correct word
+      let filledText = blankQuestion.displayText;
+      blankQuestion.blanks.forEach(blank => {
+        filledText = filledText.replace('_____', blank.correctWord);
+      });
+      return filledText;
+    };
+
     return (
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.reference}>
           {verse.book} {verse.chapter}:{verse.verse_number}
         </Text>
         <Text style={styles.instructionText}>
-          Tap the blanks to fill in the missing words
+          {hasAnswered ? 'Complete verse:' : 'Tap the blanks to fill in the missing words'}
         </Text>
 
         <Card variant="warm" style={styles.verseCard}>
-          <Text style={styles.verseText}>{blankQuestion.displayText}</Text>
+          <Text style={styles.verseText}>{getDisplayText()}</Text>
         </Card>
 
         {blankQuestion.blanks.map((blank, index) => (
@@ -389,6 +431,57 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   };
 
+  const renderWriteEntireVerseMode = () => {
+    const result = hasAnswered ? practiceService.checkWriteEntireVerseAnswer(writtenVerseAnswer, verse.text) : null;
+
+    return (
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.reference}>
+          {verse.book} {verse.chapter}:{verse.verse_number}
+        </Text>
+        <Text style={styles.instructionText}>
+          {hasAnswered ? 'Here is the correct verse:' : 'Write the entire verse from memory'}
+        </Text>
+
+        {!hasAnswered ? (
+          <TextInput
+            style={styles.verseInput}
+            placeholder="Type the verse here..."
+            placeholderTextColor={theme.colors.text.tertiary}
+            value={writtenVerseAnswer}
+            onChangeText={setWrittenVerseAnswer}
+            multiline
+            numberOfLines={6}
+            textAlignVertical="top"
+            autoCapitalize="sentences"
+            autoCorrect={false}
+          />
+        ) : (
+          <Card variant="warm" style={styles.verseCard}>
+            <Text style={styles.verseText}>{verse.text}</Text>
+          </Card>
+        )}
+
+        {hasAnswered && result && (
+          <Card variant="cream" style={styles.resultCard}>
+            <Text style={result.isCorrect ? styles.resultTextCorrect : styles.resultTextIncorrect}>
+              {result.isCorrect ? '✓ Excellent!' : `${Math.round(result.accuracy)}% accurate`}
+            </Text>
+            {!result.isCorrect && (
+              <Text style={styles.resultSubtext}>
+                Keep practicing - you'll get it!
+              </Text>
+            )}
+          </Card>
+        )}
+
+        {!hasAnswered && writtenVerseAnswer.trim().length > 0 && (
+          <Button title="Check Answer" onPress={handleCheckAnswer} variant="olive" />
+        )}
+      </ScrollView>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -398,7 +491,7 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
             {currentIndex + 1} / {versesWithModes.length}
           </Text>
           <Text style={styles.modeLabel}>
-            {mode === 'recall' ? 'Recall' : mode === 'fill-in-blanks' ? 'Fill Blanks' : 'Multiple Choice'}
+            {mode === 'recall' ? 'Recall' : mode === 'fill-in-blanks' ? 'Fill Blanks' : mode === 'multiple-choice' ? 'Multiple Choice' : 'Write Verse'}
           </Text>
         </View>
 
@@ -406,6 +499,7 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
         {mode === 'recall' && renderRecallMode()}
         {mode === 'fill-in-blanks' && renderFillInBlanksMode()}
         {mode === 'multiple-choice' && renderMultipleChoiceMode()}
+        {mode === 'write-entire-verse' && renderWriteEntireVerseMode()}
 
         {/* Next button */}
         {(hasAnswered || mode === 'recall') && (
@@ -660,6 +754,25 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.body.fontSize,
     fontFamily: theme.typography.fonts.ui.default,
     color: theme.colors.text.secondary,
+  },
+  verseInput: {
+    backgroundColor: theme.colors.background.lightCream,
+    borderWidth: 2,
+    borderColor: theme.colors.primary.mutedStone,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    fontSize: 18,
+    fontFamily: theme.typography.fonts.scripture.default,
+    color: theme.colors.text.primary,
+    minHeight: 150,
+    marginBottom: theme.spacing.lg,
+  },
+  resultSubtext: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontFamily: theme.typography.fonts.ui.default,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
   },
 });
 

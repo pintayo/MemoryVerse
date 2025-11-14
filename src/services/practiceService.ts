@@ -1,6 +1,7 @@
 import { Verse } from '../types/database';
+import { practiceConfig } from '../config/practiceConfig';
 
-export type PracticeMode = 'recall' | 'fill-in-blanks' | 'multiple-choice';
+export type PracticeMode = 'recall' | 'fill-in-blanks' | 'multiple-choice' | 'write-entire-verse';
 
 export interface BlankWord {
   index: number;
@@ -28,17 +29,21 @@ class PracticeService {
     const rand = Math.random();
 
     if (userLevel <= 3) {
+      // Beginner: easier modes
       if (rand < 0.4) return 'multiple-choice';
       if (rand < 0.8) return 'fill-in-blanks';
       return 'recall';
-    } else if (userLevel <= 10) {
+    } else if (userLevel < practiceConfig.advancedLevelThreshold) {
+      // Intermediate: balanced mix
       if (rand < 0.33) return 'multiple-choice';
       if (rand < 0.66) return 'fill-in-blanks';
       return 'recall';
     } else {
-      if (rand < 0.2) return 'multiple-choice';
-      if (rand < 0.4) return 'fill-in-blanks';
-      return 'recall';
+      // Advanced (level 10+): harder modes including write-entire-verse
+      if (rand < 0.15) return 'multiple-choice';
+      if (rand < 0.35) return 'fill-in-blanks';
+      if (rand < 0.65) return 'recall';
+      return 'write-entire-verse';
     }
   }
 
@@ -56,6 +61,7 @@ class PracticeService {
     let baseXP = 0;
 
     const modeMultiplier: Record<PracticeMode, number> = {
+      'write-entire-verse': 1.5, // Hardest mode, highest reward
       'recall': 1.0,
       'fill-in-blanks': 0.8,
       'multiple-choice': 0.6,
@@ -91,6 +97,46 @@ class PracticeService {
       accuracy,
       correctCount,
       totalCount,
+    };
+  }
+
+  // Check write-entire-verse answer
+  checkWriteEntireVerseAnswer(userAnswer: string, correctVerse: string): {
+    isCorrect: boolean;
+    accuracy: number;
+  } {
+    // Normalize both texts for comparison
+    const normalizeText = (text: string) => {
+      return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s]/g, '') // Remove punctuation
+        .replace(/\s+/g, ' ');   // Normalize whitespace
+    };
+
+    const userNormalized = normalizeText(userAnswer);
+    const correctNormalized = normalizeText(correctVerse);
+
+    // Split into words for word-by-word comparison
+    const userWords = userNormalized.split(' ');
+    const correctWords = correctNormalized.split(' ');
+
+    // Calculate accuracy based on matching words
+    const maxLength = Math.max(userWords.length, correctWords.length);
+    let matchingWords = 0;
+
+    for (let i = 0; i < Math.min(userWords.length, correctWords.length); i++) {
+      if (userWords[i] === correctWords[i]) {
+        matchingWords++;
+      }
+    }
+
+    const accuracy = maxLength > 0 ? (matchingWords / maxLength) * 100 : 0;
+    const isCorrect = accuracy >= 90; // 90% accuracy required
+
+    return {
+      isCorrect,
+      accuracy,
     };
   }
 

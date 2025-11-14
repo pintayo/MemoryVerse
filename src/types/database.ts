@@ -147,7 +147,7 @@ export interface Database {
           id: string;
           user_id: string;
           verse_id: string;
-          session_type: 'read' | 'recall' | 'recite' | 'fill-in-blanks' | 'multiple-choice';
+          session_type: 'read' | 'recall' | 'recite' | 'fill-in-blanks' | 'multiple-choice' | 'write-entire-verse';
           user_answer: string | null;
           is_correct: boolean;
           accuracy_percentage: number;
@@ -160,7 +160,7 @@ export interface Database {
           id?: string;
           user_id: string;
           verse_id: string;
-          session_type: 'read' | 'recall' | 'recite' | 'fill-in-blanks' | 'multiple-choice';
+          session_type: 'read' | 'recall' | 'recite' | 'fill-in-blanks' | 'multiple-choice' | 'write-entire-verse';
           user_answer?: string | null;
           is_correct: boolean;
           accuracy_percentage: number;
