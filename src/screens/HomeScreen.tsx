@@ -7,6 +7,7 @@ import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../comp
 import { theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
 import { verseService } from '../services/verseService';
+import { practiceService } from '../services/practiceService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
@@ -135,7 +136,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       description: 'Recall & recite verses',
       onPress: () => {
         if (todayVerse?.id) {
-          navigation.navigate('Recall', { verseId: todayVerse.id });
+          // Randomly select a practice mode based on user level
+          const userLevel = profile?.level || 1;
+          const mode = practiceService.selectModeForUser(userLevel);
+
+          // Navigate to the selected mode
+          if (mode === 'recall') {
+            navigation.navigate('Recall', { verseId: todayVerse.id });
+          } else if (mode === 'fill-in-blanks') {
+            navigation.navigate('FillInBlanks', {});
+          } else if (mode === 'multiple-choice') {
+            navigation.navigate('MultipleChoice', {});
+          }
         }
       },
     },

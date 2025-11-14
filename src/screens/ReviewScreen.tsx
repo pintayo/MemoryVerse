@@ -13,6 +13,7 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { Card } from '../components';
 import { theme } from '../theme';
 import { spacedRepetitionService, ReviewVerse, ReviewStats } from '../services/spacedRepetitionService';
+import { practiceService } from '../services/practiceService';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 
@@ -21,7 +22,7 @@ interface ReviewScreenProps {
 }
 
 const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [reviewsByUrgency, setReviewsByUrgency] = useState<{
     overdue: ReviewVerse[];
     dueToday: ReviewVerse[];
@@ -61,7 +62,18 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
   };
 
   const handleReviewVerse = (verse: ReviewVerse) => {
-    navigation.navigate('Recall', { verseId: verse.id });
+    // Randomly select a practice mode based on user level
+    const userLevel = profile?.level || 1;
+    const mode = practiceService.selectModeForUser(userLevel);
+
+    // Navigate to the selected mode
+    if (mode === 'recall') {
+      navigation.navigate('Recall', { verseId: verse.id });
+    } else if (mode === 'fill-in-blanks') {
+      navigation.navigate('FillInBlanks', {});
+    } else if (mode === 'multiple-choice') {
+      navigation.navigate('MultipleChoice', {});
+    }
   };
 
   const renderStatsCard = () => {
