@@ -29,11 +29,11 @@ const FillInBlanksScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const currentVerse = verses[currentVerseIndex];
 
-  // Load verses on mount
-  useEffect(() => {
-    logger.log('[FillInBlanksScreen] useEffect triggered');
-    loadVerses();
-  }, []);
+  // Load verses on mount - TEMPORARILY DISABLED FOR DEBUGGING
+  // useEffect(() => {
+  //   logger.log('[FillInBlanksScreen] useEffect triggered');
+  //   loadVerses();
+  // }, []);
 
   const loadVerses = async () => {
     try {
