@@ -39,6 +39,9 @@ console.log('[RootNavigator] PremiumUpgradeScreen imported');
 import { SettingsScreen } from '../screens/SettingsScreen';
 console.log('[RootNavigator] SettingsScreen imported');
 
+import { FavoritesScreen } from '../screens/FavoritesScreen';
+console.log('[RootNavigator] FavoritesScreen imported');
+
 import { theme } from '../theme';
 console.log('[RootNavigator] theme imported');
 
@@ -145,6 +148,13 @@ const RootNavigator = () => {
         options={{
           title: 'Review Verses',
           headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="Favorites"
+        component={FavoritesScreen}
+        options={{
+          headerShown: false,
         }}
       />
       <Stack.Screen

@@ -85,12 +85,20 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
 
       setIsSearching(true);
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('verses')
           .select('id, book, chapter, verse_number, text')
           .eq('translation', 'KJV')
-          .ilike('text', `%${searchQuery}%`)
-          .limit(50);
+          .ilike('text', `%${searchQuery}%`);
+
+        // If in chapters mode (book selected), filter by that book
+        if (mode === 'chapters' && selectedBook) {
+          query = query.eq('book', selectedBook);
+        }
+
+        query = query.limit(50);
+
+        const { data, error } = await query;
 
         if (error) throw error;
         setSearchResults(data || []);
@@ -103,7 +111,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
 
     const debounce = setTimeout(searchVerses, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery]);
+  }, [searchQuery, mode, selectedBook]);
 
   const handleBookSelect = async (book: string) => {
     setSelectedBook(book);
@@ -246,9 +254,8 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
   };
 
   const handleFavorites = () => {
-    // Navigate to favorites (could be a modal or separate screen)
     logger.log('[BibleScreen] Navigate to favorites');
-    // TODO: Implement favorites navigation
+    navigation.navigate('Favorites');
   };
 
   const renderHeader = () => {
@@ -303,7 +310,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
               mode === 'books'
                 ? "Search books or verses..."
                 : mode === 'chapters'
-                ? "Search chapters..."
+                ? `Search verses in ${selectedBook}...`
                 : "Search verses in this chapter..."
             }
             value={searchQuery}
@@ -423,14 +430,45 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
   };
 
   const renderChaptersList = () => {
-    const filteredChapters = searchQuery
-      ? chapters.filter(ch => ch.toString().includes(searchQuery))
-      : chapters;
-
     return (
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Show verse search results if searching */}
+        {searchQuery.length >= 3 && (
+          <View style={styles.searchResultsSection}>
+            {isSearching ? (
+              <View style={styles.searchLoadingContainer}>
+                <ActivityIndicator size="small" color={theme.colors.secondary.lightGold} />
+                <Text style={styles.loadingText}>Searching verses...</Text>
+              </View>
+            ) : searchResults.length > 0 ? (
+              <>
+                <Text style={styles.searchResultsTitle}>
+                  {searchResults.length} verse{searchResults.length !== 1 ? 's' : ''} found in {selectedBook}
+                </Text>
+                {searchResults.map((result) => (
+                  <TouchableOpacity
+                    key={result.id}
+                    style={styles.verseResultCard}
+                    onPress={() => handleVerseSelect(result)}
+                  >
+                    <Text style={styles.verseResultRef}>
+                      {result.book} {result.chapter}:{result.verse_number}
+                    </Text>
+                    <Text style={styles.verseResultText} numberOfLines={2}>
+                      {result.text}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            ) : (
+              <Text style={styles.noResultsText}>No verses found matching "{searchQuery}" in {selectedBook}</Text>
+            )}
+          </View>
+        )}
+
+        {/* Always show chapters grid */}
         <View style={styles.chaptersGrid}>
-          {filteredChapters.map((chapter) => (
+          {chapters.map((chapter) => (
             <TouchableOpacity
               key={chapter}
               style={styles.chapterCard}

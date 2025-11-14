@@ -10,7 +10,7 @@ interface BibleVersePickerProps {
   onClose: () => void;
   onVerseSelect: (verseId: string) => void;
   onChapterSelect?: (book: string, chapter: number) => void;
-  onRandomVerse: () => void;
+  onRandomVerse: (book?: string, chapter?: number) => void;
 }
 
 interface Book {
@@ -129,6 +129,26 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
     onClose();
   };
 
+  const getRandomButtonText = () => {
+    if (step === 'verses' && selectedBook && selectedChapter) {
+      return `Random Verse of ${selectedBook} ${selectedChapter}`;
+    } else if (step === 'chapters' && selectedBook) {
+      return `Random Verse of ${selectedBook}`;
+    }
+    return 'Random Verse';
+  };
+
+  const handleRandomVerse = () => {
+    if (step === 'verses' && selectedBook && selectedChapter) {
+      onRandomVerse(selectedBook, selectedChapter);
+    } else if (step === 'chapters' && selectedBook) {
+      onRandomVerse(selectedBook);
+    } else {
+      onRandomVerse();
+    }
+    onClose();
+  };
+
   return (
     <Modal
       visible={visible}
@@ -164,17 +184,14 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
           </View>
 
           {/* Random Verse Button */}
-          <TouchableOpacity style={styles.randomButton} onPress={() => {
-            onRandomVerse();
-            onClose();
-          }}>
+          <TouchableOpacity style={styles.randomButton} onPress={handleRandomVerse}>
             <Svg width="20" height="20" viewBox="0 0 24 24">
               <Path
                 d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-                fill={theme.colors.secondary.lightGold}
+                fill={theme.colors.text.primary}
               />
             </Svg>
-            <Text style={styles.randomButtonText}>Random Verse</Text>
+            <Text style={styles.randomButtonText}>{getRandomButtonText()}</Text>
           </TouchableOpacity>
 
           {/* Content */}

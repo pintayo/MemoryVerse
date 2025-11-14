@@ -52,7 +52,7 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
     if (selectedCategory === 'daily') {
       navigation.setOptions({
         headerTitle: 'Tell About Your Day',
-        headerBackVisible: true,
+        headerBackVisible: false,
         headerLeft: () => (
           <TouchableOpacity onPress={handleBackToCategories} style={{ paddingLeft: 16 }}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
@@ -62,7 +62,7 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
     } else if (selectedCategory) {
       navigation.setOptions({
         headerTitle: prayerOptions.find(o => o.id === selectedCategory)?.title || 'Prayer',
-        headerBackVisible: true,
+        headerBackVisible: false,
         headerLeft: () => (
           <TouchableOpacity onPress={handleBackToCategories} style={{ paddingLeft: 16 }}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
