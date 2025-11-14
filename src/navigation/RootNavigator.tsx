@@ -12,11 +12,12 @@ console.log('[RootNavigator] BottomTabNavigator imported');
 import { VerseCardScreen, RecallScreen } from '../screens';
 console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
 
-import FillInBlanksMode from '../screens/FillInBlanksMode';
-console.log('[RootNavigator] FillInBlanksMode imported');
+// Temporarily disabled for debugging
+// import FillInBlanksMode from '../screens/FillInBlanksMode';
+// console.log('[RootNavigator] FillInBlanksMode imported');
 
-import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
-console.log('[RootNavigator] MultipleChoiceScreen imported');
+// import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
+// console.log('[RootNavigator] MultipleChoiceScreen imported');
 
 import { UnderstandScreen } from '../screens/UnderstandScreen';
 console.log('[RootNavigator] UnderstandScreen imported');
@@ -99,6 +100,7 @@ const RootNavigator = () => {
           headerBackTitle: 'Back',
         }}
       />
+      {/* Temporarily disabled for debugging
       <Stack.Screen
         name="FillInBlanks"
         component={FillInBlanksMode}
@@ -113,6 +115,7 @@ const RootNavigator = () => {
           headerShown: false,
         }}
       />
+      */}
       <Stack.Screen
         name="Pray"
         component={PrayScreen}
