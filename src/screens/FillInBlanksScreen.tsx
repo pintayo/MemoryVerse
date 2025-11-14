@@ -1,58 +1,17 @@
 console.log('[FillInBlanksScreen] Module loading...');
 
 import React, { useState, useEffect } from 'react';
-console.log('[FillInBlanksScreen] React imported');
-
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-console.log('[FillInBlanksScreen] RN components imported');
-
 import { SafeAreaView } from 'react-native-safe-area-context';
-console.log('[FillInBlanksScreen] SafeAreaView imported');
-
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-console.log('[FillInBlanksScreen] Navigation imported');
-
 import { RootStackParamList } from '../navigation/types';
-console.log('[FillInBlanksScreen] Types imported');
-
 import { Button, Card, VerseReference } from '../components';
-console.log('[FillInBlanksScreen] Components imported');
-
 import { theme } from '../theme';
-console.log('[FillInBlanksScreen] Theme imported');
-
 import { verseService } from '../services/verseService';
-console.log('[FillInBlanksScreen] verseService imported');
-
-import { profileService } from '../services/profileService';
-console.log('[FillInBlanksScreen] profileService imported');
-
-import { spacedRepetitionService } from '../services/spacedRepetitionService';
-console.log('[FillInBlanksScreen] spacedRepetitionService imported');
-
-import { streakService } from '../services/streakService';
-console.log('[FillInBlanksScreen] streakService imported');
-
-import { appReviewService } from '../services/appReviewService';
-console.log('[FillInBlanksScreen] appReviewService imported');
-
-import { practiceService, BlankQuestion, BlankWord } from '../services/practiceService';
-console.log('[FillInBlanksScreen] practiceService imported');
-
-import { supabase } from '../lib/supabase';
-console.log('[FillInBlanksScreen] supabase imported');
-
 import { Verse } from '../types/database';
-console.log('[FillInBlanksScreen] database types imported');
-
 import { useAuth } from '../contexts/AuthContext';
-console.log('[FillInBlanksScreen] useAuth imported');
-
 import { logger } from '../utils/logger';
-console.log('[FillInBlanksScreen] logger imported');
-
 import { practiceConfig } from '../config/practiceConfig';
-console.log('[FillInBlanksScreen] practiceConfig imported');
 
 console.log('[FillInBlanksScreen] All imports complete!');
 
@@ -62,21 +21,86 @@ const FillInBlanksScreen: React.FC<Props> = ({ navigation, route }) => {
   const { user, profile } = useAuth();
 
   const [verses, setVerses] = useState<Verse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [testCount, setTestCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Test useEffect WITHOUT any async calls
+  // Load verses on mount
   useEffect(() => {
-    logger.log('[FillInBlanksScreen] useEffect triggered - setting test count');
-    setTestCount(prev => prev + 1);
+    logger.log('[FillInBlanksScreen] useEffect triggered, calling loadVerses');
+    loadVerses();
   }, []);
+
+  const loadVerses = async () => {
+    try {
+      logger.log('[FillInBlanksScreen] loadVerses starting');
+      setIsLoading(true);
+      setError(null);
+
+      const loadedVerses: Verse[] = [];
+
+      logger.log(`[FillInBlanksScreen] Loading ${practiceConfig.versesPerLesson} verses`);
+
+      // Load verses one at a time with error handling
+      for (let i = 0; i < practiceConfig.versesPerLesson; i++) {
+        logger.log(`[FillInBlanksScreen] Loading verse ${i + 1}/${practiceConfig.versesPerLesson}`);
+
+        try {
+          const verse = await verseService.getRandomVerse('KJV');
+          logger.log(`[FillInBlanksScreen] Verse ${i + 1} loaded:`, verse ? 'success' : 'null');
+
+          if (verse) {
+            loadedVerses.push(verse);
+          }
+        } catch (verseError) {
+          logger.error(`[FillInBlanksScreen] Error loading verse ${i + 1}:`, verseError);
+          // Continue trying to load other verses
+        }
+      }
+
+      logger.log(`[FillInBlanksScreen] Loaded ${loadedVerses.length} verses total`);
+
+      if (loadedVerses.length > 0) {
+        setVerses(loadedVerses);
+      } else {
+        setError('No verses found. Please import Bible data.');
+      }
+    } catch (err) {
+      logger.error('[FillInBlanksScreen] Error in loadVerses:', err);
+      setError('Failed to load verses. Please try again.');
+    } finally {
+      setIsLoading(false);
+      logger.log('[FillInBlanksScreen] loadVerses completed');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.secondary.mutedGold} />
+          <Text style={styles.loadingText}>Loading verses...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Button title="Try Again" onPress={loadVerses} variant="olive" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Fill in the Blanks Mode</Text>
-        <Text style={styles.subtitle}>Testing useEffect without async calls</Text>
-        <Text style={styles.info}>UseEffect ran {testCount} time(s)</Text>
+        <Text style={styles.subtitle}>Verses loaded successfully!</Text>
+        <Text style={styles.info}>Loaded {verses.length} verses</Text>
         <Text style={styles.info}>User: {user?.email || 'Not logged in'}</Text>
         <Button
           title="Go Back"
@@ -98,6 +122,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: theme.spacing.md,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontFamily: theme.typography.fonts.ui.default,
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.feedback.error,
+    textAlign: 'center',
+    marginBottom: 20,
   },
   title: {
     fontSize: 24,
