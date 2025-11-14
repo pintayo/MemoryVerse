@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     fontFamily: theme.typography.fonts.ui.default,
-    color: theme.colors.feedback.error,
+    color: theme.colors.error.main,
     marginBottom: 20,
     textAlign: 'center',
   },
