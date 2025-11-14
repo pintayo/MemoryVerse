@@ -2,21 +2,36 @@
 -- Created: 2025-11-14
 -- Description: Adds table for storing AI-generated chapter summaries and context
 
--- Create chapter_contexts table
+-- Create chapter_contexts table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.chapter_contexts (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     book TEXT NOT NULL,
     chapter INTEGER NOT NULL,
     translation TEXT DEFAULT 'KJV' NOT NULL,
-    main_themes TEXT,
-    historical_context TEXT,
-    key_verses TEXT,
-    practical_applications TEXT,
-    cross_references TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    UNIQUE(book, chapter, translation)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Add unique constraint if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chapter_contexts_book_chapter_translation_key'
+    ) THEN
+        ALTER TABLE public.chapter_contexts
+        ADD CONSTRAINT chapter_contexts_book_chapter_translation_key
+        UNIQUE(book, chapter, translation);
+    END IF;
+END $$;
+
+-- Add columns if they don't exist
+ALTER TABLE public.chapter_contexts
+    ADD COLUMN IF NOT EXISTS main_themes TEXT,
+    ADD COLUMN IF NOT EXISTS historical_context TEXT,
+    ADD COLUMN IF NOT EXISTS key_verses TEXT,
+    ADD COLUMN IF NOT EXISTS practical_applications TEXT,
+    ADD COLUMN IF NOT EXISTS cross_references TEXT;
 
 -- Add index for querying chapter contexts
 CREATE INDEX IF NOT EXISTS idx_chapter_contexts_book_chapter
