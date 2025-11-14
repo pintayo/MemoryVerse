@@ -1,84 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
-import { Button } from '../components';
-import { theme } from '../theme';
-import { verseService } from '../services/verseService';
-import { Verse } from '../types/database';
-import { useAuth } from '../contexts/AuthContext';
-import { logger } from '../utils/logger';
-import { practiceConfig } from '../config/practiceConfig';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'MultipleChoice'>;
-
-const ChoiceScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { user, profile } = useAuth();
-
-  const [verses, setVerses] = useState<Verse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadVerses = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const loadedVerses: Verse[] = [];
-
-      for (let i = 0; i < practiceConfig.versesPerLesson; i++) {
-        const verse = await verseService.getRandomVerse('KJV');
-        if (verse) loadedVerses.push(verse);
-      }
-
-      if (loadedVerses.length > 0) {
-        setVerses(loadedVerses);
-      } else {
-        setError('No verses found.');
-      }
-    } catch (err) {
-      logger.error('[ChoiceScreen] Error loading verses:', err);
-      setError('Failed to load verses.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.colors.secondary.mutedGold} />
-          <Text style={styles.text}>Loading verses...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Button title="Try Again" onPress={loadVerses} variant="olive" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
+const ChoiceScreen: React.FC<any> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
         <Text style={styles.title}>Multiple Choice</Text>
-        {verses.length > 0 ? (
-          <>
-            <Text style={styles.text}>Loaded {verses.length} verses!</Text>
-            <Button title="Go Back" onPress={() => navigation.goBack()} variant="olive" />
-          </>
-        ) : (
-          <Button title="Load Verses" onPress={loadVerses} variant="olive" />
-        )}
+        <Text style={styles.text}>Coming soon!</Text>
       </View>
     </SafeAreaView>
   );
@@ -87,7 +16,7 @@ const ChoiceScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.offWhiteParchment,
+    backgroundColor: '#F9F7F4',
   },
   center: {
     flex: 1,
@@ -97,22 +26,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: theme.typography.fonts.ui.bold,
-    color: theme.colors.text.primary,
+    fontWeight: 'bold',
     marginBottom: 20,
   },
   text: {
     fontSize: 16,
-    fontFamily: theme.typography.fonts.ui.default,
-    color: theme.colors.text.secondary,
     marginBottom: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    fontFamily: theme.typography.fonts.ui.default,
-    color: theme.colors.feedback.error,
-    marginBottom: 20,
-    textAlign: 'center',
   },
 });
 
