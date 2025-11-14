@@ -12,9 +12,9 @@ console.log('[RootNavigator] BottomTabNavigator imported');
 import { VerseCardScreen, RecallScreen } from '../screens';
 console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
 
-// Testing FillInBlanksScreen first
-import FillInBlanksScreen from '../screens/FillInBlanksScreen';
-console.log('[RootNavigator] FillInBlanksScreen imported');
+// Use the new FillInBlanksMode file
+import FillInBlanksMode from '../screens/FillInBlanksMode';
+console.log('[RootNavigator] FillInBlanksMode imported');
 
 // Keep MultipleChoice commented for now
 // import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
@@ -103,7 +103,7 @@ const RootNavigator = () => {
       />
       <Stack.Screen
         name="FillInBlanks"
-        component={FillInBlanksScreen}
+        component={FillInBlanksMode}
         options={{
           headerShown: false,
         }}
