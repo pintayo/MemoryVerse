@@ -122,7 +122,7 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.colors.secondary.mutedGold} />
+          <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
           <Text style={styles.loadingText}>Loading verses...</Text>
         </View>
       </SafeAreaView>
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   modeLabel: {
     fontSize: theme.typography.ui.caption.fontSize,
     fontFamily: theme.typography.fonts.ui.medium,
-    color: theme.colors.secondary.mutedGold,
+    color: theme.colors.secondary.lightGold,
     textTransform: 'uppercase',
   },
   center: {
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary.mutedStone,
   },
   optionSelected: {
-    borderColor: theme.colors.secondary.mutedGold,
+    borderColor: theme.colors.secondary.lightGold,
     backgroundColor: theme.colors.secondary.lightGold,
   },
   optionCorrect: {
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   mcOptionSelected: {
-    borderColor: theme.colors.secondary.mutedGold,
+    borderColor: theme.colors.secondary.lightGold,
     backgroundColor: theme.colors.secondary.lightGold,
   },
   mcOptionCorrect: {
