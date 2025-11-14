@@ -17,7 +17,7 @@ const BlanksScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F7F4',
+    backgroundColor: theme.colors.background.offWhiteParchment,
   },
   center: {
     flex: 1,
@@ -27,11 +27,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: theme.typography.fonts.ui.bold,
+    color: theme.colors.text.primary,
     marginBottom: 20,
   },
   text: {
     fontSize: 16,
+    fontFamily: theme.typography.fonts.ui.default,
+    color: theme.colors.text.secondary,
     marginBottom: 20,
   },
 });
