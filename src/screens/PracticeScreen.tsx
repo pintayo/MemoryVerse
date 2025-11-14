@@ -340,14 +340,15 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
 
     return (
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.reference}>{mcQuestion.verseReference}</Text>
         <Text style={styles.instructionText}>
-          Which verse starts with this text?
+          Which verse is this?
         </Text>
 
-        <Card variant="warm" style={styles.promptCard}>
-          <Text style={styles.promptText}>"{mcQuestion.startingText}..."</Text>
+        <Card variant="warm" style={styles.verseCard}>
+          <Text style={styles.verseText}>{mcQuestion.verseText}</Text>
         </Card>
+
+        <Text style={styles.mcPrompt}>Select the correct reference:</Text>
 
         {mcQuestion.options.map((option, index) => {
           const isSelected = selectedMCIndex === index;
@@ -359,7 +360,7 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
             <TouchableOpacity
               key={index}
               style={[
-                styles.mcOption,
+                styles.mcReferenceOption,
                 isSelected && !hasAnswered && styles.mcOptionSelected,
                 showCorrect && styles.mcOptionCorrect,
                 showWrong && styles.mcOptionWrong,
@@ -368,7 +369,7 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
               disabled={hasAnswered}
             >
               <Text style={[
-                styles.mcOptionText,
+                styles.mcReferenceText,
                 (showCorrect || showWrong) && styles.mcOptionTextAnswered,
               ]}>
                 {option}
@@ -546,24 +547,22 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.ui.default,
     fontWeight: '600' as const,
   },
-  promptCard: {
-    marginBottom: theme.spacing.lg,
-    padding: theme.spacing.lg,
-  },
-  promptText: {
-    fontSize: 18,
-    fontFamily: theme.typography.fonts.scripture.default,
+  mcPrompt: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '500' as const,
     color: theme.colors.text.primary,
-    textAlign: 'center',
-    fontStyle: 'italic',
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
-  mcOption: {
+  mcReferenceOption: {
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background.lightCream,
     borderWidth: 2,
     borderColor: theme.colors.primary.mutedStone,
     marginBottom: theme.spacing.md,
+    alignItems: 'center',
   },
   mcOptionSelected: {
     borderColor: theme.colors.secondary.lightGold,
@@ -577,11 +576,11 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.error.main,
     backgroundColor: '#ffebee',
   },
-  mcOptionText: {
-    fontSize: theme.typography.ui.body.fontSize,
-    fontFamily: theme.typography.fonts.scripture.default,
+  mcReferenceText: {
+    fontSize: theme.typography.ui.subheading.fontSize,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
     color: theme.colors.text.primary,
-    lineHeight: 24,
   },
   mcOptionTextAnswered: {
     fontFamily: theme.typography.fonts.ui.default,

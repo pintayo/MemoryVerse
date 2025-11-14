@@ -18,9 +18,8 @@ export interface BlankQuestion {
 
 export interface MultipleChoiceQuestion {
   verseId: string;
-  verseReference: string;
-  startingText: string;
-  options: string[];
+  verseText: string; // Show full verse text
+  options: string[]; // Array of verse references (e.g., "John 3:16")
   correctIndex: number;
 }
 
@@ -149,34 +148,20 @@ class PracticeService {
 
   // Generate multiple choice question
   generateMultipleChoice(verse: Verse, otherVerses: Verse[]): MultipleChoiceQuestion {
-    const words = verse.text.split(/\s+/);
+    // Show full verse text, user picks correct reference
+    const correctReference = `${verse.book} ${verse.chapter}:${verse.verse_number}`;
 
-    // Show first 2-4 words as the prompt
-    const numStartWords = Math.min(
-      Math.max(2, Math.floor(words.length * 0.2)),
-      4
-    );
-    const startingText = words.slice(0, numStartWords).join(' ');
-
-    // Correct answer is the full verse
-    const correctOption = verse.text;
-
-    // Generate 2-3 wrong options
-    const wrongOptions = this.generateWrongVerseOptions(
-      verse,
-      startingText,
-      otherVerses
-    );
+    // Generate 2-3 wrong reference options from other verses
+    const wrongReferences = this.generateWrongReferenceOptions(verse, otherVerses);
 
     // Combine and shuffle
-    const allOptions = [correctOption, ...wrongOptions];
+    const allOptions = [correctReference, ...wrongReferences];
     const shuffled = this.shuffleArray(allOptions);
-    const correctIndex = shuffled.indexOf(correctOption);
+    const correctIndex = shuffled.indexOf(correctReference);
 
     return {
       verseId: verse.id,
-      verseReference: `${verse.book} ${verse.chapter}:${verse.verse_number}`,
-      startingText,
+      verseText: verse.text,
       options: shuffled,
       correctIndex,
     };
@@ -283,43 +268,41 @@ class PracticeService {
     return this.shuffleArray(options);
   }
 
-  // Generate plausible wrong verse continuations
-  private generateWrongVerseOptions(
+  // Generate plausible wrong verse references
+  private generateWrongReferenceOptions(
     correctVerse: Verse,
-    startingText: string,
     otherVerses: Verse[]
   ): string[] {
     const options: string[] = [];
+    const usedReferences = new Set<string>();
 
-    // Strategy 1: Use similar verses from same book
+    // Strategy 1: Use verses from same book (different chapter/verse)
     const sameBookVerses = otherVerses.filter(v =>
-      v.book === correctVerse.book && v.id !== correctVerse.id
+      v.book === correctVerse.book &&
+      v.id !== correctVerse.id &&
+      (v.chapter !== correctVerse.chapter || v.verse_number !== correctVerse.verse_number)
     );
 
-    if (sameBookVerses.length > 0) {
-      const randomVerse = sameBookVerses[Math.floor(Math.random() * sameBookVerses.length)];
-      options.push(randomVerse.text);
-    }
-
-    // Strategy 2: Use verses with similar starting words
-    const similarStarts = otherVerses.filter(v => {
-      const otherStart = v.text.split(/\s+/).slice(0, 2).join(' ').toLowerCase();
-      const correctStart = startingText.split(/\s+/).slice(0, 2).join(' ').toLowerCase();
-      return otherStart !== correctStart && v.id !== correctVerse.id;
-    });
-
-    if (similarStarts.length > 0 && options.length < 3) {
-      const randomVerse = similarStarts[Math.floor(Math.random() * similarStarts.length)];
-      if (!options.includes(randomVerse.text)) {
-        options.push(randomVerse.text);
+    for (const verse of sameBookVerses) {
+      const ref = `${verse.book} ${verse.chapter}:${verse.verse_number}`;
+      if (!usedReferences.has(ref) && options.length < 3) {
+        options.push(ref);
+        usedReferences.add(ref);
       }
     }
 
-    // Strategy 3: Use random verses as fallback
-    while (options.length < 3 && otherVerses.length > 0) {
-      const randomVerse = otherVerses[Math.floor(Math.random() * otherVerses.length)];
-      if (!options.includes(randomVerse.text) && randomVerse.id !== correctVerse.id) {
-        options.push(randomVerse.text);
+    // Strategy 2: Use verses from different books to fill remaining slots
+    if (options.length < 3) {
+      const otherBookVerses = otherVerses.filter(v =>
+        v.book !== correctVerse.book && v.id !== correctVerse.id
+      );
+
+      for (const verse of otherBookVerses) {
+        const ref = `${verse.book} ${verse.chapter}:${verse.verse_number}`;
+        if (!usedReferences.has(ref) && options.length < 3) {
+          options.push(ref);
+          usedReferences.add(ref);
+        }
       }
     }
 
