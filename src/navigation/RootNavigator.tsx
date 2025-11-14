@@ -12,10 +12,10 @@ console.log('[RootNavigator] BottomTabNavigator imported');
 import { VerseCardScreen, RecallScreen } from '../screens';
 console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
 
-// Temporarily disabled for debugging
-// import FillInBlanksMode from '../screens/FillInBlanksMode';
-// console.log('[RootNavigator] FillInBlanksMode imported');
+import FillInBlanksMode from '../screens/FillInBlanksMode';
+console.log('[RootNavigator] FillInBlanksMode imported');
 
+// Keep MultipleChoice disabled for now
 // import MultipleChoiceScreen from '../screens/MultipleChoiceScreen';
 // console.log('[RootNavigator] MultipleChoiceScreen imported');
 
@@ -100,7 +100,6 @@ const RootNavigator = () => {
           headerBackTitle: 'Back',
         }}
       />
-      {/* Temporarily disabled for debugging
       <Stack.Screen
         name="FillInBlanks"
         component={FillInBlanksMode}
@@ -108,6 +107,7 @@ const RootNavigator = () => {
           headerShown: false,
         }}
       />
+      {/* Keep MultipleChoice disabled for now
       <Stack.Screen
         name="MultipleChoice"
         component={MultipleChoiceScreen}
