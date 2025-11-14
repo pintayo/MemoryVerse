@@ -6,6 +6,9 @@ export const practiceConfig = {
   // Number of verses per practice lesson
   versesPerLesson: 5,
 
+  // Level threshold for advanced practice modes
+  advancedLevelThreshold: 10,
+
   // XP rewards
   xp: {
     perfect: 20,    // 100% accuracy

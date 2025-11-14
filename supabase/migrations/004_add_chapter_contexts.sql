@@ -31,7 +31,8 @@ ALTER TABLE public.chapter_contexts
     ADD COLUMN IF NOT EXISTS historical_context TEXT,
     ADD COLUMN IF NOT EXISTS key_verses TEXT,
     ADD COLUMN IF NOT EXISTS practical_applications TEXT,
-    ADD COLUMN IF NOT EXISTS cross_references TEXT;
+    ADD COLUMN IF NOT EXISTS cross_references TEXT,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
 
 -- Add index for querying chapter contexts
 CREATE INDEX IF NOT EXISTS idx_chapter_contexts_book_chapter
@@ -62,3 +63,7 @@ CREATE POLICY "Authenticated users can update chapter contexts" ON public.chapte
 -- Grant permissions
 GRANT SELECT ON public.chapter_contexts TO anon, authenticated;
 GRANT INSERT, UPDATE ON public.chapter_contexts TO authenticated;
+
+-- IMPORTANT: After running this migration, refresh the schema cache
+-- Run this command in the SQL Editor:
+-- NOTIFY pgrst, 'reload schema';
