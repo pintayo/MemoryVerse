@@ -53,7 +53,7 @@ const BlanksScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.colors.secondary.mutedGold} />
+          <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
           <Text style={styles.text}>Loading verses...</Text>
         </View>
       </SafeAreaView>
