@@ -62,18 +62,21 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
   };
 
   const handleReviewVerse = (verse: ReviewVerse) => {
-    // Randomly select a practice mode based on user level
-    const userLevel = profile?.level || 1;
-    const mode = practiceService.selectModeForUser(userLevel);
+    // Temporarily disabled random mode selection for debugging
+    navigation.navigate('Recall', { verseId: verse.id });
 
-    // Navigate to the selected mode
-    if (mode === 'recall') {
-      navigation.navigate('Recall', { verseId: verse.id });
-    } else if (mode === 'fill-in-blanks') {
-      navigation.navigate('FillInBlanks', {});
-    } else if (mode === 'multiple-choice') {
-      navigation.navigate('MultipleChoice', {});
-    }
+    // // Randomly select a practice mode based on user level
+    // const userLevel = profile?.level || 1;
+    // const mode = practiceService.selectModeForUser(userLevel);
+
+    // // Navigate to the selected mode
+    // if (mode === 'recall') {
+    //   navigation.navigate('Recall', { verseId: verse.id });
+    // } else if (mode === 'fill-in-blanks') {
+    //   navigation.navigate('FillInBlanks', {});
+    // } else if (mode === 'multiple-choice') {
+    //   navigation.navigate('MultipleChoice', {});
+    // }
   };
 
   const renderStatsCard = () => {
