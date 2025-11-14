@@ -45,11 +45,40 @@ const BlanksScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={theme.colors.secondary.mutedGold} />
+          <Text style={styles.text}>Loading verses...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Button title="Try Again" onPress={loadVerses} variant="olive" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
         <Text style={styles.title}>Fill in the Blanks</Text>
-        <Text style={styles.text}>Coming soon!</Text>
+        {verses.length > 0 ? (
+          <>
+            <Text style={styles.text}>Loaded {verses.length} verses!</Text>
+            <Button title="Go Back" onPress={() => navigation.goBack()} variant="olive" />
+          </>
+        ) : (
+          <Button title="Load Verses" onPress={loadVerses} variant="olive" />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -77,6 +106,13 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.ui.default,
     color: theme.colors.text.secondary,
     marginBottom: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: theme.typography.fonts.ui.default,
+    color: theme.colors.feedback.error,
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 
