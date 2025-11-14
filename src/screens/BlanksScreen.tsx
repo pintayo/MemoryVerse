@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button } from '../components';
 import { theme } from '../theme';
 
 const BlanksScreen: React.FC<any> = ({ navigation }) => {
