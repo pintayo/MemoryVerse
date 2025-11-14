@@ -24,7 +24,7 @@ interface VerseWithMode {
 }
 
 const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
 
   const [versesWithModes, setVersesWithModes] = useState<VerseWithMode[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -202,6 +202,10 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
       try {
         await profileService.addXP(user.id, totalXP);
         logger.info('[PracticeScreen] Successfully awarded XP:', totalXP);
+
+        // Refresh profile to update UI with new XP and level
+        await refreshProfile();
+        logger.info('[PracticeScreen] Profile refreshed with updated XP');
       } catch (err) {
         logger.error('[PracticeScreen] Error awarding XP:', err);
       }
