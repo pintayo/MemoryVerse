@@ -20,6 +20,31 @@ const BlanksScreen: React.FC<Props> = ({ navigation, route }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadVerses = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const loadedVerses: Verse[] = [];
+
+      for (let i = 0; i < practiceConfig.versesPerLesson; i++) {
+        const verse = await verseService.getRandomVerse('KJV');
+        if (verse) loadedVerses.push(verse);
+      }
+
+      if (loadedVerses.length > 0) {
+        setVerses(loadedVerses);
+      } else {
+        setError('No verses found.');
+      }
+    } catch (err) {
+      logger.error('[BlanksScreen] Error loading verses:', err);
+      setError('Failed to load verses.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
