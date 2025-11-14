@@ -2,6 +2,7 @@ export type RootStackParamList = {
   Main: undefined;
   VerseCard: undefined;
   Recall: { verseId: string };
+  Practice: undefined;
   FillInBlanks: { verseId?: string };
   MultipleChoice: { verseId?: string };
   Pray: { verseId: string };

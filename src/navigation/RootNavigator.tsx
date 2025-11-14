@@ -12,6 +12,9 @@ console.log('[RootNavigator] BottomTabNavigator imported');
 import { VerseCardScreen, RecallScreen } from '../screens';
 console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
 
+import PracticeScreen from '../screens/PracticeScreen';
+console.log('[RootNavigator] PracticeScreen imported');
+
 // Testing with different filenames
 import BlanksScreen from '../screens/BlanksScreen';
 console.log('[RootNavigator] BlanksScreen imported');
@@ -97,6 +100,14 @@ const RootNavigator = () => {
         component={RecallScreen}
         options={{
           title: 'Practice Verse',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="Practice"
+        component={PracticeScreen}
+        options={{
+          title: 'Practice',
           headerBackTitle: 'Back',
         }}
       />

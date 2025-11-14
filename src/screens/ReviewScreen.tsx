@@ -13,8 +13,6 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { Card } from '../components';
 import { theme } from '../theme';
 import { spacedRepetitionService, ReviewVerse, ReviewStats } from '../services/spacedRepetitionService';
-// Re-enable practiceService with minimal version
-import { practiceService } from '../services/practiceService';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 
@@ -63,18 +61,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
   };
 
   const handleReviewVerse = (verse: ReviewVerse) => {
-    // Randomly select a practice mode based on user level
-    const userLevel = profile?.level || 1;
-    const mode = practiceService.selectModeForUser(userLevel);
-
-    // Navigate to the selected mode
-    if (mode === 'recall') {
-      navigation.navigate('Recall', { verseId: verse.id });
-    } else if (mode === 'fill-in-blanks') {
-      navigation.navigate('FillInBlanks', {});
-    } else if (mode === 'multiple-choice') {
-      navigation.navigate('MultipleChoice', {});
-    }
+    navigation.navigate('Practice');
   };
 
   const renderStatsCard = () => {
