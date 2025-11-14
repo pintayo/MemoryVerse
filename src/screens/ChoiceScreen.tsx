@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,8 +17,12 @@ const ChoiceScreen: React.FC<Props> = ({ navigation, route }) => {
   const { user, profile } = useAuth();
 
   const [verses, setVerses] = useState<Verse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadVerses();
+  }, []);
 
   const loadVerses = async () => {
     try {
@@ -70,15 +74,10 @@ const ChoiceScreen: React.FC<Props> = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
-        <Text style={styles.title}>Multiple Choice</Text>
-        {verses.length > 0 ? (
-          <>
-            <Text style={styles.text}>Loaded {verses.length} verses!</Text>
-            <Button title="Go Back" onPress={() => navigation.goBack()} variant="olive" />
-          </>
-        ) : (
-          <Button title="Load Verses" onPress={loadVerses} variant="olive" />
-        )}
+        <Text style={styles.title}>Multiple Choice - Practice Mode</Text>
+        <Text style={styles.text}>This feature is coming soon!</Text>
+        <Text style={styles.text}>You loaded {verses.length} verses successfully.</Text>
+        <Button title="Go Back" onPress={() => navigation.goBack()} variant="olive" />
       </View>
     </SafeAreaView>
   );
