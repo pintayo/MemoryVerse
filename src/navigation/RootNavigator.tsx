@@ -12,6 +12,16 @@ console.log('[RootNavigator] BottomTabNavigator imported');
 import { VerseCardScreen, RecallScreen } from '../screens';
 console.log('[RootNavigator] VerseCardScreen and RecallScreen imported');
 
+import PracticeScreen from '../screens/PracticeScreen';
+console.log('[RootNavigator] PracticeScreen imported');
+
+// Testing with different filenames
+import BlanksScreen from '../screens/BlanksScreen';
+console.log('[RootNavigator] BlanksScreen imported');
+
+import ChoiceScreen from '../screens/ChoiceScreen';
+console.log('[RootNavigator] ChoiceScreen imported');
+
 import { UnderstandScreen } from '../screens/UnderstandScreen';
 console.log('[RootNavigator] UnderstandScreen imported');
 
@@ -91,6 +101,28 @@ const RootNavigator = () => {
         options={{
           title: 'Practice Verse',
           headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="Practice"
+        component={PracticeScreen}
+        options={{
+          title: 'Practice',
+          headerBackTitle: 'Back',
+        }}
+      />
+      <Stack.Screen
+        name="FillInBlanks"
+        component={BlanksScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="MultipleChoice"
+        component={ChoiceScreen}
+        options={{
+          headerShown: false,
         }}
       />
       <Stack.Screen

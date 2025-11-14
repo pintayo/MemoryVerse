@@ -134,9 +134,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       icon: 'brain',
       description: 'Recall & recite verses',
       onPress: () => {
-        if (todayVerse?.id) {
-          navigation.navigate('Recall', { verseId: todayVerse.id });
-        }
+        navigation.navigate('Practice');
       },
     },
     {

@@ -21,7 +21,7 @@ interface ReviewScreenProps {
 }
 
 const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [reviewsByUrgency, setReviewsByUrgency] = useState<{
     overdue: ReviewVerse[];
     dueToday: ReviewVerse[];
@@ -61,7 +61,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
   };
 
   const handleReviewVerse = (verse: ReviewVerse) => {
-    navigation.navigate('Recall', { verseId: verse.id });
+    navigation.navigate('Practice');
   };
 
   const renderStatsCard = () => {
