@@ -358,12 +358,14 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: theme.typography.ui.body.fontSize,
-    fontFamily: theme.typography.fonts.ui.bold,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
     color: theme.colors.text.secondary,
   },
   modeLabel: {
     fontSize: theme.typography.ui.caption.fontSize,
-    fontFamily: theme.typography.fonts.ui.medium,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '500' as const,
     color: theme.colors.secondary.lightGold,
     textTransform: 'uppercase',
   },
@@ -375,7 +377,8 @@ const styles = StyleSheet.create({
   },
   reference: {
     fontSize: theme.typography.ui.subheading.fontSize,
-    fontFamily: theme.typography.fonts.ui.bold,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.md,
     textAlign: 'center',
@@ -410,7 +413,8 @@ const styles = StyleSheet.create({
   },
   blankLabel: {
     fontSize: theme.typography.ui.body.fontSize,
-    fontFamily: theme.typography.fonts.ui.medium,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '500' as const,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
@@ -445,11 +449,13 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   optionTextSelected: {
-    fontFamily: theme.typography.fonts.ui.bold,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
   },
   optionTextAnswered: {
     color: theme.colors.text.onDark,
-    fontFamily: theme.typography.fonts.ui.bold,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
   },
   promptCard: {
     marginBottom: theme.spacing.lg,
@@ -457,7 +463,7 @@ const styles = StyleSheet.create({
   },
   promptText: {
     fontSize: 18,
-    fontFamily: theme.typography.fonts.scripture.medium,
+    fontFamily: theme.typography.fonts.scripture.default,
     color: theme.colors.text.primary,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -489,7 +495,8 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   mcOptionTextAnswered: {
-    fontFamily: theme.typography.fonts.ui.bold,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
   },
   resultCard: {
     padding: theme.spacing.md,
@@ -497,14 +504,16 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   resultTextCorrect: {
-    fontSize: theme.typography.ui.h4.fontSize,
-    fontFamily: theme.typography.fonts.ui.bold,
+    fontSize: theme.typography.ui.heading.fontSize,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
     color: theme.colors.success.mutedOlive,
     textAlign: 'center',
   },
   resultTextIncorrect: {
-    fontSize: theme.typography.ui.h4.fontSize,
-    fontFamily: theme.typography.fonts.ui.bold,
+    fontSize: theme.typography.ui.heading.fontSize,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
     color: theme.colors.error.main,
     textAlign: 'center',
   },

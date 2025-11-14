@@ -96,7 +96,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: theme.typography.fonts.ui.bold,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600' as const,
     color: theme.colors.text.primary,
     marginBottom: 20,
   },
