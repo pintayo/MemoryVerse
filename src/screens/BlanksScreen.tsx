@@ -14,6 +14,12 @@ import { practiceConfig } from '../config/practiceConfig';
 type Props = NativeStackScreenProps<RootStackParamList, 'FillInBlanks'>;
 
 const BlanksScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { user, profile } = useAuth();
+
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
