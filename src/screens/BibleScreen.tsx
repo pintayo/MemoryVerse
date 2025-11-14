@@ -254,9 +254,8 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
   };
 
   const handleFavorites = () => {
-    // Navigate to favorites (could be a modal or separate screen)
     logger.log('[BibleScreen] Navigate to favorites');
-    // TODO: Implement favorites navigation
+    navigation.navigate('Favorites');
   };
 
   const renderHeader = () => {

@@ -11,6 +11,8 @@ export type RootStackParamList = {
   Review: undefined;
   PremiumUpgrade: undefined;
   Settings: undefined;
+  Favorites: undefined;
+  ChapterContext: { book: string; chapter: number };
 };
 
 export type BottomTabParamList = {
