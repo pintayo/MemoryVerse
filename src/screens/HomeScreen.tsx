@@ -137,21 +137,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       description: 'Recall & recite verses',
       onPress: () => {
         if (todayVerse?.id) {
-          // Temporarily disabled random mode selection for debugging
-          navigation.navigate('Recall', { verseId: todayVerse.id });
+          // Randomly select a practice mode based on user level
+          const userLevel = profile?.level || 1;
+          const mode = practiceService.selectModeForUser(userLevel);
 
-          // // Randomly select a practice mode based on user level
-          // const userLevel = profile?.level || 1;
-          // const mode = practiceService.selectModeForUser(userLevel);
-
-          // // Navigate to the selected mode
-          // if (mode === 'recall') {
-          //   navigation.navigate('Recall', { verseId: todayVerse.id });
-          // } else if (mode === 'fill-in-blanks') {
-          //   navigation.navigate('FillInBlanks', {});
-          // } else if (mode === 'multiple-choice') {
-          //   navigation.navigate('MultipleChoice', {});
-          // }
+          // Navigate to the selected mode
+          if (mode === 'recall') {
+            navigation.navigate('Recall', { verseId: todayVerse.id });
+          } else if (mode === 'fill-in-blanks') {
+            navigation.navigate('FillInBlanks', {});
+          } else if (mode === 'multiple-choice') {
+            navigation.navigate('MultipleChoice', {});
+          }
         }
       },
     },
