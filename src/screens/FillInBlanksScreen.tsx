@@ -1,6 +1,6 @@
 console.log('[FillInBlanksScreen] Module loading...');
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 console.log('[FillInBlanksScreen] React imported');
 
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
@@ -61,11 +61,23 @@ type Props = NativeStackScreenProps<RootStackParamList, 'FillInBlanks'>;
 const FillInBlanksScreen: React.FC<Props> = ({ navigation, route }) => {
   const { user, profile } = useAuth();
 
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [testCount, setTestCount] = useState(0);
+
+  // Test useEffect WITHOUT any async calls
+  useEffect(() => {
+    logger.log('[FillInBlanksScreen] useEffect triggered - setting test count');
+    setTestCount(prev => prev + 1);
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Fill in the Blanks Mode</Text>
-        <Text style={styles.subtitle}>Debugging imports...</Text>
+        <Text style={styles.subtitle}>Testing useEffect without async calls</Text>
+        <Text style={styles.info}>UseEffect ran {testCount} time(s)</Text>
+        <Text style={styles.info}>User: {user?.email || 'Not logged in'}</Text>
         <Button
           title="Go Back"
           onPress={() => navigation.goBack()}
@@ -97,7 +109,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: theme.typography.fonts.ui.default,
     color: theme.colors.text.secondary,
-    marginBottom: 20,
+    marginBottom: 10,
+  },
+  info: {
+    fontSize: 14,
+    fontFamily: theme.typography.fonts.ui.default,
+    color: theme.colors.text.tertiary,
+    marginBottom: 10,
   },
 });
 
