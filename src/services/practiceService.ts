@@ -104,6 +104,84 @@ class PracticeService {
     }
     return shuffled;
   }
+
+  // Generate multiple choice question
+  generateMultipleChoice(verse: Verse, otherVerses: Verse[]): MultipleChoiceQuestion {
+    const words = verse.text.split(/\s+/);
+
+    // Show first 2-4 words as the prompt
+    const numStartWords = Math.min(
+      Math.max(2, Math.floor(words.length * 0.2)),
+      4
+    );
+    const startingText = words.slice(0, numStartWords).join(' ');
+
+    // Correct answer is the full verse
+    const correctOption = verse.text;
+
+    // Generate 2-3 wrong options
+    const wrongOptions = this.generateWrongVerseOptions(
+      verse,
+      startingText,
+      otherVerses
+    );
+
+    // Combine and shuffle
+    const allOptions = [correctOption, ...wrongOptions];
+    const shuffled = this.shuffleArray(allOptions);
+    const correctIndex = shuffled.indexOf(correctOption);
+
+    return {
+      verseId: verse.id,
+      verseReference: `${verse.book} ${verse.chapter}:${verse.verse_number}`,
+      startingText,
+      options: shuffled,
+      correctIndex,
+    };
+  }
+
+  // Generate plausible wrong verse continuations
+  private generateWrongVerseOptions(
+    correctVerse: Verse,
+    startingText: string,
+    otherVerses: Verse[]
+  ): string[] {
+    const options: string[] = [];
+
+    // Strategy 1: Use similar verses from same book
+    const sameBookVerses = otherVerses.filter(v =>
+      v.book === correctVerse.book && v.id !== correctVerse.id
+    );
+
+    if (sameBookVerses.length > 0) {
+      const randomVerse = sameBookVerses[Math.floor(Math.random() * sameBookVerses.length)];
+      options.push(randomVerse.text);
+    }
+
+    // Strategy 2: Use verses with similar starting words
+    const similarStarts = otherVerses.filter(v => {
+      const otherStart = v.text.split(/\s+/).slice(0, 2).join(' ').toLowerCase();
+      const correctStart = startingText.split(/\s+/).slice(0, 2).join(' ').toLowerCase();
+      return otherStart !== correctStart && v.id !== correctVerse.id;
+    });
+
+    if (similarStarts.length > 0 && options.length < 3) {
+      const randomVerse = similarStarts[Math.floor(Math.random() * similarStarts.length)];
+      if (!options.includes(randomVerse.text)) {
+        options.push(randomVerse.text);
+      }
+    }
+
+    // Strategy 3: Use random verses as fallback
+    while (options.length < 3 && otherVerses.length > 0) {
+      const randomVerse = otherVerses[Math.floor(Math.random() * otherVerses.length)];
+      if (!options.includes(randomVerse.text) && randomVerse.id !== correctVerse.id) {
+        options.push(randomVerse.text);
+      }
+    }
+
+    return options.slice(0, 3); // Max 3 wrong options
+  }
 }
 
 export const practiceService = new PracticeService();
