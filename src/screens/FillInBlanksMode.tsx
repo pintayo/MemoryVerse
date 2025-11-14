@@ -17,12 +17,8 @@ const FillInBlanksMode: React.FC<Props> = ({ navigation, route }) => {
   const { user, profile } = useAuth();
 
   const [verses, setVerses] = useState<Verse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadVerses();
-  }, []);
 
   const loadVerses = async () => {
     try {
@@ -75,8 +71,14 @@ const FillInBlanksMode: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
         <Text style={styles.title}>Fill in the Blanks</Text>
-        <Text style={styles.text}>Loaded {verses.length} verses!</Text>
-        <Button title="Go Back" onPress={() => navigation.goBack()} variant="olive" />
+        {verses.length > 0 ? (
+          <>
+            <Text style={styles.text}>Loaded {verses.length} verses!</Text>
+            <Button title="Go Back" onPress={() => navigation.goBack()} variant="olive" />
+          </>
+        ) : (
+          <Button title="Load Verses" onPress={loadVerses} variant="olive" />
+        )}
       </View>
     </SafeAreaView>
   );
