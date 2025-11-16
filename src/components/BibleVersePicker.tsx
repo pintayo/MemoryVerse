@@ -46,23 +46,31 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
   const loadBooks = async () => {
     try {
       setIsLoading(true);
-      // Increase limit to get all verses (Supabase defaults to 1000 rows max)
+      logger.log('[BibleVersePicker] Starting to load books...');
+
+      // Use efficient RPC function to get distinct books
       const { data, error } = await supabase
-        .from('verses')
-        .select('book')
-        .eq('translation', 'KJV') // Only get KJV translation
-        .order('book')
-        .limit(35000); // Get all ~31k verses to ensure we get all books
+        .rpc('get_bible_books', { p_translation: 'KJV' });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[BibleVersePicker] Supabase error:', error);
+        throw error;
+      }
 
-      // Get unique books
-      const uniqueBooks = [...new Set(data.map((item: Book) => item.book))];
-      logger.log(`[BibleVersePicker] Loaded ${uniqueBooks.length} books from ${data.length} verses`);
-      logger.log(`[BibleVersePicker] Books:`, uniqueBooks);
-      setBooks(uniqueBooks);
+      if (!data || data.length === 0) {
+        logger.warn('[BibleVersePicker] No books found in database');
+        setBooks([]);
+        return;
+      }
+
+      // Extract book names from the result
+      const bookNames = data.map((item: { book: string }) => item.book);
+      logger.log(`[BibleVersePicker] Loaded ${bookNames.length} books:`, bookNames.slice(0, 5), '...');
+
+      setBooks(bookNames);
     } catch (error) {
       logger.error('[BibleVersePicker] Error loading books:', error);
+      setBooks([]); // Set empty array on error
     } finally {
       setIsLoading(false);
     }
@@ -71,23 +79,30 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
   const loadChapters = async (book: string) => {
     try {
       setIsLoading(true);
+      logger.log('[BibleVersePicker] Loading chapters for book:', book);
+
+      // Use efficient RPC function to get distinct chapters
       const { data, error } = await supabase
-        .from('verses')
-        .select('chapter')
-        .eq('book', book)
-        .eq('translation', 'KJV') // Only get KJV translation
-        .order('chapter');
+        .rpc('get_bible_chapters', {
+          p_book: book,
+          p_translation: 'KJV'
+        });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[BibleVersePicker] Error loading chapters:', error);
+        throw error;
+      }
 
-      // Get unique chapters
-      const uniqueChapters = [...new Set(data.map((item: any) => item.chapter))];
-      logger.log(`[BibleVersePicker] Loaded ${uniqueChapters.length} chapters for ${book}`);
-      setChapters(uniqueChapters);
+      // Extract chapter numbers from the result
+      const chapterNumbers = data.map((item: { chapter: number }) => item.chapter);
+      logger.log(`[BibleVersePicker] Loaded ${chapterNumbers.length} chapters for ${book}`);
+
+      setChapters(chapterNumbers);
       setSelectedBook(book);
       setStep('chapters');
     } catch (error) {
       logger.error('[BibleVersePicker] Error loading chapters:', error);
+      setChapters([]);
     } finally {
       setIsLoading(false);
     }
