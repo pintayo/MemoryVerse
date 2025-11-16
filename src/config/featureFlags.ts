@@ -162,10 +162,11 @@ export const featureFlags: FeatureFlagsConfig = {
   // ============================================
 
   leaderboard: {
-    enabled: true,
+    enabled: false,
     premium: false,
-    description: 'Global XP leaderboard',
-    version: 'v1.0',
+    comingSoon: true,
+    description: 'Global XP leaderboard - compete with other users',
+    version: 'v1.1',
   },
 
   achievements: {
