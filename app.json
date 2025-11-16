@@ -21,7 +21,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "This app does not use the camera.",
         "NSMicrophoneUsageDescription": "Used for voice recording during prayer (optional).",
-        "NSUserTrackingUsageDescription": "This allows us to provide you with personalized app experiences."
+        "NSUserTrackingUsageDescription": "This allows us to provide you with personalized app experiences.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
