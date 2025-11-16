@@ -65,9 +65,9 @@ This folder contains the official website for MemoryVerse, including all legal d
 
 ## ✏️ Customization
 
-### Update Contact Information
+### Contact Information
 
-Replace `support@pintayo.com` throughout the files with your actual support email.
+All contact information has been set to: **pintayo.dev@gmail.com**
 
 ### Update App Store Links
 
@@ -80,13 +80,13 @@ In `index.html`, replace the placeholder links with your actual App Store URLs:
 <a href="YOUR_GOOGLE_PLAY_STORE_URL" target="_blank">
 ```
 
-### Update Legal Jurisdiction
+### Legal Information
 
-In `terms.html`, update the "Governing Law" section (line ~498) with your actual jurisdiction.
+- **Governing Law**: Set to Delaware, United States (standard for tech companies)
+- **Contact Form**: Fully functional using mailto protocol
+- **Privacy Policy**: Compliant with GDPR and CCPA requirements
 
-### Adjust Privacy Policy
-
-Review and customize the Privacy Policy based on your specific data practices and legal requirements.
+Review and customize the Privacy Policy if you have specific data practices that differ from the defaults.
 
 ## 📱 App Store Requirements
 
