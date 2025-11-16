@@ -359,6 +359,9 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       // Record daily practice for streak tracking
       await streakService.recordPractice(user.id);
 
+      // Update profile streak
+      await profileService.recordDailyPractice(user.id);
+
     } catch (error: any) {
       // Log but don't block - duplicate key errors are OK (means we already have progress for this verse)
       if (error?.code !== '23505') {

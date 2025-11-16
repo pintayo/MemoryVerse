@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../utils/logger';
 import { generateDailyPrayer, getFallbackDailyPrayer } from '../services/dailyPrayerService';
+import { canUseTalkAboutDay, useTalkAboutDay, getRemainingUsage, getUserSubscriptionTier, FEATURES } from '../services/usageLimitsService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pray'>;
 
@@ -36,7 +37,7 @@ const prayerOptions: PrayerOption[] = [
 ];
 
 const PrayScreen: React.FC<Props> = ({ navigation }) => {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const isPremiumUser = profile?.is_premium || false;
 
   const [selectedCategory, setSelectedCategory] = useState<PrayerCategory | 'daily' | null>(null);
@@ -45,8 +46,28 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
   const [transcribedText, setTranscribedText] = useState('');
   const [generatedPrayer, setGeneratedPrayer] = useState('');
   const [isGeneratingPrayer, setIsGeneratingPrayer] = useState(false);
+  const [remainingUses, setRemainingUses] = useState<number | null>(null);
+  const [dailyLimit, setDailyLimit] = useState<number>(0);
 
   const micPulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Load remaining usage when selecting 'daily' category
+  useEffect(() => {
+    if (selectedCategory === 'daily' && user?.id && isPremiumUser) {
+      loadRemainingUsage();
+    }
+  }, [selectedCategory, user?.id, isPremiumUser]);
+
+  const loadRemainingUsage = async () => {
+    if (!user?.id) return;
+
+    const tier = getUserSubscriptionTier(isPremiumUser);
+    setDailyLimit(tier.dailyLimit);
+
+    const remaining = await getRemainingUsage(user.id, FEATURES.TALK_ABOUT_DAY, tier.dailyLimit);
+    setRemainingUses(remaining);
+    logger.log('[PrayScreen] Remaining uses loaded:', remaining, 'of', tier.dailyLimit);
+  };
 
   useLayoutEffect(() => {
     if (selectedCategory === 'daily') {
@@ -138,9 +159,50 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
+    // Check usage limits
+    if (!user?.id) {
+      Alert.alert('Error', 'Please sign in to use this feature.');
+      return;
+    }
+
+    if (!isPremiumUser) {
+      Alert.alert(
+        'Premium Feature',
+        'This feature requires a premium subscription.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => navigation.navigate('PremiumUpgrade') },
+        ]
+      );
+      return;
+    }
+
+    // Check if user has remaining uses
+    if (remainingUses !== null && remainingUses <= 0) {
+      Alert.alert(
+        'Daily Limit Reached',
+        `You've used all ${dailyLimit} daily prayers. Your limit resets at midnight!`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       setIsGeneratingPrayer(true);
       logger.log('[PrayScreen] Generating prayer from day story');
+
+      // Increment usage count
+      const usageResult = await useTalkAboutDay(user.id, isPremiumUser);
+
+      if (!usageResult.success) {
+        Alert.alert('Limit Reached', usageResult.message || 'Unable to generate prayer at this time.');
+        setIsGeneratingPrayer(false);
+        return;
+      }
+
+      // Update remaining uses
+      setRemainingUses(usageResult.remaining);
+      logger.log('[PrayScreen] Usage incremented. Remaining:', usageResult.remaining);
 
       // Generate AI-powered prayer
       const result = await generateDailyPrayer(dayStory);
@@ -148,6 +210,21 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       if (result.success && result.prayer) {
         setGeneratedPrayer(result.prayer);
         logger.log('[PrayScreen] Prayer generated successfully');
+
+        // Show remaining uses
+        if (usageResult.remaining === 0) {
+          Alert.alert(
+            'Prayer Generated',
+            `Your prayer is ready! This was your last prayer for today. Your limit resets at midnight.`,
+            [{ text: 'OK' }]
+          );
+        } else if (usageResult.remaining <= 2) {
+          Alert.alert(
+            'Prayer Generated',
+            `Your prayer is ready! You have ${usageResult.remaining} prayer${usageResult.remaining === 1 ? '' : 's'} remaining today.`,
+            [{ text: 'OK' }]
+          );
+        }
       } else {
         // Use fallback prayer if AI fails
         logger.warn('[PrayScreen] AI generation failed, using fallback:', result.error);
@@ -204,6 +281,21 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
                 />
               </Svg>
               <Text style={styles.premiumBadgeText}>Premium Feature</Text>
+            </View>
+          )}
+
+          {isPremiumUser && remainingUses !== null && (
+            <View style={styles.usageLimitBadge}>
+              <Ionicons name="heart" size={16} color={
+                remainingUses === 0 ? theme.colors.error.main :
+                remainingUses <= 2 ? theme.colors.secondary.warmTerracotta :
+                theme.colors.success.mutedOlive
+              } />
+              <Text style={[styles.usageLimitText, remainingUses === 0 && styles.usageLimitTextZero]}>
+                {remainingUses === 0
+                  ? 'No prayers remaining today (resets at midnight)'
+                  : `${remainingUses} of ${dailyLimit} prayers remaining today`}
+              </Text>
             </View>
           )}
 
@@ -667,6 +759,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.secondary.lightGold,
     fontFamily: theme.typography.fonts.ui.default,
+  },
+  usageLimitBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: theme.colors.background.lightCream,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.primary.oatmeal,
+  },
+  usageLimitText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  usageLimitTextZero: {
+    color: theme.colors.error.main,
+    fontWeight: '600',
   },
   premiumLabel: {
     backgroundColor: theme.colors.secondary.lightGold,

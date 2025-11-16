@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { Card } from '../components';
@@ -15,6 +17,8 @@ import { theme } from '../theme';
 import { spacedRepetitionService, ReviewVerse, ReviewStats } from '../services/spacedRepetitionService';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
+
+const TUTORIAL_DISMISSED_KEY = 'review_tutorial_dismissed';
 
 interface ReviewScreenProps {
   navigation: any;
@@ -30,10 +34,31 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     loadReviews();
+    checkTutorialStatus();
   }, []);
+
+  const checkTutorialStatus = async () => {
+    try {
+      const dismissed = await AsyncStorage.getItem(TUTORIAL_DISMISSED_KEY);
+      setShowTutorial(dismissed !== 'true');
+    } catch (error) {
+      logger.error('[ReviewScreen] Error checking tutorial status:', error);
+      setShowTutorial(true); // Show tutorial on error
+    }
+  };
+
+  const dismissTutorial = async () => {
+    try {
+      await AsyncStorage.setItem(TUTORIAL_DISMISSED_KEY, 'true');
+      setShowTutorial(false);
+    } catch (error) {
+      logger.error('[ReviewScreen] Error dismissing tutorial:', error);
+    }
+  };
 
   const loadReviews = async () => {
     if (!user?.id) return;
@@ -62,6 +87,43 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
 
   const handleReviewVerse = (verse: ReviewVerse) => {
     navigation.navigate('Practice');
+  };
+
+  const renderTutorialCard = () => {
+    if (!showTutorial) return null;
+
+    return (
+      <Card variant="warm" style={styles.tutorialCard}>
+        <View style={styles.tutorialHeader}>
+          <Svg width="32" height="32" viewBox="0 0 24 24">
+            <Path
+              d="M12 2 C6.48 2 2 6.48 2 12 C2 17.52 6.48 22 12 22 C17.52 22 22 17.52 22 12 C22 6.48 17.52 2 12 2 Z M13 17 L11 17 L11 15 L13 15 L13 17 Z M13 13 L11 13 L11 7 L13 7 L13 13 Z"
+              fill={theme.colors.secondary.lightGold}
+            />
+          </Svg>
+          <Text style={styles.tutorialTitle}>How Reviews Work</Text>
+          <TouchableOpacity onPress={dismissTutorial} style={styles.tutorialClose}>
+            <Svg width="20" height="20" viewBox="0 0 24 24">
+              <Path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                fill={theme.colors.text.tertiary}
+              />
+            </Svg>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.tutorialText}>
+          <Text style={styles.tutorialBold}>Spaced Repetition</Text> is scientifically proven to help you remember verses long-term. The system automatically schedules reviews at optimal intervals:{'\n\n'}
+          🔴 <Text style={styles.tutorialBold}>Overdue</Text> - Review these first to keep your memory fresh{'\n'}
+          🟡 <Text style={styles.tutorialBold}>Due Today</Text> - Perfect time to review these verses{'\n'}
+          🔵 <Text style={styles.tutorialBold}>Due Soon</Text> - Coming up in the next few days
+        </Text>
+
+        <Text style={styles.tutorialFooter}>
+          The better you do, the longer between reviews! Keep practicing daily to master verses permanently.
+        </Text>
+      </Card>
+    );
   };
 
   const renderStatsCard = () => {
@@ -264,6 +326,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
       >
+        {renderTutorialCard()}
         {renderStatsCard()}
 
         {totalReviews === 0 ? (
@@ -377,6 +440,46 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     marginTop: theme.spacing.md,
+  },
+  tutorialCard: {
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.background.warmParchment,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.secondary.lightGold,
+  },
+  tutorialHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  tutorialTitle: {
+    flex: 1,
+    fontSize: theme.typography.ui.subheading.fontSize,
+    fontWeight: theme.typography.ui.subheading.fontWeight,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  tutorialClose: {
+    padding: theme.spacing.xs,
+  },
+  tutorialText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    lineHeight: 22,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.md,
+  },
+  tutorialBold: {
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+  },
+  tutorialFooter: {
+    fontSize: theme.typography.ui.caption.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontStyle: 'italic',
+    marginTop: theme.spacing.sm,
   },
   statsCard: {
     marginBottom: theme.spacing.lg,

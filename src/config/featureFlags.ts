@@ -143,16 +143,17 @@ export const featureFlags: FeatureFlagsConfig = {
   // ============================================
 
   voiceRecording: {
-    enabled: true,
+    enabled: false,
     premium: false,
-    description: 'Record and playback verse practice',
-    version: 'v1.0',
+    comingSoon: true,
+    description: 'Speech-to-text for prayer and practice',
+    version: 'v1.1',
   },
 
   aiPrayerCoaching: {
     enabled: true,
-    premium: false,
-    description: 'AI-generated prayer guidance for verses',
+    premium: true,
+    description: 'AI-powered personalized daily prayers with usage limits',
     version: 'v1.0',
   },
 
@@ -161,10 +162,11 @@ export const featureFlags: FeatureFlagsConfig = {
   // ============================================
 
   leaderboard: {
-    enabled: true,
+    enabled: false,
     premium: false,
-    description: 'Global XP leaderboard',
-    version: 'v1.0',
+    comingSoon: true,
+    description: 'Global XP leaderboard - compete with other users',
+    version: 'v1.1',
   },
 
   achievements: {
@@ -443,10 +445,11 @@ export const featureFlags: FeatureFlagsConfig = {
   // ============================================
 
   offlineDownloads: {
-    enabled: true, // Already built
-    premium: false,
+    enabled: false,
+    premium: true,
+    comingSoon: true,
     description: 'Download verses for offline practice',
-    version: 'v1.0',
+    version: 'v1.1',
   },
 
   customThemes: {
