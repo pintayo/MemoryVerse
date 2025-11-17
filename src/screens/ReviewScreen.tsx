@@ -86,7 +86,7 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
   };
 
   const handleReviewVerse = (verse: ReviewVerse) => {
-    navigation.navigate('Practice');
+    navigation.navigate('Practice', { isReviewMode: true });
   };
 
   const renderTutorialCard = () => {
@@ -428,6 +428,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.screen.horizontal,
+    paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.xxl,
   },
   loadingContainer: {

@@ -216,7 +216,7 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
             </View>
           ) : (
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-              {step === 'books' && (
+              {step === 'books' && books.length > 0 && (
                 <View style={styles.grid}>
                   {books.map((book) => (
                     <TouchableOpacity
@@ -227,6 +227,13 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
                       <Text style={styles.gridItemText}>{book}</Text>
                     </TouchableOpacity>
                   ))}
+                </View>
+              )}
+
+              {step === 'books' && books.length === 0 && (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No books found</Text>
+                  <Text style={styles.emptySubtext}>Please try again or contact support</Text>
                 </View>
               )}
 
@@ -421,5 +428,24 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.scripture.default,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.xxl,
+    minHeight: 200,
+  },
+  emptyText: {
+    fontSize: theme.typography.ui.heading.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+  },
+  emptySubtext: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
   },
 });
