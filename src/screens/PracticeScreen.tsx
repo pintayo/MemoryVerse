@@ -8,6 +8,7 @@ import { theme } from '../theme';
 import { verseService } from '../services/verseService';
 import { practiceService, PracticeMode, BlankQuestion, MultipleChoiceQuestion } from '../services/practiceService';
 import { profileService } from '../services/profileService';
+import { spacedRepetitionService, ReviewVerse } from '../services/spacedRepetitionService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
@@ -21,10 +22,12 @@ interface VerseWithMode {
   blankQuestion?: BlankQuestion;
   mcQuestion?: MultipleChoiceQuestion;
   wasCorrect?: boolean; // Track if user answered correctly
+  progressId?: string; // For tracking spaced repetition progress
 }
 
 const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
   const { user, profile, refreshProfile } = useAuth();
+  const isReviewMode = route?.params?.isReviewMode || false;
 
   const [versesWithModes, setVersesWithModes] = useState<VerseWithMode[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -43,29 +46,92 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
 
   useEffect(() => {
     loadVerses();
-  }, []);
+  }, [isReviewMode]);
 
   const loadVerses = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Load all verses in parallel for better performance
-      const numPracticeVerses = practiceConfig.versesPerLesson;
-      const numExtraVerses = 30;
+      let loadedVerses: Verse[] = [];
+      let loadedExtraVerses: Verse[] = [];
 
-      const [practiceVersePromises, extraVersePromises] = [
-        Array(numPracticeVerses).fill(null).map(() => verseService.getRandomVerse('KJV')),
-        Array(numExtraVerses).fill(null).map(() => verseService.getRandomVerse('KJV'))
-      ];
+      if (isReviewMode && user?.id) {
+        // Load review verses when in review mode
+        logger.log('[PracticeScreen] Loading verses for review mode');
+        const reviewVerses = await spacedRepetitionService.getReviewVerses(user.id);
 
-      const [practiceVerses, extraVerses] = await Promise.all([
-        Promise.all(practiceVersePromises),
-        Promise.all(extraVersePromises)
-      ]);
+        if (reviewVerses.length === 0) {
+          setError('No verses due for review. Great job!');
+          setIsLoading(false);
+          return;
+        }
 
-      const loadedVerses = practiceVerses.filter((v): v is Verse => v !== null);
-      const loadedExtraVerses = extraVerses.filter((v): v is Verse => v !== null);
+        // Store review verses with progress IDs for later recording
+        const reviewVersesWithProgress = reviewVerses;
+
+        // Use review verses (which are already Verse objects with additional review fields)
+        loadedVerses = reviewVerses.map(rv => ({
+          id: rv.id,
+          book: rv.book,
+          chapter: rv.chapter,
+          verse_number: rv.verse_number,
+          text: rv.text,
+          translation: rv.translation,
+          category: rv.category,
+          difficulty: rv.difficulty,
+          context: rv.context,
+          context_generated_by_ai: rv.context_generated_by_ai,
+          context_generated_at: rv.context_generated_at,
+          is_memorable: rv.is_memorable,
+          created_at: rv.created_at,
+        }));
+
+        // Load extra verses for questions
+        const extraVersePromises = Array(30).fill(null).map(() => verseService.getRandomVerse('KJV'));
+        const extraVerses = await Promise.all(extraVersePromises);
+        loadedExtraVerses = extraVerses.filter((v): v is Verse => v !== null);
+
+        // After generating practice items, store progress IDs
+        const withModes: VerseWithMode[] = loadedVerses.map((verse, index) => {
+          const userLevel = profile?.level || 1;
+          const mode = practiceService.selectModeForUser(userLevel);
+          const item: VerseWithMode = {
+            verse,
+            mode,
+            progressId: reviewVersesWithProgress[index]?.progress_id, // Store progress ID
+          };
+
+          if (mode === 'fill-in-blanks') {
+            item.blankQuestion = practiceService.generateBlanks(verse, loadedExtraVerses);
+          } else if (mode === 'multiple-choice') {
+            item.mcQuestion = practiceService.generateMultipleChoice(verse, loadedExtraVerses);
+          }
+
+          return item;
+        });
+
+        setVersesWithModes(withModes);
+        setIsLoading(false);
+        return; // Exit early to skip the common verse processing below
+      } else {
+        // Load random verses for practice mode (existing behavior)
+        const numPracticeVerses = practiceConfig.versesPerLesson;
+        const numExtraVerses = 30;
+
+        const [practiceVersePromises, extraVersePromises] = [
+          Array(numPracticeVerses).fill(null).map(() => verseService.getRandomVerse('KJV')),
+          Array(numExtraVerses).fill(null).map(() => verseService.getRandomVerse('KJV'))
+        ];
+
+        const [practiceVerses, extraVerses] = await Promise.all([
+          Promise.all(practiceVersePromises),
+          Promise.all(extraVersePromises)
+        ]);
+
+        loadedVerses = practiceVerses.filter((v): v is Verse => v !== null);
+        loadedExtraVerses = extraVerses.filter((v): v is Verse => v !== null);
+      }
 
       if (loadedVerses.length > 0) {
         // Assign a random mode to each verse and generate questions
@@ -158,35 +224,55 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
     let totalQuestions = 0;
     let totalXP = 0;
 
-    versesWithModes.forEach(({ mode, blankQuestion, wasCorrect }) => {
+    // Calculate accuracy for each verse and record review results
+    for (const item of versesWithModes) {
+      const { mode, blankQuestion, wasCorrect, progressId } = item;
+      let verseAccuracy = 0;
+
       if (mode === 'fill-in-blanks' && blankQuestion) {
         const result = practiceService.checkBlanksAnswer(blankQuestion.blanks);
         totalCorrect += result.correctCount;
         totalQuestions += result.totalCount;
         totalXP += practiceService.calculateXP(result.accuracy, mode);
+        verseAccuracy = result.accuracy / 100;
       } else if (mode === 'multiple-choice') {
         totalQuestions += 1;
         if (wasCorrect) {
           totalCorrect += 1;
           totalXP += practiceService.calculateXP(100, mode);
+          verseAccuracy = 1.0;
         } else {
           totalXP += practiceService.calculateXP(0, mode);
+          verseAccuracy = 0.0;
         }
       } else if (mode === 'write-entire-verse') {
         totalQuestions += 1;
         if (wasCorrect) {
           totalCorrect += 1;
           totalXP += practiceService.calculateXP(100, mode);
+          verseAccuracy = 1.0;
         } else {
           totalXP += practiceService.calculateXP(0, mode);
+          verseAccuracy = 0.0;
         }
       } else if (mode === 'recall') {
         // Recall mode - assume full credit (no validation yet)
         totalQuestions += 1;
         totalCorrect += 1;
         totalXP += practiceService.calculateXP(100, mode);
+        verseAccuracy = 1.0;
       }
-    });
+
+      // Record review result for spaced repetition if in review mode
+      if (isReviewMode && progressId) {
+        try {
+          await spacedRepetitionService.recordReview(progressId, verseAccuracy, 60); // 60 seconds default
+          logger.log('[PracticeScreen] Review result recorded for progress ID:', progressId);
+        } catch (err) {
+          logger.error('[PracticeScreen] Error recording review:', err);
+        }
+      }
+    }
 
     const accuracy = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
 

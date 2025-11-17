@@ -336,6 +336,7 @@ class SpacedRepetitionService {
 
   /**
    * Calculate days until review
+   * Returns negative number if overdue
    */
   private calculateDaysUntilReview(nextReviewAt: string | null): number {
     if (!nextReviewAt) return 0;
@@ -345,7 +346,7 @@ class SpacedRepetitionService {
     const diffMs = reviewDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-    return Math.max(0, diffDays);
+    return diffDays; // Allow negative values for overdue verses
   }
 
   /**

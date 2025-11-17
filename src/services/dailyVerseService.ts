@@ -21,6 +21,7 @@ export interface DailyVerseResponse {
 /**
  * Get today's verse for the user's timezone
  * Each user sees the verse for their local date
+ * Uses the database function to handle creation with proper RLS privileges
  */
 export async function getTodaysDailyVerse(translation: string = 'KJV'): Promise<Verse | null> {
   try {
@@ -30,94 +31,43 @@ export async function getTodaysDailyVerse(translation: string = 'KJV'): Promise<
 
     logger.log('[dailyVerseService] Fetching daily verse for date:', localDate, 'translation:', translation);
 
-    // Try to get existing daily verse for this date
-    const { data: existingVerse, error: fetchError } = await supabase
-      .from('daily_verses')
-      .select(`
-        id,
-        date,
-        verse_id,
-        translation,
-        verses (
-          id,
-          book,
-          chapter,
-          verse_number,
-          text,
-          translation,
-          category,
-          difficulty,
-          context,
-          context_generated_by_ai,
-          context_generated_at,
-          is_memorable,
-          created_at
-        )
-      `)
-      .eq('date', localDate)
-      .eq('translation', translation)
-      .maybeSingle();
+    // Use the database function which handles creation with SECURITY DEFINER
+    const { data, error } = await supabase
+      .rpc('get_or_create_daily_verse', {
+        p_translation: translation
+      });
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      logger.error('[dailyVerseService] Error fetching daily verse:', fetchError);
-      throw fetchError;
+    if (error) {
+      logger.error('[dailyVerseService] Error calling get_or_create_daily_verse:', error);
+      // Fallback: try to fetch directly
+      return await getDailyVerseForDate(localDate, translation);
     }
 
-    // If verse exists for today, return it
-    if (existingVerse?.verses) {
-      const verse = existingVerse.verses as any as Verse;
-      logger.log('[dailyVerseService] Found existing daily verse:', verse.book, verse.chapter, verse.verse_number);
-      return verse;
-    }
-
-    // No verse for today yet - create one by selecting a random memorable verse
-    logger.log('[dailyVerseService] No verse for today, creating new one...');
-
-    // Get a random memorable verse
-    let { data: randomVerses, error: randomError } = await supabase
-      .from('verses')
-      .select('*')
-      .eq('translation', translation)
-      .eq('is_memorable', true)
-      .limit(100);
-
-    // If no memorable verses, get any verses
-    if (!randomVerses || randomVerses.length === 0) {
-      const result = await supabase
-        .from('verses')
-        .select('*')
-        .eq('translation', translation)
-        .limit(100);
-
-      randomVerses = result.data;
-      randomError = result.error;
-    }
-
-    if (randomError || !randomVerses || randomVerses.length === 0) {
-      logger.error('[dailyVerseService] No verses available');
+    if (!data || data.length === 0) {
+      logger.error('[dailyVerseService] No verse returned from function');
       return null;
     }
 
-    // Pick a random verse from the pool
-    const randomVerse = randomVerses[Math.floor(Math.random() * randomVerses.length)] as Verse;
+    // The function returns a row with verse details
+    const verseData = data[0];
+    const verse: Verse = {
+      id: verseData.verse_id,
+      book: verseData.book,
+      chapter: verseData.chapter,
+      verse_number: verseData.verse_number,
+      text: verseData.text,
+      translation: verseData.translation,
+      category: null,
+      difficulty: null,
+      context: null,
+      context_generated_by_ai: false,
+      context_generated_at: null,
+      is_memorable: false,
+      created_at: new Date().toISOString()
+    };
 
-    // Store it as today's verse
-    const { error: insertError } = await supabase
-      .from('daily_verses')
-      .insert({
-        date: localDate,
-        verse_id: randomVerse.id,
-        translation: translation,
-      });
-
-    if (insertError) {
-      logger.error('[dailyVerseService] Error storing daily verse:', insertError);
-      // Continue anyway - just return the verse
-    } else {
-      logger.log('[dailyVerseService] Created new daily verse for', localDate);
-    }
-
-    return randomVerse;
+    logger.log('[dailyVerseService] Got daily verse:', verse.book, verse.chapter, verse.verse_number);
+    return verse;
   } catch (error) {
     logger.error('[dailyVerseService] Failed to get daily verse:', error);
     return null;

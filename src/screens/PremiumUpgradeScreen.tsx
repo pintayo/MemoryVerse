@@ -13,6 +13,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { theme } from '../theme';
@@ -20,14 +21,16 @@ import { featureFlags, getPremiumFeatures } from '../config/featureFlags';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { analyticsService } from '../services/analyticsService';
-
-type PricingPlan = 'monthly' | 'annual';
+import { purchaseService, SubscriptionTier } from '../services/purchaseService';
 
 export const PremiumUpgradeScreen = () => {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const navigation = useNavigation();
   const route = useRoute();
-  const [selectedPlan, setSelectedPlan] = useState<PricingPlan>('annual');
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier | null>(null);
+  const [offerings, setOfferings] = useState<SubscriptionTier[]>([]);
+  const [isLoadingOfferings, setIsLoadingOfferings] = useState(true);
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   const isPremiumUser = profile?.is_premium || false;
 
@@ -37,47 +40,123 @@ export const PremiumUpgradeScreen = () => {
     analyticsService.logPremiumScreenViewed(source);
   }, []);
 
+  // Load offerings from RevenueCat
+  useEffect(() => {
+    loadOfferings();
+  }, []);
+
+  const loadOfferings = async () => {
+    setIsLoadingOfferings(true);
+    try {
+      const tiers = await purchaseService.getOfferings();
+      setOfferings(tiers);
+
+      // Auto-select the recommended tier (annual)
+      const recommended = tiers.find(t => t.isRecommended);
+      if (recommended) {
+        setSelectedTier(recommended);
+      } else if (tiers.length > 0) {
+        setSelectedTier(tiers[0]);
+      }
+    } catch (error) {
+      console.error('Error loading offerings:', error);
+    } finally {
+      setIsLoadingOfferings(false);
+    }
+  };
+
   // Get premium features excluding 'originalLanguage'
   const premiumFeatureKeys = getPremiumFeatures().filter(key => key !== 'originalLanguage');
 
-  // Pricing configuration
-  const pricing = {
-    monthly: {
-      price: '$4.99',
-      period: '/month',
-      total: '$4.99/month',
-      savings: null,
-    },
-    annual: {
-      price: '$39.99',
-      period: '/year',
-      total: '$3.33/month',
-      savings: 'Save 33%',
-    },
-  };
+  const handleUpgrade = async () => {
+    if (!selectedTier || !selectedTier.package) {
+      Alert.alert('Error', 'Please select a subscription plan');
+      return;
+    }
 
-  const handleUpgrade = () => {
     // Track premium plan selected
-    analyticsService.logPremiumPlanSelected(selectedPlan);
+    analyticsService.logPremiumPlanSelected(selectedTier.id);
 
-    // TODO: Integrate with in-app purchases
-    Alert.alert(
-      'Coming Soon',
-      'In-app purchases will be available soon. Thank you for your interest in Premium!',
-      [{ text: 'OK' }]
-    );
+    setIsPurchasing(true);
+    try {
+      const result = await purchaseService.purchasePackage(selectedTier.package);
+
+      if (result.success) {
+        // Refresh profile to update premium status
+        await refreshProfile();
+
+        Alert.alert(
+          'Welcome to Premium! 🎉',
+          'Thank you for subscribing! You now have access to all premium features.',
+          [{ text: 'Start Exploring', onPress: () => navigation.goBack() }]
+        );
+      } else if (!result.userCancelled) {
+        // Only show error if user didn't cancel
+        Alert.alert(
+          'Purchase Failed',
+          result.error || 'Unable to complete purchase. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error.message || 'Something went wrong. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
-  const handleRestore = () => {
-    // TODO: Restore purchases
+  const handleRestore = async () => {
     Alert.alert(
       'Restore Purchases',
-      'This will restore any previous premium purchases.',
+      'This will restore any previous premium purchases from this App Store account.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Restore', onPress: () => {
-          Alert.alert('Coming Soon', 'Restore functionality will be available soon.');
-        }},
+        {
+          text: 'Restore',
+          onPress: async () => {
+            setIsPurchasing(true);
+            try {
+              const result = await purchaseService.restorePurchases();
+
+              if (result.success) {
+                // Refresh profile
+                await refreshProfile();
+
+                if (result.isPremium) {
+                  Alert.alert(
+                    'Success!',
+                    'Your premium subscription has been restored.',
+                    [{ text: 'OK' }]
+                  );
+                } else {
+                  Alert.alert(
+                    'No Purchases Found',
+                    'No previous purchases were found on this account.',
+                    [{ text: 'OK' }]
+                  );
+                }
+              } else {
+                Alert.alert(
+                  'Restore Failed',
+                  result.error || 'Unable to restore purchases.',
+                  [{ text: 'OK' }]
+                );
+              }
+            } catch (error: any) {
+              Alert.alert(
+                'Error',
+                error.message || 'Failed to restore purchases.',
+                [{ text: 'OK' }]
+              );
+            } finally {
+              setIsPurchasing(false);
+            }
+          }
+        },
       ]
     );
   };
@@ -188,46 +267,60 @@ export const PremiumUpgradeScreen = () => {
         <View style={styles.pricingSection}>
           <Text style={styles.sectionTitle}>Choose Your Plan</Text>
 
-          {/* Annual Plan */}
-          <TouchableOpacity
-            style={[
-              styles.pricingCard,
-              selectedPlan === 'annual' && styles.pricingCardSelected,
-            ]}
-            onPress={() => setSelectedPlan('annual')}
-          >
-            {pricing.annual.savings && (
-              <View style={styles.savingsBadge}>
-                <Text style={styles.savingsText}>{pricing.annual.savings}</Text>
-              </View>
-            )}
-            <View style={styles.pricingHeader}>
-              <Text style={styles.planName}>Annual</Text>
-              <View style={styles.priceContainer}>
-                <Text style={styles.price}>{pricing.annual.price}</Text>
-                <Text style={styles.period}>{pricing.annual.period}</Text>
-              </View>
-              <Text style={styles.priceDetail}>{pricing.annual.total}</Text>
+          {isLoadingOfferings ? (
+            <View style={styles.loadingOfferings}>
+              <ActivityIndicator size="large" color={theme.colors.accent.burnishedGold} />
+              <Text style={styles.loadingText}>Loading subscription options...</Text>
             </View>
-          </TouchableOpacity>
+          ) : offerings.length === 0 ? (
+            <View style={styles.noOfferings}>
+              <Text style={styles.noOfferingsText}>
+                Unable to load subscription plans. Please try again later.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {offerings.map((tier) => (
+                <TouchableOpacity
+                  key={tier.id}
+                  style={[
+                    styles.pricingCard,
+                    selectedTier?.id === tier.id && styles.pricingCardSelected,
+                  ]}
+                  onPress={() => setSelectedTier(tier)}
+                  disabled={isPurchasing}
+                >
+                  {tier.savings && (
+                    <View style={styles.savingsBadge}>
+                      <Text style={styles.savingsText}>{tier.savings}</Text>
+                    </View>
+                  )}
+                  <View style={styles.pricingHeader}>
+                    <Text style={styles.planName}>{tier.title}</Text>
+                    <View style={styles.priceContainer}>
+                      <Text style={styles.price}>{tier.price}</Text>
+                      <Text style={styles.period}>{tier.period}</Text>
+                    </View>
+                    <Text style={styles.priceDetail}>{tier.pricePerMonth}</Text>
+                  </View>
 
-          {/* Monthly Plan */}
-          <TouchableOpacity
-            style={[
-              styles.pricingCard,
-              selectedPlan === 'monthly' && styles.pricingCardSelected,
-            ]}
-            onPress={() => setSelectedPlan('monthly')}
-          >
-            <View style={styles.pricingHeader}>
-              <Text style={styles.planName}>Monthly</Text>
-              <View style={styles.priceContainer}>
-                <Text style={styles.price}>{pricing.monthly.price}</Text>
-                <Text style={styles.period}>{pricing.monthly.period}</Text>
-              </View>
-              <Text style={styles.priceDetail}>{pricing.monthly.total}</Text>
-            </View>
-          </TouchableOpacity>
+                  {/* Show features for this specific tier */}
+                  <View style={styles.tierFeatures}>
+                    {tier.features.slice(0, 3).map((feature, index) => (
+                      <Text key={index} style={styles.tierFeatureText}>
+                        • {feature}
+                      </Text>
+                    ))}
+                    {tier.features.length > 3 && (
+                      <Text style={styles.tierFeatureText}>
+                        • And {tier.features.length - 3} more...
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </>
+          )}
         </View>
 
         {/* Premium Features */}
@@ -282,10 +375,21 @@ export const PremiumUpgradeScreen = () => {
         </View>
 
         {/* Upgrade Button */}
-        <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade}>
-          <Text style={styles.upgradeButtonText}>
-            Start {selectedPlan === 'annual' ? 'Annual' : 'Monthly'} Plan
-          </Text>
+        <TouchableOpacity
+          style={[styles.upgradeButton, isPurchasing && styles.upgradeButtonDisabled]}
+          onPress={handleUpgrade}
+          disabled={isPurchasing || isLoadingOfferings || !selectedTier}
+        >
+          {isPurchasing ? (
+            <>
+              <ActivityIndicator color="white" style={{ marginRight: 8 }} />
+              <Text style={styles.upgradeButtonText}>Processing...</Text>
+            </>
+          ) : (
+            <Text style={styles.upgradeButtonText}>
+              Subscribe to {selectedTier?.title || 'Premium'}
+            </Text>
+          )}
         </TouchableOpacity>
 
         {/* Restore Purchases */}
@@ -469,7 +573,12 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.xl,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginBottom: theme.spacing.md,
+  },
+  upgradeButtonDisabled: {
+    opacity: 0.6,
   },
   upgradeButtonText: {
     color: 'white',
@@ -533,6 +642,41 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.subheading.fontSize,
     fontWeight: '700',
     fontFamily: theme.typography.fonts.ui.default,
+  },
+  loadingOfferings: {
+    paddingVertical: theme.spacing.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  noOfferings: {
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.background.warmParchment,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  noOfferingsText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+  },
+  tierFeatures: {
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.primary.oatmeal,
+  },
+  tierFeatureText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.xs,
   },
 });
 

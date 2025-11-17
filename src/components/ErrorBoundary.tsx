@@ -82,36 +82,62 @@ class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // Show different messages for development vs production
+      const isDevelopment = __DEV__;
+
       return (
         <View style={styles.container}>
           <ScrollView contentContainerStyle={styles.content}>
             <Text style={styles.title}>⚠️ Something Went Wrong</Text>
 
-            <Text style={styles.message}>
-              The app encountered an error. This is usually due to:
-            </Text>
+            {isDevelopment ? (
+              <>
+                <Text style={styles.message}>
+                  The app encountered an error. This is usually due to:
+                </Text>
 
-            <View style={styles.list}>
-              <Text style={styles.listItem}>• Missing Supabase configuration</Text>
-              <Text style={styles.listItem}>• Database connection issues</Text>
-              <Text style={styles.listItem}>• Cache/build issues</Text>
-            </View>
+                <View style={styles.list}>
+                  <Text style={styles.listItem}>• Missing Supabase configuration</Text>
+                  <Text style={styles.listItem}>• Database connection issues</Text>
+                  <Text style={styles.listItem}>• Cache/build issues</Text>
+                </View>
 
-            {this.state.error && (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorTitle}>Error Details:</Text>
-                <Text style={styles.errorText}>{this.state.error.toString()}</Text>
-              </View>
+                {this.state.error && (
+                  <View style={styles.errorBox}>
+                    <Text style={styles.errorTitle}>Error Details:</Text>
+                    <Text style={styles.errorText}>{this.state.error.toString()}</Text>
+                  </View>
+                )}
+
+                <Text style={styles.instructions}>
+                  Try these steps:
+                </Text>
+                <View style={styles.list}>
+                  <Text style={styles.listItem}>1. Check your .env file has valid Supabase keys</Text>
+                  <Text style={styles.listItem}>2. Stop Expo and run: npx expo start --clear</Text>
+                  <Text style={styles.listItem}>3. If still failing, run: ./nuclear-reset.sh</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.message}>
+                  We're sorry, but the app encountered an unexpected error. We've been notified and are working to fix it.
+                </Text>
+
+                <Text style={styles.instructions}>
+                  What you can try:
+                </Text>
+                <View style={styles.list}>
+                  <Text style={styles.listItem}>• Close and restart the app</Text>
+                  <Text style={styles.listItem}>• Check your internet connection</Text>
+                  <Text style={styles.listItem}>• Update to the latest version</Text>
+                </View>
+
+                <Text style={styles.message}>
+                  If the problem persists, please contact support through the app settings.
+                </Text>
+              </>
             )}
-
-            <Text style={styles.instructions}>
-              Try these steps:
-            </Text>
-            <View style={styles.list}>
-              <Text style={styles.listItem}>1. Check your .env file has valid Supabase keys</Text>
-              <Text style={styles.listItem}>2. Stop Expo and run: npx expo start --clear</Text>
-              <Text style={styles.listItem}>3. If still failing, run: ./nuclear-reset.sh</Text>
-            </View>
 
             <TouchableOpacity style={styles.button} onPress={this.handleReset}>
               <Text style={styles.buttonText}>Try Again</Text>
