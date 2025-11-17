@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../utils/logger';
 import { generateDailyPrayer, getFallbackDailyPrayer } from '../services/dailyPrayerService';
 import { canUseTalkAboutDay, useTalkAboutDay, getRemainingUsage, getUserSubscriptionTier, FEATURES } from '../services/usageLimitsService';
+import { validatePrayerInput, logAbuseAttempt, getTodayRequestCount } from '../services/prayerInputValidator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pray'>;
 
@@ -191,7 +192,26 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       setIsGeneratingPrayer(true);
       logger.log('[PrayScreen] Generating prayer from day story');
 
-      // Increment usage count
+      // STEP 1: Validate input for safety and abuse prevention
+      const requestCount = await getTodayRequestCount(user.id);
+      const validation = await validatePrayerInput(dayStory, user.id, requestCount);
+
+      if (!validation.isValid) {
+        // Log abuse attempt if suspicious
+        if (validation.violationType && ['blocked_word', 'suspicious_pattern'].includes(validation.violationType)) {
+          await logAbuseAttempt(user.id, dayStory, validation.violationType);
+        }
+
+        // Show user-friendly error message
+        Alert.alert('Unable to Generate Prayer', validation.error || 'Please try again with different input.');
+        setIsGeneratingPrayer(false);
+        return;
+      }
+
+      // Use sanitized input from validator
+      const sanitizedInput = validation.sanitizedInput || dayStory;
+
+      // STEP 2: Increment usage count
       const usageResult = await useTalkAboutDay(user.id, isPremiumUser, profile?.subscription_tier);
 
       if (!usageResult.success) {
@@ -204,8 +224,8 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       setRemainingUses(usageResult.remaining);
       logger.log('[PrayScreen] Usage incremented. Remaining:', usageResult.remaining);
 
-      // Generate AI-powered prayer
-      const result = await generateDailyPrayer(dayStory);
+      // STEP 3: Generate AI-powered prayer with sanitized input
+      const result = await generateDailyPrayer(sanitizedInput);
 
       if (result.success && result.prayer) {
         setGeneratedPrayer(result.prayer);
