@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
-import { purchaseService } from '../services/purchaseService';
+// import { purchaseService } from '../services/purchaseService'; // TODO: Uncomment for development build
 import { Profile } from '../types/database';
 import { logger } from '../utils/logger';
 import { setSentryUser, clearSentryUser, addActionBreadcrumb, errorHandlers } from '../utils/sentryHelper';
@@ -43,13 +43,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         addActionBreadcrumb('Profile loaded', { userId });
 
         // Initialize RevenueCat with user ID for subscription tracking
-        try {
-          await purchaseService.initialize(userId);
-          logger.log('[AuthContext] RevenueCat initialized for user');
-        } catch (error) {
-          logger.error('[AuthContext] RevenueCat initialization failed:', error);
-          // Don't throw - allow app to continue without purchases
-        }
+        // TODO: Uncomment when using development build (not Expo Go)
+        // try {
+        //   await purchaseService.initialize(userId);
+        //   logger.log('[AuthContext] RevenueCat initialized for user');
+        // } catch (error) {
+        //   logger.error('[AuthContext] RevenueCat initialization failed:', error);
+        //   // Don't throw - allow app to continue without purchases
+        // }
       } else {
         logger.warn('[AuthContext] No profile found for user:', userId);
       }
