@@ -2,11 +2,15 @@
  * Feature Flags Configuration
  *
  * Central place to enable/disable features and manage premium vs free tiers
+ * with environment-based overrides for development, staging, and production.
  *
  * Usage:
  * import { featureFlags } from '@/config/featureFlags';
- * if (featureFlags.socialSharing.enabled) { ... }
+ * if (featureFlags.isAvailable('socialSharing', isPremium)) { ... }
  */
+
+import Constants from 'expo-constants';
+import { logger } from '../utils/logger';
 
 export interface FeatureModule {
   enabled: boolean;
@@ -96,9 +100,24 @@ export interface FeatureFlagsConfig {
   aiRecommendations: FeatureModule;
   aiStudyBuddy: FeatureModule;
   aiMemoryAids: FeatureModule;
+
+  // DEVELOPER FEATURES
+  debugMode: FeatureModule;
+  mockData: FeatureModule;
+  performanceMetrics: FeatureModule;
+  featureFlagUI: FeatureModule;
 }
 
-export const featureFlags: FeatureFlagsConfig = {
+// Environment detection
+const isDevelopment = __DEV__;
+const environment = Constants.expoConfig?.extra?.environment || 'development';
+const isProduction = environment === 'production';
+const isStaging = environment === 'staging';
+
+logger.log('[FeatureFlags] Environment:', environment, 'isDev:', isDevelopment);
+
+// Base feature configuration
+const baseFeatureFlags: FeatureFlagsConfig = {
   // ============================================
   // CORE FEATURES (v1.0 - SHIPPED)
   // ============================================
@@ -139,11 +158,11 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // PRACTICE MODES (v1.0 - SHIPPED)
+  // PRACTICE MODES (v1.0)
   // ============================================
 
   voiceRecording: {
-    enabled: false,
+    enabled: isDevelopment || isStaging, // Only in dev/staging
     premium: false,
     comingSoon: true,
     description: 'Speech-to-text for prayer and practice',
@@ -158,7 +177,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // GAMIFICATION (v1.0 - SHIPPED)
+  // GAMIFICATION (v1.0)
   // ============================================
 
   leaderboard: {
@@ -184,7 +203,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // NOTIFICATIONS (v1.0 - SHIPPED)
+  // NOTIFICATIONS (v1.0)
   // ============================================
 
   dailyReminders: {
@@ -196,13 +215,13 @@ export const featureFlags: FeatureFlagsConfig = {
 
   streakFreeze: {
     enabled: true,
-    premium: true, // Premium only
+    premium: true,
     description: 'Protect streak once per week',
     version: 'v1.0',
   },
 
   // ============================================
-  // MONETIZATION & SETTINGS (v1.0 - BUILDING NOW)
+  // MONETIZATION & SETTINGS (v1.0)
   // ============================================
 
   premiumUpgrade: {
@@ -220,7 +239,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   inAppPurchases: {
-    enabled: false, // TODO: Configure IAP
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Apple/Google in-app purchase integration',
@@ -228,7 +247,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // GROWTH & RETENTION (v1.0 - BUILDING NOW)
+  // GROWTH & RETENTION (v1.0)
   // ============================================
 
   appReviewPrompt: {
@@ -246,7 +265,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   deepLinking: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Open app from shared links',
@@ -258,7 +277,7 @@ export const featureFlags: FeatureFlagsConfig = {
   // ============================================
 
   exportData: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Export notes and progress as PDF/CSV',
@@ -266,7 +285,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   dataBackup: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'Automatic cloud backup of all data',
@@ -274,7 +293,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // POLISH & UX (v1.0 - BUILDING NOW)
+  // POLISH & UX (v1.0)
   // ============================================
 
   betterErrorStates: {
@@ -285,7 +304,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   hapticFeedback: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Vibration feedback for interactions',
@@ -293,7 +312,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   loadingSkeletons: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Skeleton screens while loading',
@@ -301,7 +320,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   emptyStates: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Beautiful empty state illustrations',
@@ -309,7 +328,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   pullToRefresh: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Pull-to-refresh on all list screens',
@@ -317,7 +336,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   whatsNewScreen: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Show new features after updates',
@@ -325,11 +344,11 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // v1.1 - ANALYTICS & INSIGHTS (PLANNED)
+  // ANALYTICS & INSIGHTS (v1.1 - PLANNED)
   // ============================================
 
   progressDashboard: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Visual charts showing learning progress',
@@ -337,15 +356,15 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   detailedAnalytics: {
-    enabled: false, // TODO: Build this
-    premium: true, // Premium feature
+    enabled: false,
+    premium: true,
     comingSoon: true,
     description: 'Advanced analytics and insights',
     version: 'v1.1',
   },
 
   learningInsights: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'AI-powered learning recommendations',
@@ -353,11 +372,11 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // v1.2 - COLLECTIONS (PLANNED)
+  // COLLECTIONS (v1.2 - PLANNED)
   // ============================================
 
   verseCollections: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Create and share custom verse lists',
@@ -365,7 +384,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   verseOfTheDay: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Daily featured verse notification',
@@ -373,11 +392,11 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // v1.3 - SOCIAL FEATURES (PLANNED)
+  // SOCIAL FEATURES (v1.3 - PLANNED)
   // ============================================
 
   socialSharing: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Share verses and progress on social media',
@@ -385,7 +404,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   friendChallenges: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Challenge friends to streak competitions',
@@ -393,7 +412,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   studyGroups: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Join or create study groups',
@@ -401,11 +420,11 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // v2.0 - READING PLANS (PLANNED)
+  // READING PLANS (v2.0 - PLANNED)
   // ============================================
 
   readingPlans: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: '30-day, 90-day, 1-year Bible reading plans',
@@ -413,11 +432,11 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // v2.1 - AUDIO FEATURES (PLANNED)
+  // AUDIO FEATURES (v2.1 - PLANNED)
   // ============================================
 
   textToSpeech: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Listen to verses with high-quality TTS',
@@ -425,7 +444,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   audioVerses: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'Professional audio recordings of verses',
@@ -433,7 +452,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   backgroundAudio: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'Listen while phone is locked',
@@ -441,7 +460,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // v2.2 - PREMIUM FEATURES (PLANNED)
+  // PREMIUM FEATURES (v2.2 - PLANNED)
   // ============================================
 
   offlineDownloads: {
@@ -453,7 +472,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   customThemes: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'Dark mode, sepia, and custom colors',
@@ -461,7 +480,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   advancedFilters: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'Filter by multiple criteria simultaneously',
@@ -469,7 +488,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   prioritySupport: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: '24-hour response time for support requests',
@@ -477,11 +496,11 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // v2.4 - ADVANCED LEARNING (PLANNED)
+  // ADVANCED LEARNING (v2.4 - PLANNED)
   // ============================================
 
   memoryGames: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'Interactive games for memorization',
@@ -489,7 +508,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   crossReferences: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'See related verses and connections',
@@ -497,7 +516,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   originalLanguage: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'Greek/Hebrew original text insights',
@@ -505,7 +524,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   commentary: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'Access theological commentary',
@@ -513,11 +532,11 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   // ============================================
-  // v3.0 - AI FEATURES (PLANNED)
+  // AI FEATURES (v3.0 - PLANNED)
   // ============================================
 
   aiRecommendations: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: false,
     comingSoon: true,
     description: 'AI suggests verses based on mood/situation',
@@ -525,7 +544,7 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   aiStudyBuddy: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'Chat with AI about verses',
@@ -533,84 +552,211 @@ export const featureFlags: FeatureFlagsConfig = {
   },
 
   aiMemoryAids: {
-    enabled: false, // TODO: Build this
+    enabled: false,
     premium: true,
     comingSoon: true,
     description: 'AI-generated mnemonics and memory techniques',
     version: 'v3.0',
   },
+
+  // ============================================
+  // DEVELOPER FEATURES
+  // ============================================
+
+  debugMode: {
+    enabled: isDevelopment,
+    premium: false,
+    description: 'Show debug information and logs',
+    version: 'v1.0',
+  },
+
+  mockData: {
+    enabled: isDevelopment,
+    premium: false,
+    description: 'Use mock data instead of API calls',
+    version: 'v1.0',
+  },
+
+  performanceMetrics: {
+    enabled: isDevelopment,
+    premium: false,
+    description: 'Show performance metrics overlay',
+    version: 'v1.0',
+  },
+
+  featureFlagUI: {
+    enabled: isDevelopment,
+    premium: false,
+    description: 'Toggle feature flags in-app',
+    version: 'v1.0',
+  },
 };
 
 /**
+ * Feature Flag Service
+ * Manages runtime feature flag state and overrides
+ */
+class FeatureFlagService {
+  private flags: FeatureFlagsConfig;
+  private overrides: Partial<Record<keyof FeatureFlagsConfig, Partial<FeatureModule>>> = {};
+  private betaUserOverrides: Partial<Record<keyof FeatureFlagsConfig, Partial<FeatureModule>>> = {};
+
+  constructor() {
+    this.flags = baseFeatureFlags;
+    logger.log('[FeatureFlags] Initialized');
+  }
+
+  /**
+   * Check if a feature is available for the current user
+   */
+  isAvailable(feature: keyof FeatureFlagsConfig, isPremium: boolean = false): boolean {
+    const flag = this.getFlag(feature);
+
+    // Feature must be enabled
+    if (!flag.enabled) return false;
+
+    // If feature requires premium, check user's premium status
+    if (flag.premium && !isPremium) return false;
+
+    return true;
+  }
+
+  /**
+   * Get feature configuration with overrides applied
+   */
+  getFlag(feature: keyof FeatureFlagsConfig): FeatureModule {
+    const base = this.flags[feature];
+    const override = this.overrides[feature];
+    const betaOverride = this.betaUserOverrides[feature];
+
+    // Merge: base < override < betaOverride
+    return {
+      ...base,
+      ...override,
+      ...betaOverride,
+    };
+  }
+
+  /**
+   * Enable beta features for a user
+   */
+  setBetaUserFlags(flags: Partial<Record<keyof FeatureFlagsConfig, Partial<FeatureModule>>>) {
+    this.betaUserOverrides = { ...this.betaUserOverrides, ...flags };
+    logger.log('[FeatureFlags] Beta user flags set:', Object.keys(flags));
+  }
+
+  /**
+   * Clear beta user flags (e.g., on logout)
+   */
+  clearBetaUserFlags() {
+    this.betaUserOverrides = {};
+    logger.log('[FeatureFlags] Beta user flags cleared');
+  }
+
+  /**
+   * Override a specific flag (for testing/debugging)
+   * Only works in development mode
+   */
+  override(feature: keyof FeatureFlagsConfig, overrides: Partial<FeatureModule>) {
+    if (isDevelopment) {
+      this.overrides[feature] = { ...this.overrides[feature], ...overrides };
+      logger.log(`[FeatureFlags] Override set: ${feature}`, overrides);
+    } else {
+      logger.warn('[FeatureFlags] Overrides only work in development mode');
+    }
+  }
+
+  /**
+   * Clear all manual overrides
+   */
+  clearOverrides() {
+    this.overrides = {};
+    logger.log('[FeatureFlags] All overrides cleared');
+  }
+
+  /**
+   * Get all flags with overrides applied
+   */
+  getAllFlags(): FeatureFlagsConfig {
+    const result: any = {};
+    (Object.keys(this.flags) as Array<keyof FeatureFlagsConfig>).forEach((key) => {
+      result[key] = this.getFlag(key);
+    });
+    return result;
+  }
+
+  /**
+   * Get environment info
+   */
+  getEnvironment(): string {
+    return environment;
+  }
+
+  isDevelopment(): boolean {
+    return isDevelopment;
+  }
+
+  isProduction(): boolean {
+    return isProduction;
+  }
+}
+
+// Export singleton instance
+export const featureFlagsService = new FeatureFlagService();
+
+// Legacy exports for backwards compatibility
+export const featureFlags = baseFeatureFlags;
+
+/**
  * Helper function to check if a feature is available for current user
- *
- * @param feature - Feature key from featureFlags
- * @param isPremium - Whether user has premium subscription
- * @returns true if feature is enabled and available to user
  */
 export function isFeatureAvailable(
   feature: keyof FeatureFlagsConfig,
   isPremium: boolean = false
 ): boolean {
-  const flag = featureFlags[feature];
-
-  // Feature must be enabled
-  if (!flag.enabled) return false;
-
-  // If feature requires premium, check user's premium status
-  if (flag.premium && !isPremium) return false;
-
-  return true;
+  return featureFlagsService.isAvailable(feature, isPremium);
 }
 
 /**
  * Get all features available for current user tier
- *
- * @param isPremium - Whether user has premium subscription
- * @returns Array of available feature keys
  */
 export function getAvailableFeatures(isPremium: boolean = false): string[] {
-  return Object.entries(featureFlags)
-    .filter(([_, config]) => {
-      if (!config.enabled) return false;
-      if (config.premium && !isPremium) return false;
-      return true;
-    })
-    .map(([key, _]) => key);
+  return (Object.keys(baseFeatureFlags) as Array<keyof FeatureFlagsConfig>)
+    .filter((feature) => featureFlagsService.isAvailable(feature, isPremium))
+    .map((key) => key as string);
 }
 
 /**
  * Get features by version
- *
- * @param version - Version string (e.g., 'v1.0', 'v1.1')
- * @returns Features added in that version
  */
 export function getFeaturesByVersion(version: string): string[] {
-  return Object.entries(featureFlags)
+  return Object.entries(baseFeatureFlags)
     .filter(([_, config]) => config.version === version)
     .map(([key, _]) => key);
 }
 
 /**
  * Get upcoming features (coming soon)
- *
- * @returns Features marked as coming soon
  */
 export function getUpcomingFeatures(): string[] {
-  return Object.entries(featureFlags)
+  return Object.entries(baseFeatureFlags)
     .filter(([_, config]) => config.comingSoon === true)
     .map(([key, _]) => key);
 }
 
 /**
  * Get premium features
- *
- * @returns All features that require premium
  */
 export function getPremiumFeatures(): string[] {
-  return Object.entries(featureFlags)
+  return Object.entries(baseFeatureFlags)
     .filter(([_, config]) => config.premium === true)
     .map(([key, _]) => key);
+}
+
+// Make available in dev console
+if (isDevelopment && typeof global !== 'undefined') {
+  (global as any).featureFlags = featureFlagsService;
+  logger.log('[FeatureFlags] Available in console via: featureFlags');
 }
 
 export default featureFlags;
