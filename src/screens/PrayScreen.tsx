@@ -61,7 +61,7 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
   const loadRemainingUsage = async () => {
     if (!user?.id) return;
 
-    const tier = getUserSubscriptionTier(isPremiumUser);
+    const tier = getUserSubscriptionTier(isPremiumUser, profile?.subscription_tier);
     setDailyLimit(tier.dailyLimit);
 
     const remaining = await getRemainingUsage(user.id, FEATURES.TALK_ABOUT_DAY, tier.dailyLimit);
@@ -192,7 +192,7 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       logger.log('[PrayScreen] Generating prayer from day story');
 
       // Increment usage count
-      const usageResult = await useTalkAboutDay(user.id, isPremiumUser);
+      const usageResult = await useTalkAboutDay(user.id, isPremiumUser, profile?.subscription_tier);
 
       if (!usageResult.success) {
         Alert.alert('Limit Reached', usageResult.message || 'Unable to generate prayer at this time.');

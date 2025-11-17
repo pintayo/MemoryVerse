@@ -14,10 +14,9 @@ export interface SubscriptionTier {
 // Define subscription tiers and their limits
 export const SUBSCRIPTION_TIERS = {
   FREE: { name: 'Free', dailyLimit: 0 },
-  BASIC: { name: 'Basic ($4.99/mo)', dailyLimit: 1 },
-  STANDARD: { name: 'Standard ($9.99/mo)', dailyLimit: 5 },
-  PREMIUM: { name: 'Premium ($14.99/mo)', dailyLimit: 10 },
-  UNLIMITED: { name: 'Unlimited ($19.99/mo)', dailyLimit: 999 }, // Effectively unlimited
+  BASIC: { name: 'Basic (€4.99/mo)', dailyLimit: 1 },
+  STANDARD: { name: 'Standard (€9.99/mo)', dailyLimit: 5 },
+  PREMIUM: { name: 'Premium (€14.99/mo)', dailyLimit: 10 },
 } as const;
 
 // Feature names
@@ -29,13 +28,28 @@ export const FEATURES = {
 
 /**
  * Get the subscription tier for a user
- * In the future, this should check the user's actual subscription
- * For now, we'll use is_premium flag
+ * Checks the user's actual subscription tier from their profile
  */
-export function getUserSubscriptionTier(isPremium: boolean): SubscriptionTier {
-  // TODO: Implement actual subscription tier detection
-  // For now: free users get 0, premium gets BASIC tier (1 per day)
-  return isPremium ? SUBSCRIPTION_TIERS.BASIC : SUBSCRIPTION_TIERS.FREE;
+export function getUserSubscriptionTier(
+  isPremium: boolean,
+  subscriptionTier?: string | null
+): SubscriptionTier {
+  if (!isPremium) {
+    return SUBSCRIPTION_TIERS.FREE;
+  }
+
+  // Map subscription tier to limits
+  switch (subscriptionTier?.toLowerCase()) {
+    case 'premium':
+      return SUBSCRIPTION_TIERS.PREMIUM; // 10 prayers/day
+    case 'standard':
+      return SUBSCRIPTION_TIERS.STANDARD; // 5 prayers/day
+    case 'basic':
+      return SUBSCRIPTION_TIERS.BASIC; // 1 prayer/day
+    default:
+      // Default to BASIC for premium users without explicit tier
+      return SUBSCRIPTION_TIERS.BASIC;
+  }
 }
 
 /**
@@ -102,7 +116,8 @@ export async function checkAndIncrementUsage(
  */
 export async function canUseTalkAboutDay(
   userId: string,
-  isPremium: boolean
+  isPremium: boolean,
+  subscriptionTier?: string | null
 ): Promise<{ canUse: boolean; remaining: number; limit: number; message?: string }> {
   // Check if user is premium
   if (!isPremium) {
@@ -114,7 +129,7 @@ export async function canUseTalkAboutDay(
     };
   }
 
-  const tier = getUserSubscriptionTier(isPremium);
+  const tier = getUserSubscriptionTier(isPremium, subscriptionTier);
   const remaining = await getRemainingUsage(userId, FEATURES.TALK_ABOUT_DAY, tier.dailyLimit);
 
   if (remaining <= 0) {
@@ -138,7 +153,8 @@ export async function canUseTalkAboutDay(
  */
 export async function useTalkAboutDay(
   userId: string,
-  isPremium: boolean
+  isPremium: boolean,
+  subscriptionTier?: string | null
 ): Promise<{ success: boolean; remaining: number; message?: string }> {
   if (!isPremium) {
     return {
@@ -148,7 +164,7 @@ export async function useTalkAboutDay(
     };
   }
 
-  const tier = getUserSubscriptionTier(isPremium);
+  const tier = getUserSubscriptionTier(isPremium, subscriptionTier);
   const remaining = await checkAndIncrementUsage(userId, FEATURES.TALK_ABOUT_DAY, tier.dailyLimit);
 
   if (remaining < 0) {
@@ -168,10 +184,14 @@ export async function useTalkAboutDay(
 /**
  * Get usage stats for display
  */
-export async function getUsageStats(userId: string, isPremium: boolean): Promise<{
+export async function getUsageStats(
+  userId: string,
+  isPremium: boolean,
+  subscriptionTier?: string | null
+): Promise<{
   talkAboutDay: { used: number; limit: number; remaining: number };
 }> {
-  const tier = getUserSubscriptionTier(isPremium);
+  const tier = getUserSubscriptionTier(isPremium, subscriptionTier);
   const remaining = await getRemainingUsage(userId, FEATURES.TALK_ABOUT_DAY, tier.dailyLimit);
   const used = Math.max(0, tier.dailyLimit - remaining);
 

@@ -300,9 +300,9 @@ class PurchaseService {
    * Get subscription tier from product ID
    */
   private getSubscriptionTierFromProductId(productId: string): string {
-    if (productId.includes('basic')) return 'basic';
+    if (productId.includes('premium')) return 'premium';
     if (productId.includes('standard')) return 'standard';
-    if (productId.includes('annual')) return 'annual';
+    if (productId.includes('basic')) return 'basic';
     return 'basic';
   }
 
@@ -315,43 +315,50 @@ class PurchaseService {
     isRecommended: boolean;
     savings?: string;
   } {
-    if (productId.includes('annual')) {
+    // Premium Tier (€14.99/mo) - Highest tier
+    if (productId.includes('premium')) {
       return {
-        title: 'Annual Premium',
+        title: 'Premium',
         features: [
           '10 AI prayers per day',
+          'Daily spiritual encouragement',
+          'Deeper scripture insights',
           'Unlimited streak freezes',
-          'Advanced analytics',
+          'Advanced verse analytics',
           'All Bible translations',
           'Priority support',
           'Early access to new features',
         ],
-        isRecommended: true,
-        savings: 'Save 33%',
+        isRecommended: false, // Standard is recommended for most users
       };
     }
 
+    // Standard Tier (€9.99/mo) - Recommended for most users
     if (productId.includes('standard')) {
       return {
         title: 'Standard',
         features: [
           '5 AI prayers per day',
+          'Daily spiritual encouragement',
+          'Deeper scripture insights',
           '3 streak freezes per month',
-          'Advanced analytics',
+          'Advanced verse analytics',
           'All Bible translations',
-          'Priority support',
+          'Email support',
         ],
-        isRecommended: false,
+        isRecommended: true, // Best value for most users
       };
     }
 
+    // Basic Tier (€4.99/mo) - Entry level
     if (productId.includes('basic')) {
       return {
         title: 'Basic',
         features: [
           '1 AI prayer per day',
+          'Daily spiritual encouragement',
           '1 streak freeze per month',
-          'Basic analytics',
+          'Basic verse analytics',
           'Email support',
         ],
         isRecommended: false,
@@ -401,47 +408,51 @@ class PurchaseService {
   private getFallbackOfferings(): SubscriptionTier[] {
     return [
       {
-        id: 'memoryverse_annual_fallback',
-        title: 'Annual Premium',
-        price: '$39.99',
-        period: '/year',
-        pricePerMonth: '$3.33/mo',
+        id: 'com.pintayo.memoryverse.pro.standard.monthly',
+        title: 'Standard',
+        price: '€9.99',
+        period: '/month',
+        pricePerMonth: '€9.99/mo',
+        features: [
+          '5 AI prayers per day',
+          'Daily spiritual encouragement',
+          'Deeper scripture insights',
+          '3 streak freezes per month',
+          'Advanced verse analytics',
+          'All Bible translations',
+          'Email support',
+        ],
+        isRecommended: true,
+      },
+      {
+        id: 'com.pintayo.memoryverse.pro.premium.monthly',
+        title: 'Premium',
+        price: '€14.99',
+        period: '/month',
+        pricePerMonth: '€14.99/mo',
         features: [
           '10 AI prayers per day',
+          'Daily spiritual encouragement',
+          'Deeper scripture insights',
           'Unlimited streak freezes',
-          'Advanced analytics',
+          'Advanced verse analytics',
           'All Bible translations',
           'Priority support',
           'Early access to new features',
         ],
-        isRecommended: true,
-        savings: 'Save 33%',
-      },
-      {
-        id: 'memoryverse_standard_monthly_fallback',
-        title: 'Standard',
-        price: '$9.99',
-        period: '/month',
-        pricePerMonth: '$9.99/mo',
-        features: [
-          '5 AI prayers per day',
-          '3 streak freezes per month',
-          'Advanced analytics',
-          'All Bible translations',
-          'Priority support',
-        ],
         isRecommended: false,
       },
       {
-        id: 'memoryverse_basic_monthly_fallback',
+        id: 'com.pintayo.memoryverse.pro.basic.monthly',
         title: 'Basic',
-        price: '$4.99',
+        price: '€4.99',
         period: '/month',
-        pricePerMonth: '$4.99/mo',
+        pricePerMonth: '€4.99/mo',
         features: [
           '1 AI prayer per day',
+          'Daily spiritual encouragement',
           '1 streak freeze per month',
-          'Basic analytics',
+          'Basic verse analytics',
           'Email support',
         ],
         isRecommended: false,
