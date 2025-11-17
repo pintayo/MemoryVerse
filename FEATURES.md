@@ -163,6 +163,7 @@ Features that could justify higher tier subscriptions:
 - Track group progress
 - Custom branding
 - Prayer request system
+- Bible study with admin access/dashboard
 
 ---
 
