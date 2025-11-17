@@ -60,55 +60,46 @@ You'll use the appropriate one based on the platform.
 
 ## 💰 Step 4: Set Up Products (Subscriptions)
 
-### Create in App Store Connect (iOS)
+### ✅ Your Products in App Store Connect (Already Created!)
 
-1. Go to https://appstoreconnect.apple.com
-2. **My Apps** → Select your app
-3. **In-App Purchases** (in sidebar)
-4. Click **"+"** to create new subscription
+You've already created these products in App Store Connect:
 
-**Subscription Group:**
-1. Create group: "MemoryVerse Premium"
-2. Reference Name: "Premium Membership"
-
-**Create 3 subscriptions:**
+**Subscription Group:** MemoryVerse Premium Access
 
 #### Product 1: Basic Monthly
-- **Product ID:** `memoryverse_basic_monthly`
-- **Reference Name:** Basic Monthly
+- **Product ID:** `com.pintayo.memoryverse.pro.basic.monthly`
+- **Reference Name:** MemoryVerse Pro Basic Monthly
 - **Subscription Duration:** 1 Month
-- **Price:** $4.99 USD
-- **Description:** "Unlock AI prayer coaching and streak protection"
+- **Price:** €4.99
+- **Description:** "Unlock 1 prayer/day and daily spiritual encouragement"
 
-#### Product 2: Standard Monthly
-- **Product ID:** `memoryverse_standard_monthly`
-- **Reference Name:** Standard Monthly
+#### Product 2: Standard Monthly (Recommended)
+- **Product ID:** `com.pintayo.memoryverse.pro.standard.monthly`
+- **Reference Name:** MemoryVerse Pro Standard Monthly
 - **Subscription Duration:** 1 Month
-- **Price:** $9.99 USD
-- **Description:** "Unlock all premium features with 5 AI prayers daily"
+- **Price:** €9.99
+- **Description:** "Get 5 prayers/day and deeper scripture insights"
 
-#### Product 3: Annual (Best Value)
-- **Product ID:** `memoryverse_annual`
-- **Reference Name:** Annual Premium
-- **Subscription Duration:** 1 Year
-- **Price:** $39.99 USD (Save 33%!)
-- **Description:** "Best value - all premium features, billed yearly"
+#### Product 3: Premium Monthly
+- **Product ID:** `com.pintayo.memoryverse.pro.premium.monthly`
+- **Reference Name:** MemoryVerse Pro Premium Monthly
+- **Subscription Duration:** 1 Month
+- **Price:** €14.99
+- **Description:** "Get 10 prayers/day and exclusive spiritual features"
 
-### Create in Google Play Console (Android)
+### Create in Google Play Console (Android) - When Ready
 
 1. Go to https://play.google.com/console
 2. Select your app
 3. **Monetize** → **Products** → **Subscriptions**
 4. Click **"Create subscription"**
 
-**Create same 3 products:**
-- `memoryverse_basic_monthly` - $4.99/month
-- `memoryverse_standard_monthly` - $9.99/month
-- `memoryverse_annual` - $39.99/year
+**Create 3 products with SAME IDs:**
+- `com.pintayo.memoryverse.pro.basic.monthly` - €4.99/month
+- `com.pintayo.memoryverse.pro.standard.monthly` - €9.99/month
+- `com.pintayo.memoryverse.pro.premium.monthly` - €14.99/month
 
-**Billing period:**
-- Monthly: 1 month
-- Annual: 1 year
+**Billing period:** 1 month for all
 
 **Free trial:** 7 days (recommended)
 
@@ -117,9 +108,9 @@ You'll use the appropriate one based on the platform.
 1. RevenueCat dashboard → **Products**
 2. Click **"+ New Product"**
 3. For each product:
-   - **Product ID:** `memoryverse_basic_monthly` (must match exactly!)
-   - **Apple Product ID:** `memoryverse_basic_monthly`
-   - **Google Product ID:** `memoryverse_basic_monthly`
+   - **Product ID:** `com.pintayo.memoryverse.pro.basic.monthly` (must match exactly!)
+   - **Apple Product ID:** `com.pintayo.memoryverse.pro.basic.monthly`
+   - **Google Product ID:** `com.pintayo.memoryverse.pro.basic.monthly`
 4. Repeat for all 3 products
 
 ---
@@ -134,21 +125,20 @@ Offerings let you test different pricing without changing code.
    - **Identifier:** `default`
    - **Description:** Default offering
 4. Add all 3 products to this offering
-5. Mark **Annual** as "Default package"
+5. Mark **Standard** as "Default package" (recommended for most users)
 6. Set this as **Current Offering**
 
 ---
 
 ## 🔧 Step 6: Install RevenueCat in Your App
 
-### Install Package
+### ✅ Package Already Installed!
 
-```bash
-cd /path/to/MemoryVerse
-npm install react-native-purchases
-```
+The `react-native-purchases` package is already installed in your project.
 
-### iOS Setup
+### iOS Setup (Required)
+
+You need to install CocoaPods dependencies:
 
 ```bash
 cd ios
@@ -156,303 +146,115 @@ pod install
 cd ..
 ```
 
-### Configure Purchases
+If you don't have an `ios` folder yet (Expo Go mode), you'll generate it when building for iOS:
 
-Create a new service file:
-
-**File:** `src/services/purchaseService.ts`
-
-```typescript
-import Purchases, { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
-import { Platform } from 'react-native';
-import { logger } from '../utils/logger';
-
-// RevenueCat API Keys
-const API_KEYS = {
-  apple: 'appl_YOUR_APPLE_KEY_HERE', // Replace with your actual key
-  google: 'goog_YOUR_GOOGLE_KEY_HERE', // Replace with your actual key
-};
-
-export interface SubscriptionTier {
-  id: string;
-  title: string;
-  price: string;
-  period: string;
-  features: string[];
-  package?: PurchasesPackage;
-}
-
-class PurchaseService {
-  private initialized = false;
-
-  /**
-   * Initialize RevenueCat
-   * Call this once when app starts
-   */
-  async initialize(userId?: string): Promise<void> {
-    if (this.initialized) return;
-
-    try {
-      const apiKey = Platform.OS === 'ios' ? API_KEYS.apple : API_KEYS.google;
-
-      Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG); // Remove in production
-
-      await Purchases.configure({ apiKey, appUserID: userId });
-
-      this.initialized = true;
-      logger.log('[PurchaseService] Initialized successfully');
-    } catch (error) {
-      logger.error('[PurchaseService] Initialization failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get available subscription offerings
-   */
-  async getOfferings(): Promise<SubscriptionTier[]> {
-    try {
-      const offerings = await Purchases.getOfferings();
-
-      if (!offerings.current) {
-        logger.warn('[PurchaseService] No offerings available');
-        return [];
-      }
-
-      const current = offerings.current;
-      const tiers: SubscriptionTier[] = [];
-
-      // Map packages to subscription tiers
-      current.availablePackages.forEach((pkg) => {
-        const product = pkg.product;
-
-        tiers.push({
-          id: product.identifier,
-          title: this.getTierName(product.identifier),
-          price: product.priceString,
-          period: product.subscriptionPeriod || 'month',
-          features: this.getTierFeatures(product.identifier),
-          package: pkg,
-        });
-      });
-
-      return tiers;
-    } catch (error) {
-      logger.error('[PurchaseService] Error fetching offerings:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Purchase a subscription
-   */
-  async purchasePackage(pkg: PurchasesPackage): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { customerInfo } = await Purchases.purchasePackage(pkg);
-
-      const isPremium = this.checkPremiumStatus(customerInfo);
-
-      if (isPremium) {
-        logger.log('[PurchaseService] Purchase successful!');
-        return { success: true };
-      } else {
-        return { success: false, error: 'Purchase did not activate premium' };
-      }
-    } catch (error: any) {
-      logger.error('[PurchaseService] Purchase failed:', error);
-
-      if (error.userCancelled) {
-        return { success: false, error: 'User cancelled' };
-      }
-
-      return { success: false, error: error.message || 'Purchase failed' };
-    }
-  }
-
-  /**
-   * Restore previous purchases
-   */
-  async restorePurchases(): Promise<{ success: boolean; isPremium: boolean }> {
-    try {
-      const { customerInfo } = await Purchases.restorePurchases();
-      const isPremium = this.checkPremiumStatus(customerInfo);
-
-      logger.log('[PurchaseService] Restore completed. Premium:', isPremium);
-      return { success: true, isPremium };
-    } catch (error) {
-      logger.error('[PurchaseService] Restore failed:', error);
-      return { success: false, isPremium: false };
-    }
-  }
-
-  /**
-   * Check if user has active premium subscription
-   */
-  checkPremiumStatus(customerInfo: any): boolean {
-    const entitlements = customerInfo.entitlements.active;
-    return 'premium' in entitlements;
-  }
-
-  /**
-   * Get current customer info
-   */
-  async getCustomerInfo() {
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo;
-    } catch (error) {
-      logger.error('[PurchaseService] Error getting customer info:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Helper: Get tier name from product ID
-   */
-  private getTierName(productId: string): string {
-    if (productId.includes('basic')) return 'Basic';
-    if (productId.includes('standard')) return 'Standard';
-    if (productId.includes('annual')) return 'Annual Premium';
-    return 'Premium';
-  }
-
-  /**
-   * Helper: Get tier features
-   */
-  private getTierFeatures(productId: string): string[] {
-    const common = ['Remove ads', 'Streak freeze', 'Advanced stats'];
-
-    if (productId.includes('basic')) {
-      return [...common, '1 AI prayer per day'];
-    }
-    if (productId.includes('standard')) {
-      return [...common, '5 AI prayers per day', 'Priority support'];
-    }
-    if (productId.includes('annual')) {
-      return [...common, '10 AI prayers per day', 'All translations', 'Early access'];
-    }
-
-    return common;
-  }
-}
-
-export const purchaseService = new PurchaseService();
+```bash
+npx expo prebuild
 ```
+
+### ✅ Configure Purchases (Already Done!)
+
+The purchase service has already been created at `src/services/purchaseService.ts` with:
+- Full RevenueCat SDK integration
+- Subscription tier detection (Basic, Standard, Premium)
+- Purchase and restore functionality
+- Automatic sync with Supabase database
+
+**What You Need to Do:**
+
+Add your RevenueCat API keys to `.env` file:
+
+```bash
+# Copy .env.example to .env if you haven't already
+cp .env.example .env
+
+# Then edit .env and add your keys:
+REVENUECAT_APPLE_API_KEY=appl_YOUR_KEY_HERE
+REVENUECAT_GOOGLE_API_KEY=goog_YOUR_KEY_HERE
+```
+
+Get your API keys from:
+1. RevenueCat dashboard → **Project Settings** → **API Keys**
+2. Copy the **Public** SDK keys (not secret keys)
 
 ---
 
-## 🎯 Step 7: Update App to Use RevenueCat
+## 🎯 Step 7: App Integration (Already Done!)
 
-### Initialize on App Start
+### ✅ RevenueCat Initialization
 
-**File:** `App.tsx` or `src/contexts/AuthContext.tsx`
+RevenueCat is already integrated and initializes automatically when users log in:
+- **Location:** `src/contexts/AuthContext.tsx`
+- **When:** After user profile loads
+- **What:** Initializes RevenueCat with user ID for subscription tracking
 
-```typescript
-import { purchaseService } from './services/purchaseService';
+### ✅ Premium Upgrade Screen
 
-// In your app initialization (after user logs in)
-useEffect(() => {
-  if (user?.id) {
-    purchaseService.initialize(user.id);
-  }
-}, [user]);
-```
+The Premium Upgrade Screen has been fully updated:
+- **Location:** `src/screens/PremiumUpgradeScreen.tsx`
+- **Features:**
+  - Loads subscription offerings from RevenueCat
+  - Displays real-time pricing from App Store
+  - Handles purchase flow with loading states
+  - Implements restore purchases functionality
+  - Auto-refreshes profile after purchase
 
-### Update Premium Upgrade Screen
-
-**File:** `src/screens/PremiumUpgradeScreen.tsx`
-
-Replace the `handleUpgrade` function:
-
-```typescript
-const [offerings, setOfferings] = useState<SubscriptionTier[]>([]);
-const [isLoading, setIsLoading] = useState(true);
-
-useEffect(() => {
-  loadOfferings();
-}, []);
-
-const loadOfferings = async () => {
-  setIsLoading(true);
-  const tiers = await purchaseService.getOfferings();
-  setOfferings(tiers);
-  setIsLoading(false);
-};
-
-const handleUpgrade = async (tier: SubscriptionTier) => {
-  if (!tier.package) return;
-
-  setIsLoading(true);
-  const result = await purchaseService.purchasePackage(tier.package);
-  setIsLoading(false);
-
-  if (result.success) {
-    Alert.alert('Success!', 'Welcome to Premium! 🎉');
-    // Update user's premium status in your database
-    await updateUserPremiumStatus(user.id, true);
-    // Refresh profile
-    await refreshProfile();
-  } else if (result.error && result.error !== 'User cancelled') {
-    Alert.alert('Purchase Failed', result.error);
-  }
-};
-```
+**No code changes needed!** Just add your API keys to `.env`
 
 ---
 
 ## 🔔 Step 8: Set Up Webhooks (Important!)
 
-RevenueCat webhooks keep your database in sync.
+RevenueCat webhooks keep your database in sync when subscriptions change.
 
-### Create Webhook Endpoint
+### ✅ Webhook Handler Already Created!
 
-**File:** Create a serverless function or API endpoint
+A Supabase Edge Function has been created at:
+- **Location:** `supabase/functions/revenuecat-webhook/index.ts`
+- **Handles:** INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, BILLING_ISSUE, PRODUCT_CHANGE
+- **Updates:** `is_premium`, `subscription_tier`, `premium_expires_at` in profiles table
 
-```typescript
-// Example: Supabase Edge Function or Vercel Serverless Function
-export default async function handler(req, res) {
-  const event = req.body;
+### Deploy the Webhook
 
-  // RevenueCat sends events like:
-  // - INITIAL_PURCHASE
-  // - RENEWAL
-  // - CANCELLATION
-  // - EXPIRATION
+First, make sure you have Supabase CLI installed:
 
-  if (event.type === 'INITIAL_PURCHASE' || event.type === 'RENEWAL') {
-    // Update user to premium
-    const userId = event.app_user_id;
-
-    await supabase
-      .from('profiles')
-      .update({
-        is_premium: true,
-        premium_expires_at: event.expiration_at_ms,
-      })
-      .eq('id', userId);
-  }
-
-  if (event.type === 'CANCELLATION' || event.type === 'EXPIRATION') {
-    // Remove premium access
-    const userId = event.app_user_id;
-
-    await supabase
-      .from('profiles')
-      .update({ is_premium: false })
-      .eq('id', userId);
-  }
-
-  res.status(200).json({ received: true });
-}
+```bash
+npm install -g supabase
 ```
 
-### Configure in RevenueCat
+Then deploy the webhook function:
+
+```bash
+# Login to Supabase
+supabase login
+
+# Link your project
+supabase link --project-ref YOUR_PROJECT_REF
+
+# Deploy the webhook function
+supabase functions deploy revenuecat-webhook
+```
+
+After deployment, you'll get a URL like:
+```
+https://YOUR_PROJECT_ID.supabase.co/functions/v1/revenuecat-webhook
+```
+
+### Configure Webhook in RevenueCat
 
 1. RevenueCat dashboard → **Integrations** → **Webhooks**
 2. Click **"+ Add Webhook"**
-3. Enter your webhook URL
-4. Select events to receive (select all for now)
-5. Save
+3. **URL:** `https://YOUR_PROJECT_ID.supabase.co/functions/v1/revenuecat-webhook`
+4. **Events:** Select all events (recommended)
+5. **Authorization:** (Optional but recommended for security)
+6. Click **"Save"**
+
+The webhook will now automatically update your database when:
+- User purchases subscription
+- Subscription renews
+- User cancels subscription
+- Subscription expires
+- User changes subscription tier
 
 ---
 
