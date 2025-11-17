@@ -233,7 +233,8 @@ class PurchaseService {
    */
   checkPremiumStatus(customerInfo: CustomerInfo): boolean {
     const entitlements = customerInfo.entitlements.active;
-    return 'premium' in entitlements;
+    // Check for 'MemoryVerse' entitlement (as configured in RevenueCat)
+    return 'MemoryVerse' in entitlements;
   }
 
   /**
@@ -271,8 +272,8 @@ class PurchaseService {
 
       // Determine subscription tier based on active entitlements
       let subscriptionTier: string | null = null;
-      if (isPremium && info.entitlements.active['premium']) {
-        const productId = info.entitlements.active['premium'].productIdentifier;
+      if (isPremium && info.entitlements.active['MemoryVerse']) {
+        const productId = info.entitlements.active['MemoryVerse'].productIdentifier;
         subscriptionTier = this.getSubscriptionTierFromProductId(productId);
       }
 
