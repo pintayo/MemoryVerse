@@ -11,6 +11,7 @@ import { getTodaysDailyVerse } from '../services/dailyVerseService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
+import { loadTodaysTasks, completeTask, DailyTaskId } from '../services/dailyTasksService';
 
 logger.log('[HomeScreen] All imports complete');
 
@@ -28,6 +29,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [todayVerse, setTodayVerse] = useState<Verse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dailyTasksCompletion, setDailyTasksCompletion] = useState<Record<DailyTaskId, boolean>>({
+    verse: false,
+    practice: false,
+    understand: false,
+    chapter: false,
+    review: false,
+  });
 
   // Get real stats from profile
   const streak = profile?.current_streak || 0;
@@ -53,10 +61,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const today = new Date().toDateString();
   const practicedToday = lastPracticeDate && new Date(lastPracticeDate).toDateString() === today;
 
-  // Load today's verse on mount
+  // Load today's verse and daily tasks on mount
   useEffect(() => {
     loadTodayVerse();
+    loadDailyTasks();
   }, []);
+
+  const loadDailyTasks = async () => {
+    const tasks = await loadTodaysTasks();
+    setDailyTasksCompletion(tasks);
+  };
 
   const loadTodayVerse = async () => {
     try {
@@ -118,11 +132,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   // Daily checklist tasks (free user-friendly, no premium features)
   const dailyTasks = [
-    { id: 'verse', icon: '📖', label: 'Read today\'s verse', completed: todayVerse !== null },
-    { id: 'practice', icon: '🎯', label: 'Practice a verse', completed: false }, // TODO: Track from practice
-    { id: 'understand', icon: '💡', label: 'Understand a verse', completed: false }, // TODO: Track from understand
-    { id: 'chapter', icon: '📚', label: 'Read 1 Bible chapter', completed: false }, // TODO: Track from Bible
-    { id: 'review', icon: '🔄', label: 'Review learned verses', completed: false }, // TODO: Track from review
+    { id: 'verse' as DailyTaskId, icon: '📖', label: 'Read today\'s verse', completed: dailyTasksCompletion.verse },
+    { id: 'practice' as DailyTaskId, icon: '🎯', label: 'Practice a verse', completed: dailyTasksCompletion.practice },
+    { id: 'understand' as DailyTaskId, icon: '💡', label: 'Understand a verse', completed: dailyTasksCompletion.understand },
+    { id: 'chapter' as DailyTaskId, icon: '📚', label: 'Read 1 Bible chapter', completed: dailyTasksCompletion.chapter },
+    { id: 'review' as DailyTaskId, icon: '🔄', label: 'Review learned verses', completed: dailyTasksCompletion.review },
   ];
 
   const actionButtons = [
@@ -131,8 +145,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Read',
       icon: 'book',
       description: 'Read today\'s verse',
-      onPress: () => {
+      onPress: async () => {
         if (todayVerse) {
+          await completeTask('verse');
+          await loadDailyTasks(); // Refresh the UI
           navigation.navigate('VerseCard');
         }
       },
@@ -142,8 +158,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Understand',
       icon: 'lightbulb',
       description: 'Learn the context',
-      onPress: () => {
+      onPress: async () => {
         if (todayVerse?.id) {
+          await completeTask('understand');
+          await loadDailyTasks(); // Refresh the UI
           navigation.navigate('Understand', { verseId: todayVerse.id });
         }
       },
@@ -153,7 +171,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Review',
       icon: 'refresh',
       description: 'Review learned verses',
-      onPress: () => {
+      onPress: async () => {
+        await completeTask('review');
+        await loadDailyTasks(); // Refresh the UI
         navigation.navigate('Review');
       },
     },
@@ -162,7 +182,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Practice',
       icon: 'brain',
       description: 'Recall & recite verses',
-      onPress: () => {
+      onPress: async () => {
+        await completeTask('practice');
+        await loadDailyTasks(); // Refresh the UI
         navigation.navigate('Practice');
       },
     },
@@ -172,6 +194,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       icon: 'heart',
       description: 'Prayer training',
       onPress: () => {
+        // Note: Pray is not tracked in daily tasks for free users
         if (todayVerse?.id) {
           navigation.navigate('Pray', { verseId: todayVerse.id });
         }

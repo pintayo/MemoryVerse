@@ -22,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { analyticsService } from '../services/analyticsService';
 import { purchaseService, SubscriptionTier } from '../services/purchaseService';
+import { TIER_BENEFITS } from '../config/tierBenefits';
 
 export const PremiumUpgradeScreen = () => {
   const { profile, refreshProfile } = useAuth();
@@ -68,6 +69,108 @@ export const PremiumUpgradeScreen = () => {
   // Get premium features excluding 'originalLanguage'
   const premiumFeatureKeys = getPremiumFeatures().filter(key => key !== 'originalLanguage');
 
+  // Helper function to extract tier name from tier ID
+  const getTierName = (tierId: string): 'basic' | 'standard' | 'premium' => {
+    const lowerTierId = tierId.toLowerCase();
+    if (lowerTierId.includes('basic')) return 'basic';
+    if (lowerTierId.includes('standard')) return 'standard';
+    if (lowerTierId.includes('premium')) return 'premium';
+    return 'standard'; // Default to standard if unknown
+  };
+
+  // Get features for a specific tier
+  const getTierFeatures = (tierId: string) => {
+    const tierName = getTierName(tierId);
+    const benefits = TIER_BENEFITS[tierName];
+
+    const features = [];
+
+    // AI Prayers
+    features.push({
+      icon: '✨',
+      text: `${benefits.aiPrayersPerDay} AI prayer${benefits.aiPrayersPerDay > 1 ? 's' : ''} per day`,
+      highlight: true,
+    });
+
+    // Translations
+    if (benefits.translations) {
+      features.push({
+        icon: '🌍',
+        text: `${benefits.translations.length} Bible translation${benefits.translations.length > 1 ? 's' : ''}`,
+        highlight: true,
+      });
+    }
+
+    // Practice Limit
+    if (benefits.unlimitedPractice) {
+      features.push({
+        icon: '🎯',
+        text: 'Unlimited practice sessions',
+        highlight: true,
+      });
+    } else if (benefits.practiceLimit) {
+      features.push({
+        icon: '🎯',
+        text: `${benefits.practiceLimit} verses/day practice`,
+        highlight: false,
+      });
+    }
+
+    // Streak Freeze
+    if (benefits.streakFreeze) {
+      features.push({
+        icon: '🔥',
+        text: `Streak freeze (${benefits.streakFreezeLimit})`,
+        highlight: true,
+      });
+    }
+
+    // Premium-only features
+    if (tierName === 'premium') {
+      if (benefits.storyModeAccess) {
+        features.push({
+          icon: '📺',
+          text: 'Early Story Mode access',
+          highlight: true,
+        });
+      }
+      if (benefits.personalizedPlans) {
+        features.push({
+          icon: '📅',
+          text: 'Personalized study plans',
+          highlight: false,
+        });
+      }
+      if (benefits.advancedAnalytics) {
+        features.push({
+          icon: '📊',
+          text: 'Advanced analytics',
+          highlight: false,
+        });
+      }
+    }
+
+    // Standard and Premium features
+    if (tierName === 'standard' || tierName === 'premium') {
+      if (benefits.aiChapterSummaries) {
+        features.push({
+          icon: '📖',
+          text: 'AI chapter summaries',
+          highlight: tierName === 'standard',
+        });
+      }
+      if (benefits.prayerHistory) {
+        features.push({
+          icon: '📜',
+          text: 'Prayer history',
+          highlight: false,
+        });
+      }
+    }
+
+    return features;
+  };
+
   const handleUpgrade = async () => {
     if (!selectedTier || !selectedTier.package) {
       Alert.alert('Error', 'Please select a subscription plan');
@@ -86,8 +189,8 @@ export const PremiumUpgradeScreen = () => {
         await refreshProfile();
 
         Alert.alert(
-          'Welcome to Premium! 🎉',
-          'Thank you for subscribing! You now have access to all premium features.',
+          'Welcome to Pro! 🎉',
+          'Thank you for subscribing! You now have access to all pro features.',
           [{ text: 'Start Exploring', onPress: () => navigation.goBack() }]
         );
       } else if (!result.userCancelled) {
@@ -180,15 +283,15 @@ export const PremiumUpgradeScreen = () => {
                 />
               </Svg>
             </View>
-            <Text style={styles.activeTitle}>Premium Active</Text>
+            <Text style={styles.activeTitle}>Pro Subscription Active</Text>
             <Text style={styles.activeSubtitle}>
-              You have full access to all premium features
+              You have full access to all pro features in your plan
             </Text>
           </View>
 
-          {/* Premium Features List */}
+          {/* Pro Features List */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Premium Features</Text>
+            <Text style={styles.sectionTitle}>Your Pro Features</Text>
             {premiumFeatureKeys.map((key) => {
               const feature = featureFlags[key as keyof typeof featureFlags];
               const isAvailable = feature.enabled;
@@ -251,9 +354,9 @@ export const PremiumUpgradeScreen = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Compact Hero */}
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Unlock Premium</Text>
+          <Text style={styles.heroTitle}>Unlock Pro</Text>
           <Text style={styles.heroSubtitle}>
-            Deepen your faith with unlimited AI prayers, streak protection, verse insights, and early Story Mode access
+            Deepen your faith with AI prayers, streak protection, more translations, verse insights, and exclusive features
           </Text>
         </View>
 
@@ -303,32 +406,16 @@ export const PremiumUpgradeScreen = () => {
                     <Text style={styles.priceDetail}>{tier.pricePerMonth}</Text>
                   </View>
 
-                  {/* Concrete, measurable premium features - ONLY WHAT'S ACTUALLY AVAILABLE */}
+                  {/* Tier-specific features based on actual tier benefits */}
                   <View style={styles.tierFeatures}>
-                    <View style={styles.bulletPoint}>
-                      <Text style={styles.bulletIcon}>✨</Text>
-                      <Text style={styles.tierFeatureTextHighlight}>
-                        Unlimited AI prayers (free: 3/day) - Get personalized prayers anytime
-                      </Text>
-                    </View>
-                    <View style={styles.bulletPoint}>
-                      <Text style={styles.bulletIcon}>🔥</Text>
-                      <Text style={styles.tierFeatureTextHighlight}>
-                        Streak freeze protection (once per week) - Never lose your hard-earned streak
-                      </Text>
-                    </View>
-                    <View style={styles.bulletPoint}>
-                      <Text style={styles.bulletIcon}>📖</Text>
-                      <Text style={styles.tierFeatureTextHighlight}>
-                        AI-generated verse context - Understand every verse deeply
-                      </Text>
-                    </View>
-                    <View style={styles.bulletPoint}>
-                      <Text style={styles.bulletIcon}>📺</Text>
-                      <Text style={styles.tierFeatureTextMore}>
-                        Early access to Story Mode (launching in 4-6 weeks!)
-                      </Text>
-                    </View>
+                    {getTierFeatures(tier.id).map((feature, index) => (
+                      <View key={index} style={styles.bulletPoint}>
+                        <Text style={styles.bulletIcon}>{feature.icon}</Text>
+                        <Text style={feature.highlight ? styles.tierFeatureTextHighlight : styles.tierFeatureText}>
+                          {feature.text}
+                        </Text>
+                      </View>
+                    ))}
                   </View>
                 </TouchableOpacity>
               ))}
@@ -349,7 +436,7 @@ export const PremiumUpgradeScreen = () => {
             </>
           ) : (
             <Text style={styles.upgradeButtonText}>
-              Subscribe to {selectedTier?.title || 'Premium'}
+              Subscribe to {selectedTier?.title || 'Pro'}
             </Text>
           )}
         </TouchableOpacity>

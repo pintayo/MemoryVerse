@@ -277,7 +277,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
     return (
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          {mode !== 'books' && (
+          {mode !== 'books' ? (
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
               <Svg width={24} height={24} viewBox="0 0 24 24">
                 <Path
@@ -290,18 +290,18 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
                 />
               </Svg>
             </TouchableOpacity>
+          ) : (
+            <View style={styles.backButton} />
           )}
           <Text style={styles.headerTitle}>{title}</Text>
-          {mode === 'books' && (
-            <TouchableOpacity onPress={handleFavorites} style={styles.favoritesButton}>
-              <Svg width={24} height={24} viewBox="0 0 24 24">
-                <Path
-                  d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                  fill={theme.colors.secondary.lightGold}
-                />
-              </Svg>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={handleFavorites} style={styles.favoritesButton}>
+            <Svg width={24} height={24} viewBox="0 0 24 24">
+              <Path
+                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                fill={theme.colors.secondary.lightGold}
+              />
+            </Svg>
+          </TouchableOpacity>
         </View>
 
         {/* Search Bar */}
