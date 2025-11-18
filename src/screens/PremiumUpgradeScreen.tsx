@@ -249,23 +249,13 @@ export const PremiumUpgradeScreen = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Hero Section */}
+        {/* Compact Hero */}
         <View style={styles.hero}>
-          <Svg width="64" height="64" viewBox="0 0 24 24" style={styles.heroIcon}>
-            <Path
-              d="M12 2 L15 9 L22 9 L17 14 L19 21 L12 17 L5 21 L7 14 L2 9 L9 9 Z"
-              fill={theme.colors.accent.burnishedGold}
-            />
-          </Svg>
           <Text style={styles.heroTitle}>Unlock Premium</Text>
-          <Text style={styles.heroSubtitle}>
-            Accelerate your Bible memorization with powerful premium features
-          </Text>
         </View>
 
         {/* Pricing Plans */}
         <View style={styles.pricingSection}>
-          <Text style={styles.sectionTitle}>Choose Your Plan</Text>
 
           {isLoadingOfferings ? (
             <View style={styles.loadingOfferings}>
@@ -310,74 +300,16 @@ export const PremiumUpgradeScreen = () => {
                     <Text style={styles.priceDetail}>{tier.pricePerMonth}</Text>
                   </View>
 
-                  {/* Show features for this specific tier */}
+                  {/* Show top feature only */}
                   <View style={styles.tierFeatures}>
-                    {tier.features.slice(0, 2).map((feature, index) => (
-                      <Text key={index} style={styles.tierFeatureText}>
-                        • {feature}
-                      </Text>
-                    ))}
                     <Text style={styles.tierFeatureText}>
-                      • And more...
+                      • {tier.features[0]}
                     </Text>
                   </View>
                 </TouchableOpacity>
               ))}
             </>
           )}
-        </View>
-
-        {/* Premium Features */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Premium Features</Text>
-          {premiumFeatureKeys.slice(0, 4).map((key) => {
-            const feature = featureFlags[key as keyof typeof featureFlags];
-            const isAvailable = feature.enabled;
-
-            return (
-              <View
-                key={key}
-                style={[
-                  styles.featureRow,
-                  !isAvailable && styles.featureRowDisabled
-                ]}
-              >
-                <Svg width="20" height="20" viewBox="0 0 24 24" style={styles.checkmark}>
-                  <Path
-                    d="M5 12 L10 17 L20 7"
-                    stroke={isAvailable ? theme.colors.accent.burnishedGold : theme.colors.text.tertiary}
-                    strokeWidth="2.5"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-                <View style={styles.featureText}>
-                  <Text style={[
-                    styles.featureName,
-                    !isAvailable && styles.featureNameDisabled
-                  ]}>
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
-          <View style={styles.featureRow}>
-            <Svg width="20" height="20" viewBox="0 0 24 24" style={styles.checkmark}>
-              <Path
-                d="M5 12 L10 17 L20 7"
-                stroke={theme.colors.accent.burnishedGold}
-                strokeWidth="2.5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-            <View style={styles.featureText}>
-              <Text style={styles.featureName}>And much more...</Text>
-            </View>
-          </View>
         </View>
 
         {/* Upgrade Button */}
@@ -419,22 +351,21 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.lightCream,
   },
   content: {
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
   },
   hero: {
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
   },
   heroIcon: {
     marginBottom: theme.spacing.sm,
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.xs,
   },
   heroSubtitle: {
     fontSize: theme.typography.ui.bodySmall.fontSize,
@@ -445,7 +376,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   pricingSection: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   sectionTitle: {
     fontSize: theme.typography.ui.heading.fontSize,
@@ -457,8 +388,8 @@ const styles = StyleSheet.create({
   pricingCard: {
     backgroundColor: 'white',
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
     borderWidth: 2,
     borderColor: theme.colors.primary.mutedStone,
     position: 'relative',
@@ -473,17 +404,17 @@ const styles = StyleSheet.create({
   },
   recommendedBadge: {
     position: 'absolute',
-    top: -10,
-    right: theme.spacing.md,
+    top: -8,
+    right: theme.spacing.sm,
     backgroundColor: theme.colors.secondary.lightGold,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: 2,
     borderRadius: theme.borderRadius.full,
     zIndex: 1,
   },
   recommendedText: {
     color: theme.colors.text.primary,
-    fontSize: theme.typography.ui.caption.fontSize,
+    fontSize: 10,
     fontWeight: '700',
     fontFamily: theme.typography.fonts.ui.default,
   },
@@ -506,19 +437,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   planName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 2,
+    marginBottom: 0,
   },
   price: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '700',
     color: theme.colors.accent.burnishedGold,
     fontFamily: theme.typography.fonts.ui.default,
@@ -530,7 +461,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   priceDetail: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
+    fontSize: 12,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
   },
@@ -596,12 +527,13 @@ const styles = StyleSheet.create({
   upgradeButton: {
     backgroundColor: theme.colors.accent.burnishedGold,
     borderRadius: theme.borderRadius.lg,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   upgradeButtonDisabled: {
     opacity: 0.6,
@@ -693,16 +625,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tierFeatures: {
-    marginTop: theme.spacing.md,
-    paddingTop: theme.spacing.md,
+    marginTop: theme.spacing.xs,
+    paddingTop: theme.spacing.xs,
     borderTopWidth: 1,
     borderTopColor: theme.colors.primary.oatmeal,
   },
   tierFeatureText: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
+    fontSize: 12,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.xs,
   },
 });
 
