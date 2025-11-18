@@ -27,6 +27,57 @@ class VerseSessionService {
   private preloadQueue: Set<string> = new Set();
 
   /**
+   * Create a new 5-verse learning session starting with a specific verse
+   */
+  async createSessionWithVerse(
+    verseId: string,
+    translation: string = 'KJV'
+  ): Promise<VerseSession> {
+    try {
+      logger.log('[VerseSession] Creating session starting with verse:', verseId);
+
+      // Get the specific verse first
+      const specificVerse = await verseService.getVerseById(verseId);
+      if (!specificVerse) {
+        throw new Error('Verse not found');
+      }
+
+      const verses: Verse[] = [specificVerse];
+
+      // Load 4 more random verses from the same book/chapter
+      for (let i = 0; i < 4; i++) {
+        const verse = await verseService.getRandomVerse(
+          translation,
+          specificVerse.book,
+          specificVerse.chapter
+        );
+        if (verse && verse.id !== specificVerse.id) {
+          verses.push(verse);
+        }
+      }
+
+      const session: VerseSession = {
+        verses,
+        currentIndex: 0,
+        book: specificVerse.book,
+        chapter: specificVerse.chapter,
+      };
+
+      const sessionId = this.generateSessionId(specificVerse.book, specificVerse.chapter);
+      this.sessions.set(sessionId, session);
+
+      // Start pre-loading context for all verses
+      this.preloadContextForSession(session);
+
+      logger.log('[VerseSession] Session created with specific verse, total:', verses.length, 'verses');
+      return session;
+    } catch (error) {
+      logger.error('[VerseSession] Error creating session with verse:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create a new 5-verse learning session
    */
   async createSession(

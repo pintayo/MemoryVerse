@@ -78,10 +78,9 @@ export function LearnVerseScreen({ navigation, route }: Props) {
       const { verseId } = route.params || {};
 
       if (verseId) {
-        logger.log('[LearnVerseScreen] Loading specific verse:', verseId);
-        // TODO: For now, create a random session.
-        // Future: could create a session around this specific verse
-        const newSession = await verseSessionService.createSession('KJV', null, null);
+        logger.log('[LearnVerseScreen] Creating session starting with verse:', verseId);
+        // Create a session starting with this specific verse
+        const newSession = await verseSessionService.createSessionWithVerse(verseId, 'KJV');
         setSession(newSession);
       } else {
         // Create a new random session (all chapters)

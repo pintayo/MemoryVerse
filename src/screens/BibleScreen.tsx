@@ -670,17 +670,17 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.navButton, !hasNext && styles.navButtonDisabled]}
+              style={[styles.nextButton, !hasNext && styles.navButtonDisabled]}
               onPress={handleNextChapter}
               disabled={!hasNext}
             >
-              <Text style={[styles.navButtonText, !hasNext && styles.navButtonTextDisabled]}>
+              <Text style={[styles.nextButtonText, !hasNext && styles.nextButtonTextDisabled]}>
                 Next Chapter
               </Text>
               <Svg width={20} height={20} viewBox="0 0 24 24">
                 <Path
                   d="M9 6 L15 12 L9 18"
-                  stroke={hasNext ? theme.colors.text.primary : theme.colors.text.tertiary}
+                  stroke={hasNext ? theme.colors.background.lightCream : theme.colors.text.tertiary}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -997,6 +997,30 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   navButtonTextDisabled: {
+    color: theme.colors.text.tertiary,
+  },
+  nextButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.primary.softOlive,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  nextButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: theme.colors.background.lightCream,
+  },
+  nextButtonTextDisabled: {
     color: theme.colors.text.tertiary,
   },
   continueReadingCard: {
