@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
 import { useAuth } from '../contexts/AuthContext';
 import { StarButton } from '../components';
+import { readingProgressService, ReadingBookmark } from '../services/readingProgressService';
 
 interface BibleScreenProps {
   navigation: any;
@@ -67,6 +68,30 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [bookmark, setBookmark] = useState<ReadingBookmark | null>(null);
+  const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
+
+  // Load bookmark on mount
+  useEffect(() => {
+    loadBookmark();
+  }, []);
+
+  // Load reading progress when book is selected
+  useEffect(() => {
+    if (selectedBook && mode === 'chapters') {
+      loadBookProgress(selectedBook);
+    }
+  }, [selectedBook, mode]);
+
+  const loadBookmark = async () => {
+    const savedBookmark = await readingProgressService.getBookmark();
+    setBookmark(savedBookmark);
+  };
+
+  const loadBookProgress = async (book: string) => {
+    const chaptersRead = await readingProgressService.getBookProgress(book);
+    setReadChapters(new Set(chaptersRead));
+  };
 
   // Filter books by search query
   const filteredBooks = searchQuery
@@ -158,6 +183,12 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
 
       if (error) throw error;
       setVerses(data || []);
+
+      // Save bookmark and mark as read
+      await readingProgressService.saveBookmark(selectedBook, chapter);
+      await readingProgressService.markChapterRead(selectedBook, chapter);
+      await loadBookmark();
+      await loadBookProgress(selectedBook);
     } catch (error) {
       logger.error('[BibleScreen] Error loading verses:', error);
     } finally {
@@ -340,9 +371,49 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
     );
   };
 
+  const handleContinueReading = () => {
+    if (bookmark) {
+      handleBookSelect(bookmark.book);
+      // Will automatically navigate to the bookmarked chapter
+      setTimeout(() => {
+        handleChapterSelect(bookmark.chapter);
+      }, 100);
+    }
+  };
+
   const renderBooksList = () => {
     return (
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Continue Reading Card */}
+        {bookmark && !searchQuery && (
+          <TouchableOpacity style={styles.continueReadingCard} onPress={handleContinueReading}>
+            <View style={styles.continueReadingIcon}>
+              <Svg width={24} height={24} viewBox="0 0 24 24">
+                <Path
+                  d="M17 3H7C5.9 3 5 3.9 5 5V21L12 18L19 21V5C19 3.9 18.1 3 17 3Z"
+                  fill={theme.colors.secondary.lightGold}
+                />
+              </Svg>
+            </View>
+            <View style={styles.continueReadingContent}>
+              <Text style={styles.continueReadingTitle}>Continue Reading</Text>
+              <Text style={styles.continueReadingSubtitle}>
+                {bookmark.book} {bookmark.chapter}
+              </Text>
+            </View>
+            <Svg width={20} height={20} viewBox="0 0 24 24">
+              <Path
+                d="M9 6 L15 12 L9 18"
+                stroke={theme.colors.text.tertiary}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+          </TouchableOpacity>
+        )}
+
         {/* Show verse search results if searching */}
         {searchQuery.length >= 3 && (
           <View style={styles.searchResultsSection}>
@@ -476,15 +547,44 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
 
         {/* Always show chapters grid */}
         <View style={styles.chaptersGrid}>
-          {chapters.map((chapter) => (
-            <TouchableOpacity
-              key={chapter}
-              style={styles.chapterCard}
-              onPress={() => handleChapterSelect(chapter)}
-            >
-              <Text style={styles.chapterNumber}>{chapter}</Text>
-            </TouchableOpacity>
-          ))}
+          {chapters.map((chapter) => {
+            const isRead = readChapters.has(chapter);
+            const isBookmarked = bookmark?.book === selectedBook && bookmark?.chapter === chapter;
+
+            return (
+              <TouchableOpacity
+                key={chapter}
+                style={[
+                  styles.chapterCard,
+                  isRead && styles.chapterCardRead,
+                  isBookmarked && styles.chapterCardBookmarked,
+                ]}
+                onPress={() => handleChapterSelect(chapter)}
+              >
+                <Text style={styles.chapterNumber}>{chapter}</Text>
+                {isRead && (
+                  <View style={styles.readBadge}>
+                    <Svg width={12} height={12} viewBox="0 0 24 24">
+                      <Path
+                        d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                        fill={theme.colors.background.lightCream}
+                      />
+                    </Svg>
+                  </View>
+                )}
+                {isBookmarked && (
+                  <View style={styles.bookmarkBadge}>
+                    <Svg width={10} height={10} viewBox="0 0 24 24">
+                      <Path
+                        d="M17 3H7C5.9 3 5 3.9 5 5V21L12 18L19 21V5C19 3.9 18.1 3 17 3Z"
+                        fill={theme.colors.background.lightCream}
+                      />
+                    </Svg>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
     );
@@ -894,5 +994,72 @@ const styles = StyleSheet.create({
   },
   navButtonTextDisabled: {
     color: theme.colors.text.tertiary,
+  },
+  continueReadingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.secondary.lightGold,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  continueReadingIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.background.warmParchment,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  continueReadingContent: {
+    flex: 1,
+  },
+  continueReadingTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.background.lightCream,
+    marginBottom: 2,
+  },
+  continueReadingSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.background.lightCream,
+    opacity: 0.9,
+  },
+  chapterCardRead: {
+    backgroundColor: theme.colors.primary.softOlive,
+    borderColor: theme.colors.primary.softOlive,
+  },
+  chapterCardBookmarked: {
+    borderColor: theme.colors.secondary.lightGold,
+    borderWidth: 3,
+  },
+  readBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: theme.colors.primary.softOlive,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bookmarkBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: theme.colors.secondary.lightGold,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
