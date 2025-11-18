@@ -410,9 +410,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           activeOpacity={0.9}
         >
           {/* Image Background - 9:14 aspect ratio */}
-          {/* TO USE YOUR OWN IMAGE: Place story-mode-preview.png (900x1400px) in assets/images/ */}
+          {/* TO USE YOUR OWN IMAGE:
+              1. Place story-mode-preview.png (900x1400px) in assets/images/
+              2. Uncomment the ImageBackground below and remove the View wrapper
+              <ImageBackground
+                source={require('../../assets/images/story-mode-preview.png')}
+                style={styles.storyModeImageBackground}
+                resizeMode="cover"
+              >
+          */}
           <View style={styles.storyModeImageBackground}>
-            {/* SVG Cross as background placeholder */}
+            {/* SVG Cross as background placeholder - remove when using custom image */}
             <Svg width="120" height="120" viewBox="0 0 120 120" style={{ position: 'absolute', opacity: 0.15 }}>
               <Path
                 d="M50 25 L70 25 L70 50 L95 50 L95 70 L70 70 L70 95 L50 95 L50 70 L25 70 L25 50 L50 50 Z"
@@ -434,6 +442,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               </View>
             </View>
           </View>
+          {/* When using custom image, change closing tag to: </ImageBackground> */}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -561,7 +570,7 @@ const styles = StyleSheet.create({
   },
   // Hero Verse Card
   heroVerseCard: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     paddingVertical: theme.spacing.xl,
     minHeight: 180,
   },
@@ -652,7 +661,7 @@ const styles = StyleSheet.create({
   },
   // Progress Card
   progressCard: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     padding: theme.spacing.lg,
   },
   progressTitle: {
@@ -727,7 +736,7 @@ const styles = StyleSheet.create({
   },
   // Daily Checklist
   dailyChecklistCard: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     padding: theme.spacing.lg,
   },
   checklistTitle: {

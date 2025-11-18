@@ -5,14 +5,37 @@
 
 import { logger } from './logger';
 
-// Explicit content keywords to block
-const EXPLICIT_KEYWORDS = [
-  'porn', 'sex', 'nude', 'naked', 'explicit', 'nsfw',
-  'xxx', 'erotic', 'sexual', 'genitalia', 'masturbat',
-  'orgasm', 'rape', 'incest', 'pedophil', 'molest',
-  'fuck', 'shit', 'bitch', 'ass', 'dick', 'cock', 'pussy',
-  'violence', 'kill', 'murder', 'suicide', 'harm yourself',
-  'self harm', 'cut yourself', 'end your life',
+// Explicit content patterns to block (using word boundaries to avoid false positives)
+const EXPLICIT_PATTERNS = [
+  /\bporn\b/i,
+  /\bsex\b/i,
+  /\bnude\b/i,
+  /\bnaked\b/i,
+  /\bnsfw\b/i,
+  /\bxxx\b/i,
+  /\berotic\b/i,
+  /\bsexual\b/i,
+  /\bgenitalia\b/i,
+  /\bmasturbat/i,
+  /\borgasm\b/i,
+  /\brape\b/i,
+  /\bincest\b/i,
+  /\bpedophil/i,
+  /\bmolest/i,
+  /\bfuck\b/i,
+  /\bshit\b/i,
+  /\bbitch\b/i,
+  /\bass\b/i,  // Word boundary prevents matching "Passover", "compassion", etc.
+  /\bdick\b/i,
+  /\bcock\b/i,
+  /\bpussy\b/i,
+  /\bkill\b/i,
+  /\bmurder\b/i,
+  /\bsuicide\b/i,
+  /\bharm yourself\b/i,
+  /\bself harm\b/i,
+  /\bcut yourself\b/i,
+  /\bend your life\b/i,
 ];
 
 // Prompt injection patterns to detect
@@ -43,11 +66,9 @@ export interface ContentFilterResult {
  * Check if text contains explicit content
  */
 function containsExplicitContent(text: string): boolean {
-  const lowerText = text.toLowerCase();
-
-  for (const keyword of EXPLICIT_KEYWORDS) {
-    if (lowerText.includes(keyword)) {
-      logger.warn(`[ContentFilter] Explicit keyword detected: ${keyword}`);
+  for (const pattern of EXPLICIT_PATTERNS) {
+    if (pattern.test(text)) {
+      logger.warn(`[ContentFilter] Explicit pattern detected: ${pattern}`);
       return true;
     }
   }

@@ -17,6 +17,7 @@ import { logger } from '../utils/logger';
 import { useAuth } from '../contexts/AuthContext';
 import { StarButton } from '../components';
 import { readingProgressService, ReadingBookmark } from '../services/readingProgressService';
+import { completeTask } from '../services/dailyTasksService';
 
 interface BibleScreenProps {
   navigation: any;
@@ -189,6 +190,9 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
       await readingProgressService.markChapterRead(selectedBook, chapter);
       await loadBookmark();
       await loadBookProgress(selectedBook);
+
+      // Complete the daily chapter task
+      await completeTask('chapter');
     } catch (error) {
       logger.error('[BibleScreen] Error loading verses:', error);
     } finally {
