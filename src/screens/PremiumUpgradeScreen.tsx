@@ -286,10 +286,16 @@ export const PremiumUpgradeScreen = () => {
                   style={[
                     styles.pricingCard,
                     selectedTier?.id === tier.id && styles.pricingCardSelected,
+                    tier.isRecommended && styles.pricingCardRecommended,
                   ]}
                   onPress={() => setSelectedTier(tier)}
                   disabled={isPurchasing}
                 >
+                  {tier.isRecommended && (
+                    <View style={styles.recommendedBadge}>
+                      <Text style={styles.recommendedText}>Recommended</Text>
+                    </View>
+                  )}
                   {tier.savings && (
                     <View style={styles.savingsBadge}>
                       <Text style={styles.savingsText}>{tier.savings}</Text>
@@ -460,6 +466,26 @@ const styles = StyleSheet.create({
   pricingCardSelected: {
     borderColor: theme.colors.accent.burnishedGold,
     backgroundColor: theme.colors.background.lightCream,
+  },
+  pricingCardRecommended: {
+    borderColor: theme.colors.secondary.lightGold,
+    borderWidth: 3,
+  },
+  recommendedBadge: {
+    position: 'absolute',
+    top: -10,
+    right: theme.spacing.md,
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.full,
+    zIndex: 1,
+  },
+  recommendedText: {
+    color: theme.colors.text.primary,
+    fontSize: theme.typography.ui.caption.fontSize,
+    fontWeight: '700',
+    fontFamily: theme.typography.fonts.ui.default,
   },
   savingsBadge: {
     position: 'absolute',

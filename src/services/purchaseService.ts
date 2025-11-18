@@ -462,6 +462,21 @@ class PurchaseService {
   private getFallbackOfferings(): SubscriptionTier[] {
     return [
       {
+        id: 'com.pintayo.memoryverse.pro.basic.monthly',
+        title: 'Basic',
+        price: '€4.99',
+        period: '/month',
+        pricePerMonth: '€4.99/mo',
+        features: [
+          '1 AI prayer per day',
+          'Daily spiritual encouragement',
+          '1 streak freeze per month',
+          'Basic verse analytics',
+          'Email support',
+        ],
+        isRecommended: false,
+      },
+      {
         id: 'com.pintayo.memoryverse.pro.standard.monthly',
         title: 'Standard',
         price: '€9.99',
@@ -493,21 +508,6 @@ class PurchaseService {
           'All Bible translations',
           'Priority support',
           'Early access to new features',
-        ],
-        isRecommended: false,
-      },
-      {
-        id: 'com.pintayo.memoryverse.pro.basic.monthly',
-        title: 'Basic',
-        price: '€4.99',
-        period: '/month',
-        pricePerMonth: '€4.99/mo',
-        features: [
-          '1 AI prayer per day',
-          'Daily spiritual encouragement',
-          '1 streak freeze per month',
-          'Basic verse analytics',
-          'Email support',
         ],
         isRecommended: false,
       },

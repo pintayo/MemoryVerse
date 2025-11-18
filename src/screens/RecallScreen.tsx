@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, Input, VerseReference, LessonCompleteModal } from '../components';
+import { SignUpPrompt } from '../components/SignUpPrompt';
 import { theme } from '../theme';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -23,7 +24,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
 
 const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
   const { verseId } = route.params;
-  const { user, profile } = useAuth();
+  const { user, profile, isGuest } = useAuth();
 
   const [verses, setVerses] = useState<Verse[]>([]);
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
@@ -786,17 +787,29 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       </View>
 
       {/* Lesson Complete Modal */}
-      {lessonSummary && (
-        <LessonCompleteModal
+      {isGuest ? (
+        <SignUpPrompt
           visible={showCompleteModal}
-          correctCount={lessonSummary.correctCount}
-          totalVerses={verses.length}
-          xpEarned={lessonSummary.totalXP}
-          currentXP={lessonSummary.currentXP}
-          currentLevel={lessonSummary.currentLevel}
-          xpForNextLevel={lessonSummary.xpForNextLevel}
-          onClose={handleModalClose}
+          trigger="progress"
+          onSignUp={() => {
+            setShowCompleteModal(false);
+            navigation.navigate('Signup');
+          }}
+          onDismiss={handleModalClose}
         />
+      ) : (
+        lessonSummary && (
+          <LessonCompleteModal
+            visible={showCompleteModal}
+            correctCount={lessonSummary.correctCount}
+            totalVerses={verses.length}
+            xpEarned={lessonSummary.totalXP}
+            currentXP={lessonSummary.currentXP}
+            currentLevel={lessonSummary.currentLevel}
+            xpForNextLevel={lessonSummary.xpForNextLevel}
+            onClose={handleModalClose}
+          />
+        )
       )}
     </SafeAreaView>
   );
