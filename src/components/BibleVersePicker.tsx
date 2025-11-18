@@ -230,10 +230,16 @@ export const BibleVersePicker: React.FC<BibleVersePickerProps> = ({
                 </View>
               )}
 
-              {step === 'books' && books.length === 0 && (
+              {step === 'books' && books.length === 0 && !isLoading && (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>No books found</Text>
-                  <Text style={styles.emptySubtext}>Please try again or contact support</Text>
+                  <Text style={styles.emptySubtext}>
+                    Make sure the database has been populated with Bible data.{'\n'}
+                    Check that migration 009 has been run.
+                  </Text>
+                  <TouchableOpacity style={styles.retryButton} onPress={loadBooks}>
+                    <Text style={styles.retryButtonText}>Retry</Text>
+                  </TouchableOpacity>
                 </View>
               )}
 
@@ -447,5 +453,18 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.md,
+  },
+  retryButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.onDark,
+    fontFamily: theme.typography.fonts.ui.default,
   },
 });

@@ -48,13 +48,62 @@ export function UnderstandScreen({ navigation, route }: Props) {
   const [currentVerseId, setCurrentVerseId] = useState(verseId);
 
   useEffect(() => {
-    loadVerseWithContext();
+    let isCancelled = false;
+
+    const loadVerse = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        setIsGenerating(false);
+
+        const result = await verseService.getVerseWithContext(currentVerseId);
+
+        // Ignore results if component unmounted or verse changed
+        if (isCancelled) {
+          logger.log('[UnderstandScreen] Request cancelled, ignoring result');
+          return;
+        }
+
+        if (result.error) {
+          setError(result.error);
+          setVerse(result.verse);
+          setContext(null);
+          setIsGenerating(false);
+          return;
+        }
+
+        setVerse(result.verse);
+        setContext(result.context);
+        setIsGenerating(false);  // Context is already loaded at this point
+        setShowAiBadge(result.verse?.context_generated_by_ai || false);
+
+      } catch (err) {
+        if (!isCancelled) {
+          logger.error('[UnderstandScreen] Error loading verse:', err);
+          setError(err instanceof Error ? err.message : 'Failed to load verse');
+          setIsGenerating(false);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadVerse();
+
+    // Cleanup function to cancel pending requests
+    return () => {
+      isCancelled = true;
+      logger.log('[UnderstandScreen] Cleaning up verse load for', currentVerseId);
+    };
   }, [currentVerseId]);
 
   const loadVerseWithContext = async () => {
     try {
       setIsLoading(true);
       setError(null);
+      setIsGenerating(false);
 
       const result = await verseService.getVerseWithContext(currentVerseId);
 
@@ -62,17 +111,19 @@ export function UnderstandScreen({ navigation, route }: Props) {
         setError(result.error);
         setVerse(result.verse);
         setContext(null);
+        setIsGenerating(false);
         return;
       }
 
       setVerse(result.verse);
       setContext(result.context);
-      setIsGenerating(result.contextGenerated);
+      setIsGenerating(false);
       setShowAiBadge(result.verse?.context_generated_by_ai || false);
 
     } catch (err) {
       logger.error('[UnderstandScreen] Error loading verse:', err);
       setError(err instanceof Error ? err.message : 'Failed to load verse');
+      setIsGenerating(false);
     } finally {
       setIsLoading(false);
     }

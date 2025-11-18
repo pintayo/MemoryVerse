@@ -1,7 +1,7 @@
 logger.log('[HomeScreen] Module loading...');
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
 import { theme } from '../theme';
@@ -322,23 +322,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           }}
           activeOpacity={0.9}
         >
-          {/* Image Background Placeholder - 9:16 aspect ratio */}
+          {/* Image Background - 9:14 aspect ratio */}
+          {/* TO USE YOUR OWN IMAGE: Place story-mode-preview.png (900x1400px) in assets/images/ */}
           <View style={styles.storyModeImageBackground}>
-            {/* Cross illustration as placeholder - replace with actual image later */}
-            <Svg width="120" height="120" viewBox="0 0 120 120" style={styles.storyModeBackgroundIcon}>
-              <Path
-                d="M60 10 L62 50 L100 52 L62 54 L60 92 L58 54 L20 52 L58 50 Z"
-                fill={theme.colors.success.celebratoryGold}
-                opacity="0.2"
-              />
+            {/* SVG Cross as background placeholder */}
+            <Svg width="120" height="120" viewBox="0 0 120 120" style={{ position: 'absolute', opacity: 0.15 }}>
               <Path
                 d="M50 25 L70 25 L70 50 L95 50 L95 70 L70 70 L70 95 L50 95 L50 70 L25 70 L25 50 L50 50 Z"
                 fill={theme.colors.success.celebratoryGold}
-                opacity="0.3"
               />
             </Svg>
 
-            {/* Overlay with white text */}
+            {/* Overlay with text */}
             <View style={styles.storyModeOverlay}>
               <View style={styles.comingSoonBadgeSmall}>
                 <Text style={styles.comingSoonTextSmall}>COMING SOON</Text>
@@ -510,17 +505,9 @@ const styles = StyleSheet.create({
   storyModeImageBackground: {
     width: '100%',
     aspectRatio: 9 / 14, // Slightly wider than 9:16 for better mobile display
-    backgroundColor: theme.colors.primary.darkCharcoal,
-    justifyContent: 'center',
+    backgroundColor: theme.colors.primary.darkCharcoal, // Fallback if image fails to load
+    justifyContent: 'flex-end', // Align overlay to bottom
     alignItems: 'center',
-    position: 'relative',
-  },
-  storyModeBackgroundIcon: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginLeft: -60,
-    marginTop: -60,
   },
   storyModeOverlay: {
     position: 'absolute',
