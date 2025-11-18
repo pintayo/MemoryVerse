@@ -39,4 +39,10 @@ console.log('[components/index] ChapterContext exported');
 export { ChapterSelector } from './ChapterSelector';
 console.log('[components/index] ChapterSelector exported');
 
+export { AchievementsModal } from './AchievementsModal';
+console.log('[components/index] AchievementsModal exported');
+
+export { AchievementUnlockNotification } from './AchievementUnlockNotification';
+console.log('[components/index] AchievementUnlockNotification exported');
+
 console.log('[components/index] ALL COMPONENTS EXPORTED');
