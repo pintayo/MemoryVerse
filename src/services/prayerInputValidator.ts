@@ -15,8 +15,10 @@ const CONFIG = {
   MAX_LENGTH: 1000,         // Maximum characters
   MAX_REQUESTS_PER_DAY: 20, // Safety limit per user
   BLOCKED_WORDS: [
-    // Inappropriate/offensive words
-    'fuck', 'shit', 'damn', 'hell', 'ass', 'bitch', 'bastard',
+    // Only block extreme offensive content and illegal activity
+    // Normal swear words (fuck, shit, damn) are OK - people are sharing their real struggles
+    'nazi', 'hitler', 'terrorist', 'bomb', 'kill myself', 'suicide',
+    'rape', 'molest', 'abuse children',
     // Add more as needed - keep this list updated
   ],
   SUSPICIOUS_PATTERNS: [

@@ -34,6 +34,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const xp = profile?.total_xp || 0;
   const versesLearned = profile?.verses_memorized || 0;
 
+  // Calculate level and XP progress
+  const currentLevel = Math.floor(Math.sqrt(xp / 100)) + 1;
+  const xpForCurrentLevel = Math.pow(currentLevel - 1, 2) * 100;
+  const xpForNextLevel = Math.pow(currentLevel, 2) * 100;
+  const xpInCurrentLevel = xp - xpForCurrentLevel;
+  const xpNeededForLevel = xpForNextLevel - xpForCurrentLevel;
+  const levelProgress = (xpInCurrentLevel / xpNeededForLevel) * 100;
+  const xpToNextLevel = xpForNextLevel - xp;
+
+  // Daily goal tracking (assume goal is 5 verses per day)
+  const DAILY_GOAL = 5;
+  const [versesToday, setVersesToday] = useState(0); // TODO: Track from practice sessions today
+  const dailyGoalProgress = (versesToday / DAILY_GOAL) * 100;
+
+  // Check if user practiced today for streak protection
+  const lastPracticeDate = profile?.last_practice_date;
+  const today = new Date().toDateString();
+  const practicedToday = lastPracticeDate && new Date(lastPracticeDate).toDateString() === today;
+
   // Load today's verse on mount
   useEffect(() => {
     loadTodayVerse();
@@ -200,6 +219,130 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             />
           </View>
         </View>
+
+        {/* Streak Urgency Banner - Show if haven't practiced today */}
+        {!practicedToday && streak > 0 && (
+          <TouchableOpacity
+            style={styles.streakUrgencyBanner}
+            onPress={() => navigation.navigate('Practice')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.streakUrgencyContent}>
+              <View style={styles.streakUrgencyLeft}>
+                <Svg width="32" height="32" viewBox="0 0 24 24">
+                  <Path
+                    d="M12 2C12 2 7 8 7 13C7 17.42 9.58 21 12 21C14.42 21 17 17.42 17 13C17 8 12 2 12 2Z"
+                    fill={theme.colors.secondary.warmTerracotta}
+                  />
+                  <Path
+                    d="M12 6C12 6 9 10 9 13C9 15.21 10.34 17 12 17C13.66 17 15 15.21 15 13C15 10 12 6 12 6Z"
+                    fill={theme.colors.success.celebratoryGold}
+                  />
+                </Svg>
+                <View style={styles.streakUrgencyText}>
+                  <Text style={styles.streakUrgencyTitle}>Protect Your {streak}-Day Streak! 🔥</Text>
+                  <Text style={styles.streakUrgencySubtitle}>
+                    "Train yourself to be godly" - 1 Timothy 4:7
+                  </Text>
+                </View>
+              </View>
+              <Svg width="24" height="24" viewBox="0 0 24 24">
+                <Path
+                  d="M9 6 L15 12 L9 18"
+                  stroke="white"
+                  strokeWidth="2.5"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* XP Progress to Next Level */}
+        <Card variant="warm" style={styles.xpProgressCard}>
+          <View style={styles.xpProgressHeader}>
+            <View style={styles.xpProgressInfo}>
+              <Text style={styles.xpProgressLevel}>LEVEL {currentLevel}</Text>
+              <Text style={styles.xpProgressNext}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
+            </View>
+            <View style={styles.levelBadge}>
+              <Svg width="28" height="28" viewBox="0 0 24 24">
+                <Path
+                  d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
+                  fill={theme.colors.success.celebratoryGold}
+                />
+              </Svg>
+            </View>
+          </View>
+          <View style={styles.xpProgressBarContainer}>
+            <View style={[styles.xpProgressBarFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
+          </View>
+          <Text style={styles.xpProgressText}>
+            Keep going! Every verse brings you closer to spiritual mastery 📖
+          </Text>
+        </Card>
+
+        {/* Daily Goal Widget */}
+        <Card variant="parchment" outlined style={styles.dailyGoalCard}>
+          <View style={styles.dailyGoalHeader}>
+            <Svg width="24" height="24" viewBox="0 0 24 24">
+              <Path
+                d="M12 2C12 2 4 6 4 12C4 18 12 22 12 22C12 22 20 18 20 12C20 6 12 2 12 2Z"
+                fill={theme.colors.accent.burnishedGold}
+              />
+              <Path
+                d="M9 12L11 14L15 10"
+                stroke="white"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={styles.dailyGoalTitle}>Today's Spiritual Goal</Text>
+          </View>
+          <View style={styles.dailyGoalContent}>
+            <View style={styles.dailyGoalCircle}>
+              <Svg width="80" height="80" viewBox="0 0 100 100">
+                {/* Background circle */}
+                <Path
+                  d="M 50 10 A 40 40 0 1 1 49.99 10"
+                  stroke={theme.colors.primary.oatmeal}
+                  strokeWidth="8"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                {/* Progress circle */}
+                <Path
+                  d={`M 50 10 A 40 40 0 ${dailyGoalProgress > 50 ? 1 : 0} 1 ${
+                    50 + 40 * Math.sin((dailyGoalProgress / 100) * 2 * Math.PI)
+                  } ${
+                    50 - 40 * Math.cos((dailyGoalProgress / 100) * 2 * Math.PI)
+                  }`}
+                  stroke={theme.colors.success.celebratoryGold}
+                  strokeWidth="8"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+              </Svg>
+              <View style={styles.dailyGoalCircleText}>
+                <Text style={styles.dailyGoalCount}>{versesToday}/{DAILY_GOAL}</Text>
+              </View>
+            </View>
+            <View style={styles.dailyGoalRight}>
+              <Text style={styles.dailyGoalVersesText}>
+                {versesToday === 0 ? "Let's hide God's Word in your heart today! 💪" :
+                 versesToday < DAILY_GOAL ? `Only ${DAILY_GOAL - versesToday} more verse${DAILY_GOAL - versesToday === 1 ? '' : 's'} to reach your goal! 🎯` :
+                 "Goal crushed! You're building spiritual discipline! 🎉"}
+              </Text>
+              <Text style={styles.dailyGoalScripture}>
+                "I have hidden your word in my heart" - Psalm 119:11
+              </Text>
+            </View>
+          </View>
+        </Card>
 
         {/* Today's Verse Card */}
         <Card variant="cream" outlined style={styles.verseCard}>
@@ -539,6 +682,154 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
+  },
+  // Streak Urgency Banner
+  streakUrgencyBanner: {
+    backgroundColor: theme.colors.secondary.warmTerracotta,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.md,
+  },
+  streakUrgencyContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  streakUrgencyLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: theme.spacing.sm,
+  },
+  streakUrgencyText: {
+    flex: 1,
+  },
+  streakUrgencyTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: 'white',
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 2,
+  },
+  streakUrgencySubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontFamily: theme.typography.fonts.ui.default,
+    fontStyle: 'italic',
+  },
+  // XP Progress Card
+  xpProgressCard: {
+    marginBottom: theme.spacing.md,
+  },
+  xpProgressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  xpProgressInfo: {
+    flex: 1,
+  },
+  xpProgressLevel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 2,
+    letterSpacing: 1,
+  },
+  xpProgressNext: {
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  levelBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.success.celebratoryGold + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  xpProgressBarContainer: {
+    height: 10,
+    backgroundColor: theme.colors.primary.oatmeal,
+    borderRadius: theme.borderRadius.full,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.sm,
+  },
+  xpProgressBarFill: {
+    height: '100%',
+    backgroundColor: theme.colors.success.celebratoryGold,
+    borderRadius: theme.borderRadius.full,
+  },
+  xpProgressText: {
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontStyle: 'italic',
+  },
+  // Daily Goal Card
+  dailyGoalCard: {
+    marginBottom: theme.spacing.lg,
+  },
+  dailyGoalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  dailyGoalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  dailyGoalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  dailyGoalCircle: {
+    position: 'relative',
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dailyGoalCircleText: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dailyGoalCount: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  dailyGoalRight: {
+    flex: 1,
+  },
+  dailyGoalVersesText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.xs,
+    lineHeight: 18,
+  },
+  dailyGoalScripture: {
+    fontSize: 11,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.scripture.default,
+    fontStyle: 'italic',
+    lineHeight: 16,
   },
 });
 

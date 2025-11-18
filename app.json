@@ -6,23 +6,31 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "memoryverse",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#F5F0E8"
     },
+    "privacy": "public",
+    "platforms": ["ios", "android"],
+    "description": "Memorize Scripture like Duolingo. Build daily habits, track your progress, and hide God's Word in your heart with beautiful gamification and AI-powered prayer.",
+    "primaryColor": "#D4C4A8",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.memoryverse.app",
-      "buildNumber": "1.0.0",
+      "bundleIdentifier": "com.pintayo.memoryverse",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "This app does not use the camera.",
-        "NSMicrophoneUsageDescription": "Used for voice recording during prayer (optional).",
-        "NSUserTrackingUsageDescription": "This allows us to provide you with personalized app experiences.",
+        "NSMicrophoneUsageDescription": "Used for voice recording during prayer practice (optional).",
+        "NSUserTrackingUsageDescription": "This allows us to provide you with personalized app experiences and analytics.",
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -30,11 +38,27 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F5F0E8"
       },
-      "package": "com.memoryverse.app",
+      "package": "com.pintayo.memoryverse",
       "versionCode": 1,
       "permissions": [
-        "RECEIVE_BOOT_COMPLETED"
+        "RECEIVE_BOOT_COMPLETED",
+        "RECORD_AUDIO"
       ]
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#D4AF37"
+        }
+      ]
+    ],
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#D4AF37",
+      "androidMode": "default",
+      "androidCollapsedTitle": "MemoryVerse"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -42,7 +66,13 @@
     "extra": {
       "eas": {
         "projectId": "your-project-id-here"
-      }
+      },
+      "privacyPolicyUrl": "https://pintayo.com/privacy.html",
+      "termsOfServiceUrl": "https://pintayo.com/terms.html",
+      "supportEmail": "support@pintayo.com"
+    },
+    "hooks": {
+      "postPublish": []
     }
   }
 }

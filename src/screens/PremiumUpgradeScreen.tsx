@@ -300,11 +300,32 @@ export const PremiumUpgradeScreen = () => {
                     <Text style={styles.priceDetail}>{tier.pricePerMonth}</Text>
                   </View>
 
-                  {/* Show top feature only */}
+                  {/* Show 3 unique features + "and many more" */}
                   <View style={styles.tierFeatures}>
-                    <Text style={styles.tierFeatureText}>
-                      • {tier.features[0]}
-                    </Text>
+                    <View style={styles.bulletPoint}>
+                      <Text style={styles.bulletIcon}>✨</Text>
+                      <Text style={styles.tierFeatureTextHighlight}>
+                        AI-powered daily prayers personalized just for you
+                      </Text>
+                    </View>
+                    <View style={styles.bulletPoint}>
+                      <Text style={styles.bulletIcon}>📖</Text>
+                      <Text style={styles.tierFeatureTextHighlight}>
+                        Access to all premium Bible translations
+                      </Text>
+                    </View>
+                    <View style={styles.bulletPoint}>
+                      <Text style={styles.bulletIcon}>🔥</Text>
+                      <Text style={styles.tierFeatureTextHighlight}>
+                        Unlimited streak freezes to protect your progress
+                      </Text>
+                    </View>
+                    <View style={styles.bulletPoint}>
+                      <Text style={styles.bulletIcon}>🎁</Text>
+                      <Text style={styles.tierFeatureTextMore}>
+                        And many more premium features...
+                      </Text>
+                    </View>
                   </View>
                 </TouchableOpacity>
               ))}
@@ -625,15 +646,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tierFeatures: {
-    marginTop: theme.spacing.xs,
-    paddingTop: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
     borderTopColor: theme.colors.primary.oatmeal,
+    gap: theme.spacing.xs,
+  },
+  bulletPoint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  bulletIcon: {
+    fontSize: 14,
+    lineHeight: 18,
   },
   tierFeatureText: {
     fontSize: 12,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
+  },
+  tierFeatureTextHighlight: {
+    flex: 1,
+    fontSize: 12,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  tierFeatureTextMore: {
+    flex: 1,
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
 });
 
