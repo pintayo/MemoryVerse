@@ -253,7 +253,7 @@ export const PremiumUpgradeScreen = () => {
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Unlock Premium</Text>
           <Text style={styles.heroSubtitle}>
-            Deepen your faith with unlimited AI prayers, advanced Bible study tools, and early access to Story Mode
+            Deepen your faith with unlimited AI prayers, streak protection, verse insights, and early Story Mode access
           </Text>
         </View>
 
@@ -303,7 +303,7 @@ export const PremiumUpgradeScreen = () => {
                     <Text style={styles.priceDetail}>{tier.pricePerMonth}</Text>
                   </View>
 
-                  {/* Concrete, measurable premium features */}
+                  {/* Concrete, measurable premium features - ONLY WHAT'S ACTUALLY AVAILABLE */}
                   <View style={styles.tierFeatures}>
                     <View style={styles.bulletPoint}>
                       <Text style={styles.bulletIcon}>✨</Text>
@@ -312,27 +312,21 @@ export const PremiumUpgradeScreen = () => {
                       </Text>
                     </View>
                     <View style={styles.bulletPoint}>
-                      <Text style={styles.bulletIcon}>📖</Text>
-                      <Text style={styles.tierFeatureTextHighlight}>
-                        7 Bible translations (free: 1) - Study in KJV, NIV, ESV, NLT & more
-                      </Text>
-                    </View>
-                    <View style={styles.bulletPoint}>
                       <Text style={styles.bulletIcon}>🔥</Text>
                       <Text style={styles.tierFeatureTextHighlight}>
-                        Unlimited streak freezes (free: 1/month) - Never lose your progress
+                        Streak freeze protection (once per week) - Never lose your hard-earned streak
                       </Text>
                     </View>
                     <View style={styles.bulletPoint}>
-                      <Text style={styles.bulletIcon}>📊</Text>
+                      <Text style={styles.bulletIcon}>📖</Text>
                       <Text style={styles.tierFeatureTextHighlight}>
-                        Advanced analytics - Track mastery levels, verse retention & study patterns
+                        AI-generated verse context - Understand every verse deeply
                       </Text>
                     </View>
                     <View style={styles.bulletPoint}>
                       <Text style={styles.bulletIcon}>📺</Text>
                       <Text style={styles.tierFeatureTextMore}>
-                        Early access to Story Mode (launching soon!)
+                        Early access to Story Mode (launching in 4-6 weeks!)
                       </Text>
                     </View>
                   </View>

@@ -116,13 +116,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     );
   };
 
-  // Daily checklist tasks
+  // Daily checklist tasks (free user-friendly, no premium features)
   const dailyTasks = [
     { id: 'verse', icon: '📖', label: 'Read today\'s verse', completed: todayVerse !== null },
     { id: 'practice', icon: '🎯', label: 'Practice a verse', completed: false }, // TODO: Track from practice
-    { id: 'pray', icon: '🙏', label: 'Pray with AI', completed: false }, // TODO: Track from prayer
+    { id: 'understand', icon: '💡', label: 'Understand a verse', completed: false }, // TODO: Track from understand
     { id: 'chapter', icon: '📚', label: 'Read 1 Bible chapter', completed: false }, // TODO: Track from Bible
-    { id: 'share', icon: '💬', label: 'Share with a friend', completed: false }, // TODO: Track from share
+    { id: 'review', icon: '🔄', label: 'Review learned verses', completed: false }, // TODO: Track from review
   ];
 
   const actionButtons = [
@@ -244,14 +244,79 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           ) : null}
         </Card>
 
-        {/* Story Mode Teaser - Visual with Image Background */}
+        {/* Daily Checklist - Simple & Clean */}
+        <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
+          <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
+          <Text style={styles.checklistSubtitle}>Complete these to build your faith daily</Text>
+
+          {dailyTasks.map((task) => (
+            <View key={task.id} style={styles.checklistItem}>
+              <View style={[styles.checkbox, task.completed && styles.checkboxCompleted]}>
+                {task.completed && (
+                  <Svg width="12" height="12" viewBox="0 0 12 12">
+                    <Path
+                      d="M2 6 L5 9 L10 3"
+                      stroke="white"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                )}
+              </View>
+              <Text style={styles.checklistLabel}>
+                {task.icon} {task.label}
+              </Text>
+            </View>
+          ))}
+        </Card>
+
+        {/* Quick Actions - Full Width List (calmer vibe) */}
+        <View style={styles.actionsContainer}>
+          {actionButtons.map((action, index) => (
+            <TouchableOpacity
+              key={action.id}
+              style={[
+                styles.actionButton,
+                index === actionButtons.length - 1 && styles.actionButtonLast
+              ]}
+              onPress={action.onPress}
+              activeOpacity={0.8}
+            >
+              <View style={styles.actionButtonContent}>
+                <View style={[styles.actionIconContainer, { backgroundColor: getActionColor(action.id) }]}>
+                  {renderActionIcon(action.icon)}
+                </View>
+                <View style={styles.actionTextContainer}>
+                  <Text style={styles.actionTitle}>{action.title}</Text>
+                  <Text style={styles.actionDescription}>{action.description}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Progress Summary - Compact */}
+        {versesLearned > 0 && (
+          <View style={styles.progressSummary}>
+            <Text style={styles.progressSummaryText}>
+              📚 {versesLearned} verses memorized · 🔥 {streak} day streak
+            </Text>
+          </View>
+        )}
+
+        {/* Story Mode Teaser - Visual with Image Background (Moved to Bottom) */}
         <TouchableOpacity
           style={styles.storyModeImageCard}
           onPress={() => {
             Alert.alert(
               "Story Mode Coming Soon! 🎬",
               "Walk in Jesus' footsteps through interactive stories.\n\nSeason 1 launches in 4-6 weeks with weekly episodes!",
-              [{ text: "Notify Me!", style: "default" }]
+              [
+                { text: "Maybe Later", style: "cancel" },
+                { text: "Notify Me!", style: "default" }
+              ]
             );
             logger.log('[HomeScreen] User interested in Story Mode');
           }}
@@ -288,60 +353,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
           </View>
         </TouchableOpacity>
-
-        {/* Daily Checklist - Simple & Clean */}
-        <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
-          <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
-          <Text style={styles.checklistSubtitle}>Complete these to build your faith daily</Text>
-
-          {dailyTasks.map((task) => (
-            <View key={task.id} style={styles.checklistItem}>
-              <View style={[styles.checkbox, task.completed && styles.checkboxCompleted]}>
-                {task.completed && (
-                  <Svg width="12" height="12" viewBox="0 0 12 12">
-                    <Path
-                      d="M2 6 L5 9 L10 3"
-                      stroke="white"
-                      strokeWidth="2"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                )}
-              </View>
-              <Text style={styles.checklistLabel}>
-                {task.icon} {task.label}
-              </Text>
-            </View>
-          ))}
-        </Card>
-
-        {/* Quick Actions - Simplified */}
-        <View style={styles.quickActionsGrid}>
-          {actionButtons.slice(0, 4).map((action) => (
-            <TouchableOpacity
-              key={action.id}
-              style={styles.quickActionCard}
-              onPress={action.onPress}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.quickActionIcon, { backgroundColor: getActionColor(action.id) }]}>
-                {renderActionIcon(action.icon)}
-              </View>
-              <Text style={styles.quickActionTitle}>{action.title}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Progress Summary - Compact */}
-        {versesLearned > 0 && (
-          <View style={styles.progressSummary}>
-            <Text style={styles.progressSummaryText}>
-              📚 {versesLearned} verses memorized · 🔥 {streak} day streak
-            </Text>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -602,35 +613,46 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.ui.default,
     flex: 1,
   },
-  // Quick Actions Grid
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
+  // Quick Actions - Full Width List
+  actionsContainer: {
     marginBottom: theme.spacing.lg,
   },
-  quickActionCard: {
-    width: '47%',
+  actionButton: {
     backgroundColor: theme.colors.background.lightCream,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
-    alignItems: 'center',
+    marginBottom: theme.spacing.md,
     ...theme.shadows.sm,
   },
-  quickActionIcon: {
+  actionButtonLast: {
+    marginBottom: 0,
+  },
+  actionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIconContainer: {
     width: 48,
     height: 48,
     borderRadius: theme.borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginRight: theme.spacing.md,
   },
-  quickActionTitle: {
-    fontSize: 14,
+  actionTextContainer: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
     fontFamily: theme.typography.fonts.ui.default,
-    textAlign: 'center',
+  },
+  actionDescription: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   // Progress Summary
   progressSummary: {
