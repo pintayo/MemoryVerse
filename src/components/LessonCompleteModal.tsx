@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
-    ...theme.shadows.xl,
+    ...theme.shadows.lg,
   },
   iconContainer: {
     marginBottom: theme.spacing.lg,

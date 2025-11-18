@@ -292,7 +292,7 @@ const getActionColor = (id: string): string => {
   const colors: { [key: string]: string } = {
     read: theme.colors.secondary.softClay,
     understand: theme.colors.secondary.lightGold,
-    review: theme.colors.primary.sageGreen,
+    review: theme.colors.success.mutedOlive,
     practice: theme.colors.success.mutedOlive,
     pray: theme.colors.secondary.warmTerracotta,
   };

@@ -13,6 +13,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isGuest: boolean; // User is browsing without an account
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -145,6 +146,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     session,
     isLoading,
     isAuthenticated: !!user,
+    isGuest: !user, // User is guest if not authenticated
     signOut,
     refreshProfile,
   };

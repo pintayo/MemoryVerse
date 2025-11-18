@@ -1,6 +1,7 @@
 /**
  * Favorites Screen
  * Shows all favorited verses with category filtering and sorting
+ * Supports both authenticated users and guests (with sign-up prompts)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -21,13 +22,16 @@ import { favoritesService, FavoriteVerse } from '../services/favoritesService';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 import { Card, StarButton } from '../components';
+import { useGuestProtection } from '../hooks/useGuestProtection';
+import { getGuestFavorites } from '../services/guestModeService';
 
 interface FavoritesScreenProps {
   navigation: any;
 }
 
 export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
+  const { guardAction, PromptComponent } = useGuestProtection();
   const [favorites, setFavorites] = useState<FavoriteVerse[]>([]);
   const [filteredFavorites, setFilteredFavorites] = useState<FavoriteVerse[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -37,31 +41,55 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Check if guest is viewing favorites - show prompt on first view
+  useEffect(() => {
+    if (isGuest && favorites.length === 0) {
+      // Show prompt for guests viewing favorites
+      guardAction('favorites');
+    }
+  }, [isGuest, favorites.length]);
+
   useEffect(() => {
     loadFavorites();
-  }, [user?.id]);
+  }, [user?.id, isGuest]);
 
   useEffect(() => {
     applyFilters();
   }, [favorites, selectedCategory, sortBy]);
 
   const loadFavorites = async () => {
-    if (!user?.id) return;
-
     try {
       setIsLoading(true);
 
-      const [favs, cats] = await Promise.all([
-        favoritesService.getFavorites(user.id, {
-          translation: 'KJV',
-          sortBy,
-        }),
-        favoritesService.getFavoriteCategories(user.id),
-      ]);
+      if (isGuest) {
+        // Load guest favorites from local storage
+        const guestFavIds = await getGuestFavorites();
 
-      setFavorites(favs);
-      setCategories(cats);
-      logger.log(`[FavoritesScreen] Loaded ${favs.length} favorites, ${cats.length} categories`);
+        if (guestFavIds.length === 0) {
+          setFavorites([]);
+          setCategories([]);
+          logger.log('[FavoritesScreen] No guest favorites');
+        } else {
+          // TODO: Load verse details for guest favorites
+          // For now, just set empty array
+          setFavorites([]);
+          setCategories([]);
+          logger.log(`[FavoritesScreen] Guest has ${guestFavIds.length} favorites (details not loaded yet)`);
+        }
+      } else if (user?.id) {
+        // Load authenticated user favorites from database
+        const [favs, cats] = await Promise.all([
+          favoritesService.getFavorites(user.id, {
+            translation: 'KJV',
+            sortBy,
+          }),
+          favoritesService.getFavoriteCategories(user.id),
+        ]);
+
+        setFavorites(favs);
+        setCategories(cats);
+        logger.log(`[FavoritesScreen] Loaded ${favs.length} favorites, ${cats.length} categories`);
+      }
     } catch (error) {
       logger.error('[FavoritesScreen] Error loading favorites:', error);
       Alert.alert('Error', 'Failed to load favorites. Please try again.');
@@ -174,7 +202,16 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
           <Text style={styles.emptyText}>
             Tap the star icon on any verse to add it to your favorites
           </Text>
+          {isGuest && (
+            <TouchableOpacity
+              style={styles.signUpButton}
+              onPress={() => navigation.navigate('Signup')}
+            >
+              <Text style={styles.signUpButtonText}>Sign Up to Save Favorites</Text>
+            </TouchableOpacity>
+          )}
         </View>
+        {PromptComponent}
       </SafeAreaView>
     );
   }
@@ -327,6 +364,9 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
             : `${favorites.length} favorite${favorites.length !== 1 ? 's' : ''}`}
         </Text>
       </View>
+
+      {/* Sign-up prompt for guests */}
+      {PromptComponent}
     </SafeAreaView>
   );
 }
@@ -542,6 +582,19 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.caption.fontSize,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  signUpButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.lg,
+    marginTop: theme.spacing.lg,
+  },
+  signUpButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
   },
 });

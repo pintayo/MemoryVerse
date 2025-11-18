@@ -3,6 +3,9 @@
  * Manages in-app purchases and subscriptions via RevenueCat
  */
 
+// COMMENTED OUT: react-native-purchases not available in Expo Go
+// Uncomment when building standalone app with EAS Build
+/*
 import Purchases, {
   PurchasesOfferings,
   PurchasesOffering,
@@ -10,6 +13,11 @@ import Purchases, {
   CustomerInfo,
   LOG_LEVEL,
 } from 'react-native-purchases';
+*/
+
+// Temporary types for development without react-native-purchases
+type PurchasesPackage = any;
+type CustomerInfo = any;
 import { Platform } from 'react-native';
 import { logger } from '../utils/logger';
 import { supabase } from '../lib/supabase';
@@ -48,6 +56,13 @@ class PurchaseService {
    * Call this once when app starts or user logs in
    */
   async initialize(userId?: string): Promise<void> {
+    // DISABLED: react-native-purchases not available in Expo Go
+    logger.warn('[PurchaseService] Purchases disabled - using fallback mode');
+    this.initialized = false;
+    this.currentUserId = userId;
+    return;
+
+    /* COMMENTED OUT - Uncomment when building with EAS Build
     if (this.initialized && this.currentUserId === userId) {
       logger.log('[PurchaseService] Already initialized for this user');
       return;
@@ -83,12 +98,18 @@ class PurchaseService {
       logger.error('[PurchaseService] Initialization failed:', error);
       // Don't throw - allow app to continue without purchases
     }
+    */
   }
 
   /**
    * Get available subscription offerings from RevenueCat
    */
   async getOfferings(): Promise<SubscriptionTier[]> {
+    // DISABLED: react-native-purchases not available in Expo Go
+    logger.warn('[PurchaseService] Using fallback offerings (purchases disabled)');
+    return this.getFallbackOfferings();
+
+    /* COMMENTED OUT - Uncomment when building with EAS Build
     try {
       if (!this.initialized) {
         logger.warn('[PurchaseService] Not initialized, returning empty offerings');
@@ -139,12 +160,22 @@ class PurchaseService {
       logger.error('[PurchaseService] Error fetching offerings:', error);
       return this.getFallbackOfferings();
     }
+    */
   }
 
   /**
    * Purchase a subscription package
    */
   async purchasePackage(pkg: PurchasesPackage): Promise<PurchaseResult> {
+    // DISABLED: react-native-purchases not available in Expo Go
+    logger.warn('[PurchaseService] Purchases disabled in development mode');
+    return {
+      success: false,
+      isPremium: false,
+      error: 'Purchases not available in Expo Go. Build with EAS to enable.',
+    };
+
+    /* COMMENTED OUT - Uncomment when building with EAS Build
     try {
       if (!this.initialized) {
         return {
@@ -193,12 +224,22 @@ class PurchaseService {
         error: error.message || 'Purchase failed',
       };
     }
+    */
   }
 
   /**
    * Restore previous purchases
    */
   async restorePurchases(): Promise<PurchaseResult> {
+    // DISABLED: react-native-purchases not available in Expo Go
+    logger.warn('[PurchaseService] Restore disabled in development mode');
+    return {
+      success: false,
+      isPremium: false,
+      error: 'Purchases not available in Expo Go. Build with EAS to enable.',
+    };
+
+    /* COMMENTED OUT - Uncomment when building with EAS Build
     try {
       if (!this.initialized) {
         return {
@@ -226,21 +267,32 @@ class PurchaseService {
         error: error.message || 'Restore failed',
       };
     }
+    */
   }
 
   /**
    * Check if user has active premium subscription
    */
   checkPremiumStatus(customerInfo: CustomerInfo): boolean {
+    // DISABLED: react-native-purchases not available in Expo Go
+    return false;
+
+    /* COMMENTED OUT - Uncomment when building with EAS Build
     const entitlements = customerInfo.entitlements.active;
     // Check for 'MemoryVerse' entitlement (as configured in RevenueCat)
     return 'MemoryVerse' in entitlements;
+    */
   }
 
   /**
    * Get current customer info from RevenueCat
    */
   async getCustomerInfo(): Promise<CustomerInfo | null> {
+    // DISABLED: react-native-purchases not available in Expo Go
+    logger.warn('[PurchaseService] Customer info disabled in development mode');
+    return null;
+
+    /* COMMENTED OUT - Uncomment when building with EAS Build
     try {
       if (!this.initialized) {
         logger.warn('[PurchaseService] Not initialized');
@@ -253,6 +305,7 @@ class PurchaseService {
       logger.error('[PurchaseService] Error getting customer info:', error);
       return null;
     }
+    */
   }
 
   /**
@@ -409,6 +462,21 @@ class PurchaseService {
   private getFallbackOfferings(): SubscriptionTier[] {
     return [
       {
+        id: 'com.pintayo.memoryverse.pro.basic.monthly',
+        title: 'Basic',
+        price: '€4.99',
+        period: '/month',
+        pricePerMonth: '€4.99/mo',
+        features: [
+          '1 AI prayer per day',
+          'Daily spiritual encouragement',
+          '1 streak freeze per month',
+          'Basic verse analytics',
+          'Email support',
+        ],
+        isRecommended: false,
+      },
+      {
         id: 'com.pintayo.memoryverse.pro.standard.monthly',
         title: 'Standard',
         price: '€9.99',
@@ -440,21 +508,6 @@ class PurchaseService {
           'All Bible translations',
           'Priority support',
           'Early access to new features',
-        ],
-        isRecommended: false,
-      },
-      {
-        id: 'com.pintayo.memoryverse.pro.basic.monthly',
-        title: 'Basic',
-        price: '€4.99',
-        period: '/month',
-        pricePerMonth: '€4.99/mo',
-        features: [
-          '1 AI prayer per day',
-          'Daily spiritual encouragement',
-          '1 streak freeze per month',
-          'Basic verse analytics',
-          'Email support',
         ],
         isRecommended: false,
       },

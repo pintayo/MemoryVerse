@@ -101,6 +101,15 @@ export interface FeatureFlagsConfig {
   aiStudyBuddy: FeatureModule;
   aiMemoryAids: FeatureModule;
 
+  // NEW PREMIUM FEATURES (V1.2 - IN DEVELOPMENT)
+  advancedAnalyticsDashboard: FeatureModule; // Detailed charts, trends, predictions
+  customVerseCollections: FeatureModule; // Create, organize, share custom collections
+  exportProgressReports: FeatureModule; // Export as PDF/CSV with beautiful formatting
+  enhancedPrayerCoaching: FeatureModule; // Conversation history, insights, trends
+  multipleTranslations: FeatureModule; // NIV, KJV, NLT, NASB support
+  verseComparisonTool: FeatureModule; // Side-by-side translation comparison
+  learningPathRecommendations: FeatureModule; // AI-powered personalized study paths
+
   // DEVELOPER FEATURES
   debugMode: FeatureModule;
   mockData: FeatureModule;
@@ -557,6 +566,66 @@ const baseFeatureFlags: FeatureFlagsConfig = {
     comingSoon: true,
     description: 'AI-generated mnemonics and memory techniques',
     version: 'v3.0',
+  },
+
+  // ============================================
+  // NEW PREMIUM FEATURES (v1.2 - IN DEVELOPMENT)
+  // ============================================
+
+  advancedAnalyticsDashboard: {
+    enabled: false, // Hidden until ready for release
+    premium: true,
+    comingSoon: true,
+    description: 'Comprehensive analytics with charts, trends, and predictive insights',
+    version: 'v1.2',
+  },
+
+  customVerseCollections: {
+    enabled: false, // Hidden until ready for release
+    premium: true,
+    comingSoon: true,
+    description: 'Create, organize, and share custom verse collections with others',
+    version: 'v1.2',
+  },
+
+  exportProgressReports: {
+    enabled: false, // Hidden until ready for release
+    premium: true,
+    comingSoon: true,
+    description: 'Export beautifully formatted progress reports as PDF or CSV',
+    version: 'v1.2',
+  },
+
+  enhancedPrayerCoaching: {
+    enabled: false, // Hidden until ready for release
+    premium: true,
+    comingSoon: true,
+    description: 'Advanced AI prayer coaching with conversation history and insights',
+    version: 'v1.2',
+  },
+
+  multipleTranslations: {
+    enabled: false, // Hidden until ready for release
+    premium: true,
+    comingSoon: true,
+    description: 'Access NIV, KJV, NLT, NASB, and more Bible translations',
+    version: 'v1.2',
+  },
+
+  verseComparisonTool: {
+    enabled: false, // Hidden until ready for release
+    premium: true,
+    comingSoon: true,
+    description: 'Compare verses side-by-side across multiple translations',
+    version: 'v1.2',
+  },
+
+  learningPathRecommendations: {
+    enabled: false, // Hidden until ready for release
+    premium: true,
+    comingSoon: true,
+    description: 'AI-powered personalized learning paths based on your progress',
+    version: 'v1.2',
   },
 
   // ============================================

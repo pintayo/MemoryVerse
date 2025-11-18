@@ -16,6 +16,7 @@ import { Card } from '../components';
 import { theme } from '../theme';
 import { spacedRepetitionService, ReviewVerse, ReviewStats } from '../services/spacedRepetitionService';
 import { useAuth } from '../contexts/AuthContext';
+import { useGuestProtection } from '../hooks/useGuestProtection';
 import { logger } from '../utils/logger';
 
 const TUTORIAL_DISMISSED_KEY = 'review_tutorial_dismissed';
@@ -25,7 +26,8 @@ interface ReviewScreenProps {
 }
 
 const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, isGuest } = useAuth();
+  const { guardAction, PromptComponent } = useGuestProtection();
   const [reviewsByUrgency, setReviewsByUrgency] = useState<{
     overdue: ReviewVerse[];
     dueToday: ReviewVerse[];
@@ -37,9 +39,14 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    loadReviews();
-    checkTutorialStatus();
-  }, []);
+    if (isGuest) {
+      guardAction('progress');
+      setIsLoading(false);
+    } else {
+      loadReviews();
+      checkTutorialStatus();
+    }
+  }, [isGuest]);
 
   const checkTutorialStatus = async () => {
     try {
@@ -302,13 +309,60 @@ const ReviewScreen: React.FC<ReviewScreenProps> = ({ navigation }) => {
     );
   };
 
-  if (isLoading) {
+  if (isLoading && !isGuest) {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
           <Text style={styles.loadingText}>Loading reviews...</Text>
         </View>
+      </View>
+    );
+  }
+
+  // Guest UI - Show nice message encouraging sign-up
+  if (isGuest) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.guestContainer}>
+          <Svg width="120" height="120" viewBox="0 0 120 120">
+            <Circle cx="60" cy="60" r="50" fill={theme.colors.success.celebratoryGold} opacity="0.2" />
+            <Path
+              d="M40 60 L55 75 L80 45"
+              stroke={theme.colors.success.celebratoryGold}
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </Svg>
+          <Text style={styles.guestTitle}>Track Your Reviews</Text>
+          <Text style={styles.guestMessage}>
+            Sign up to use spaced repetition and track which verses need review!
+          </Text>
+
+          <View style={styles.guestBenefits}>
+            <Text style={styles.guestBenefitItem}>📜 Spaced repetition system</Text>
+            <Text style={styles.guestBenefitItem}>📖 Track verse retention</Text>
+            <Text style={styles.guestBenefitItem}>✝️ Review at optimal times</Text>
+            <Text style={styles.guestBenefitItem}>📊 View progress statistics</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.guestSignUpButton}
+            onPress={() => navigation.navigate('Signup')}
+          >
+            <Text style={styles.guestSignUpButtonText}>Create Free Account</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.guestLoginButton}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.guestLoginButtonText}>I Have an Account</Text>
+          </TouchableOpacity>
+        </View>
+        {PromptComponent}
       </View>
     );
   }
@@ -649,6 +703,65 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   emptySubtext: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+  },
+  // Guest UI Styles
+  guestContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  guestTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+  },
+  guestMessage: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: theme.spacing.xl,
+  },
+  guestBenefits: {
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.xl,
+    gap: theme.spacing.sm,
+  },
+  guestBenefitItem: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  guestSignUpButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xxl,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.md,
+    width: '100%',
+    maxWidth: 300,
+  },
+  guestSignUpButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+  },
+  guestLoginButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  guestLoginButtonText: {
     fontSize: theme.typography.ui.body.fontSize,
     color: theme.colors.text.tertiary,
     fontFamily: theme.typography.fonts.ui.default,

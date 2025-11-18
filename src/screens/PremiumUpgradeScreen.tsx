@@ -249,23 +249,13 @@ export const PremiumUpgradeScreen = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Hero Section */}
+        {/* Compact Hero */}
         <View style={styles.hero}>
-          <Svg width="64" height="64" viewBox="0 0 24 24" style={styles.heroIcon}>
-            <Path
-              d="M12 2 L15 9 L22 9 L17 14 L19 21 L12 17 L5 21 L7 14 L2 9 L9 9 Z"
-              fill={theme.colors.accent.burnishedGold}
-            />
-          </Svg>
           <Text style={styles.heroTitle}>Unlock Premium</Text>
-          <Text style={styles.heroSubtitle}>
-            Accelerate your Bible memorization with powerful premium features
-          </Text>
         </View>
 
         {/* Pricing Plans */}
         <View style={styles.pricingSection}>
-          <Text style={styles.sectionTitle}>Choose Your Plan</Text>
 
           {isLoadingOfferings ? (
             <View style={styles.loadingOfferings}>
@@ -286,10 +276,16 @@ export const PremiumUpgradeScreen = () => {
                   style={[
                     styles.pricingCard,
                     selectedTier?.id === tier.id && styles.pricingCardSelected,
+                    tier.isRecommended && styles.pricingCardRecommended,
                   ]}
                   onPress={() => setSelectedTier(tier)}
                   disabled={isPurchasing}
                 >
+                  {tier.isRecommended && (
+                    <View style={styles.recommendedBadge}>
+                      <Text style={styles.recommendedText}>Recommended</Text>
+                    </View>
+                  )}
                   {tier.savings && (
                     <View style={styles.savingsBadge}>
                       <Text style={styles.savingsText}>{tier.savings}</Text>
@@ -304,74 +300,16 @@ export const PremiumUpgradeScreen = () => {
                     <Text style={styles.priceDetail}>{tier.pricePerMonth}</Text>
                   </View>
 
-                  {/* Show features for this specific tier */}
+                  {/* Show top feature only */}
                   <View style={styles.tierFeatures}>
-                    {tier.features.slice(0, 3).map((feature, index) => (
-                      <Text key={index} style={styles.tierFeatureText}>
-                        • {feature}
-                      </Text>
-                    ))}
-                    {tier.features.length > 3 && (
-                      <Text style={styles.tierFeatureText}>
-                        • And {tier.features.length - 3} more...
-                      </Text>
-                    )}
+                    <Text style={styles.tierFeatureText}>
+                      • {tier.features[0]}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}
             </>
           )}
-        </View>
-
-        {/* Premium Features */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Premium Features</Text>
-          {premiumFeatureKeys.map((key) => {
-            const feature = featureFlags[key as keyof typeof featureFlags];
-            const isAvailable = feature.enabled;
-
-            return (
-              <View
-                key={key}
-                style={[
-                  styles.featureRow,
-                  !isAvailable && styles.featureRowDisabled
-                ]}
-              >
-                <Svg width="24" height="24" viewBox="0 0 24 24" style={styles.checkmark}>
-                  <Path
-                    d="M5 12 L10 17 L20 7"
-                    stroke={isAvailable ? theme.colors.accent.burnishedGold : theme.colors.text.tertiary}
-                    strokeWidth="2.5"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-                <View style={styles.featureText}>
-                  <View style={styles.featureNameRow}>
-                    <Text style={[
-                      styles.featureName,
-                      !isAvailable && styles.featureNameDisabled
-                    ]}>
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </Text>
-                    {!isAvailable && (
-                      <View style={styles.comingSoonBadge}>
-                        <Text style={styles.comingSoonText}>Coming Soon</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={[
-                    styles.featureDescription,
-                    !isAvailable && styles.featureDescriptionDisabled
-                  ]}>
-                    {feature.description}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
         </View>
 
         {/* Upgrade Button */}
@@ -413,33 +351,32 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.lightCream,
   },
   content: {
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
   },
   hero: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-    paddingVertical: theme.spacing.xl,
+    marginBottom: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
   },
   heroIcon: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: 22,
     fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.sm,
   },
   heroSubtitle: {
-    fontSize: theme.typography.ui.body.fontSize,
+    fontSize: theme.typography.ui.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 20,
     paddingHorizontal: theme.spacing.md,
   },
   pricingSection: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.sm,
   },
   sectionTitle: {
     fontSize: theme.typography.ui.heading.fontSize,
@@ -450,9 +387,9 @@ const styles = StyleSheet.create({
   },
   pricingCard: {
     backgroundColor: 'white',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
     borderWidth: 2,
     borderColor: theme.colors.primary.mutedStone,
     position: 'relative',
@@ -460,6 +397,26 @@ const styles = StyleSheet.create({
   pricingCardSelected: {
     borderColor: theme.colors.accent.burnishedGold,
     backgroundColor: theme.colors.background.lightCream,
+  },
+  pricingCardRecommended: {
+    borderColor: theme.colors.secondary.lightGold,
+    borderWidth: 3,
+  },
+  recommendedBadge: {
+    position: 'absolute',
+    top: -8,
+    right: theme.spacing.sm,
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.full,
+    zIndex: 1,
+  },
+  recommendedText: {
+    color: theme.colors.text.primary,
+    fontSize: 10,
+    fontWeight: '700',
+    fontFamily: theme.typography.fonts.ui.default,
   },
   savingsBadge: {
     position: 'absolute',
@@ -480,19 +437,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   planName: {
-    fontSize: theme.typography.ui.heading.fontSize,
+    fontSize: 16,
     fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 2,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: theme.spacing.xs,
+    marginBottom: 0,
   },
   price: {
-    fontSize: 40,
+    fontSize: 26,
     fontWeight: '700',
     color: theme.colors.accent.burnishedGold,
     fontFamily: theme.typography.fonts.ui.default,
@@ -504,17 +461,17 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   priceDetail: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
+    fontSize: 12,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
   },
   section: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   featureRowDisabled: {
     opacity: 0.5,
@@ -570,12 +527,13 @@ const styles = StyleSheet.create({
   upgradeButton: {
     backgroundColor: theme.colors.accent.burnishedGold,
     borderRadius: theme.borderRadius.lg,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   upgradeButtonDisabled: {
     opacity: 0.6,
@@ -667,16 +625,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tierFeatures: {
-    marginTop: theme.spacing.md,
-    paddingTop: theme.spacing.md,
+    marginTop: theme.spacing.xs,
+    paddingTop: theme.spacing.xs,
     borderTopWidth: 1,
     borderTopColor: theme.colors.primary.oatmeal,
   },
   tierFeatureText: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
+    fontSize: 12,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.xs,
   },
 });
 

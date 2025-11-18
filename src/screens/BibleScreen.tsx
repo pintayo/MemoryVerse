@@ -605,7 +605,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.cream,
+    backgroundColor: theme.colors.background.lightCream,
   },
   header: {
     backgroundColor: theme.colors.background.lightCream,
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background.cream,
+    backgroundColor: theme.colors.background.lightCream,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: theme.colors.primary.darkCharcoal,
+    color: theme.colors.text.primary,
     marginBottom: 12,
   },
   bookItem: {
@@ -806,7 +806,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   contextButton: {
-    backgroundColor: theme.colors.background.cream,
+    backgroundColor: theme.colors.background.lightCream,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
@@ -845,7 +845,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: theme.colors.secondary.lightGold,
-    backgroundColor: theme.colors.background.cream,
+    backgroundColor: theme.colors.background.lightCream,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
