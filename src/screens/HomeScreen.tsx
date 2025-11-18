@@ -7,6 +7,7 @@ import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../comp
 import { theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
 import { verseService } from '../services/verseService';
+import { getTodaysDailyVerse } from '../services/dailyVerseService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
@@ -43,8 +44,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       setIsLoading(true);
       setError(null);
 
-      // Get today's verse with 24-hour caching
-      const verse = await verseService.getTodayVerseWithCache('KJV');
+      // Get today's verse - synchronized for all users
+      const verse = await getTodaysDailyVerse('KJV');
 
       if (verse) {
         setTodayVerse(verse);

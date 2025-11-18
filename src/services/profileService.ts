@@ -94,6 +94,75 @@ export const profileService = {
   },
 
   /**
+   * Record daily practice and update streak
+   * Should be called after successful practice session
+   */
+  async recordDailyPractice(userId: string): Promise<{ streak: number; isNewStreak: boolean }> {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Check if user already practiced today
+      const { data: todaySession } = await supabase
+        .from('practice_sessions')
+        .select('created_at')
+        .eq('user_id', userId)
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lte('created_at', `${today}T23:59:59.999Z`)
+        .limit(1);
+
+      const practicedToday = todaySession && todaySession.length > 0;
+
+      // Get current profile
+      const profile = await this.getProfile(userId);
+      if (!profile) throw new Error('Profile not found');
+
+      let newStreak = profile.current_streak;
+      let isNewStreak = false;
+
+      if (!practicedToday) {
+        // This is the first practice today, check if streak should continue
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        const { data: yesterdaySession } = await supabase
+          .from('practice_sessions')
+          .select('created_at')
+          .eq('user_id', userId)
+          .gte('created_at', `${yesterdayStr}T00:00:00.000Z`)
+          .lte('created_at', `${yesterdayStr}T23:59:59.999Z`)
+          .limit(1);
+
+        const practicedYesterday = yesterdaySession && yesterdaySession.length > 0;
+
+        if (practicedYesterday || profile.current_streak === 0) {
+          // Continue or start streak
+          newStreak = profile.current_streak + 1;
+          isNewStreak = true;
+        } else {
+          // Streak broken, start over
+          newStreak = 1;
+          isNewStreak = true;
+        }
+
+        // Update profile with new streak
+        await this.updateStreak(userId, newStreak);
+      }
+
+      return {
+        streak: newStreak,
+        isNewStreak,
+      };
+    } catch (error) {
+      logger.error('[profileService] Error recording daily practice:', error);
+      return {
+        streak: 0,
+        isNewStreak: false,
+      };
+    }
+  },
+
+  /**
    * Calculate user level based on XP
    * Level formula: Level = floor(sqrt(XP / 100)) + 1
    */

@@ -27,6 +27,7 @@ export interface Database {
           // Premium
           is_premium: boolean;
           premium_expires_at: string | null;
+          subscription_tier: string | null;
         };
         Insert: {
           id: string;
@@ -45,6 +46,7 @@ export interface Database {
           reminder_time?: string | null;
           is_premium?: boolean;
           premium_expires_at?: string | null;
+          subscription_tier?: string | null;
         };
         Update: {
           email?: string;
@@ -61,6 +63,7 @@ export interface Database {
           reminder_time?: string | null;
           is_premium?: boolean;
           premium_expires_at?: string | null;
+          subscription_tier?: string | null;
         };
       };
       verses: {
