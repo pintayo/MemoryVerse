@@ -81,25 +81,34 @@ export const PremiumUpgradeScreen = () => {
   // Get features for a specific tier
   const getTierFeatures = (tierId: string) => {
     const tierName = getTierName(tierId);
-    const benefits = TIER_BENEFITS[tierName];
+    const benefits = TIER_BENEFITS[tierName].features;
 
     const features = [];
 
-    // AI Prayers
-    features.push({
-      icon: '✨',
-      text: `${benefits.aiPrayersPerDay} AI prayer${benefits.aiPrayersPerDay > 1 ? 's' : ''} per day`,
-      highlight: true,
-    });
-
-    // Translations
-    if (benefits.translations) {
+    // AI Verse Context
+    if (benefits.aiVerseContext) {
       features.push({
-        icon: '🌍',
-        text: `${benefits.translations.length} Bible translation${benefits.translations.length > 1 ? 's' : ''}`,
+        icon: '💡',
+        text: 'AI verse context & explanations',
         highlight: true,
       });
     }
+
+    // AI Prayers
+    if (benefits.aiPrayersPerDay > 0) {
+      features.push({
+        icon: '✨',
+        text: `${benefits.aiPrayersPerDay} AI prayer${benefits.aiPrayersPerDay > 1 ? 's' : ''} per day`,
+        highlight: true,
+      });
+    }
+
+    // Translations
+    features.push({
+      icon: '🌍',
+      text: `${benefits.translationsCount} Bible translation${benefits.translationsCount > 1 ? 's' : ''}`,
+      highlight: benefits.translationsCount > 1,
+    });
 
     // Practice Limit
     if (benefits.unlimitedPractice) {
@@ -120,8 +129,28 @@ export const PremiumUpgradeScreen = () => {
     if (benefits.streakFreeze) {
       features.push({
         icon: '🔥',
-        text: `Streak freeze (${benefits.streakFreezeLimit})`,
+        text: benefits.streakFreezeLimit === 'Unlimited'
+          ? 'Unlimited streak freezes'
+          : `Streak freeze (${benefits.streakFreezeLimit})`,
+        highlight: benefits.streakFreezeLimit === 'Unlimited',
+      });
+    }
+
+    // AI Chapter Summaries
+    if (benefits.aiChapterSummaries) {
+      features.push({
+        icon: '📖',
+        text: 'AI chapter summaries',
         highlight: true,
+      });
+    }
+
+    // Prayer History
+    if (benefits.prayerHistory) {
+      features.push({
+        icon: '📜',
+        text: 'Prayer history saved',
+        highlight: false,
       });
     }
 
@@ -129,7 +158,7 @@ export const PremiumUpgradeScreen = () => {
     if (tierName === 'premium') {
       if (benefits.storyModeAccess) {
         features.push({
-          icon: '📺',
+          icon: '🎬',
           text: 'Early Story Mode access',
           highlight: true,
         });
@@ -144,25 +173,21 @@ export const PremiumUpgradeScreen = () => {
       if (benefits.advancedAnalytics) {
         features.push({
           icon: '📊',
-          text: 'Advanced analytics',
+          text: 'Advanced analytics & reports',
           highlight: false,
         });
       }
-    }
-
-    // Standard and Premium features
-    if (tierName === 'standard' || tierName === 'premium') {
-      if (benefits.aiChapterSummaries) {
+      if (benefits.progressExport) {
         features.push({
-          icon: '📖',
-          text: 'AI chapter summaries',
-          highlight: tierName === 'standard',
+          icon: '📄',
+          text: 'Export progress (PDF)',
+          highlight: false,
         });
       }
-      if (benefits.prayerHistory) {
+      if (benefits.prioritySupport) {
         features.push({
-          icon: '📜',
-          text: 'Prayer history',
+          icon: '🎧',
+          text: 'Priority support',
           highlight: false,
         });
       }
@@ -356,7 +381,7 @@ export const PremiumUpgradeScreen = () => {
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Unlock Pro</Text>
           <Text style={styles.heroSubtitle}>
-            Deepen your faith with AI prayers, streak protection, more translations, verse insights, and exclusive features
+            AI-powered prayers, verse context, multiple Bible translations, unlimited practice, and streak protection
           </Text>
         </View>
 

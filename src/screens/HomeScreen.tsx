@@ -144,13 +144,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       id: 'read',
       title: 'Read',
       icon: 'book',
-      description: 'Read today\'s verse',
-      onPress: async () => {
-        if (todayVerse) {
-          await completeTask('verse');
-          await loadDailyTasks(); // Refresh the UI
-          navigation.navigate('VerseCard');
-        }
+      description: 'Read the Bible',
+      onPress: () => {
+        navigation.navigate('Bible');
       },
     },
     {
