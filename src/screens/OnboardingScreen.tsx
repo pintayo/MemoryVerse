@@ -199,7 +199,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
             {/* Upward arrow */}
             <Path
               d="M100 140 L100 170 M90 150 L100 140 L110 150"
-              stroke={theme.colors.success.deepGreen}
+              stroke={theme.colors.success.mutedOlive}
               strokeWidth="3"
               fill="none"
             />

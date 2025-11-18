@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   container: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.background.lightCream,
     borderRadius: 20,
     padding: 24,
     width: Math.min(width - 40, 400),
@@ -169,17 +169,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: theme.colors.clay,
+    color: theme.colors.secondary.softClay,
     textAlign: 'center',
-    fontFamily: theme.fonts.serif,
+    fontFamily: theme.typography.fonts.scripture.default,
   },
   message: {
     fontSize: 16,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 24,
-    fontFamily: theme.fonts.sansSerif,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   benefitsContainer: {
     maxHeight: 240,
@@ -188,9 +188,9 @@ const styles = StyleSheet.create({
   benefitsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: theme.colors.clay,
+    color: theme.colors.secondary.softClay,
     marginBottom: 12,
-    fontFamily: theme.fonts.sansSerif,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   benefitItem: {
     flexDirection: 'row',
@@ -200,44 +200,44 @@ const styles = StyleSheet.create({
   },
   benefitText: {
     fontSize: 15,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
     lineHeight: 22,
-    fontFamily: theme.fonts.sansSerif,
+    fontFamily: theme.typography.fonts.ui.default,
     flex: 1,
   },
   actions: {
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: theme.colors.clay,
+    backgroundColor: theme.colors.secondary.softClay,
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: theme.colors.clay,
+    shadowColor: theme.colors.secondary.softClay,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
   primaryButtonText: {
-    color: theme.colors.parchment,
+    color: theme.colors.primary.parchmentCream,
     fontSize: 17,
     fontWeight: '600',
-    fontFamily: theme.fonts.sansSerif,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   secondaryButton: {
-    backgroundColor: theme.colors.sand,
+    backgroundColor: theme.colors.primary.sandyBeige,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: theme.colors.clay,
+    color: theme.colors.secondary.softClay,
     fontSize: 16,
     fontWeight: '500',
-    fontFamily: theme.fonts.sansSerif,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   tertiaryButton: {
     paddingVertical: 12,
@@ -245,9 +245,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tertiaryButtonText: {
-    color: theme.colors.mutedText,
+    color: theme.colors.text.tertiary,
     fontSize: 14,
-    fontFamily: theme.fonts.sansSerif,
+    fontFamily: theme.typography.fonts.ui.default,
   },
 });
 
