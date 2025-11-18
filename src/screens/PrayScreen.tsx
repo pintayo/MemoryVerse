@@ -105,10 +105,10 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       if (!isPremiumUser) {
         Alert.alert(
           '✨ Unlock AI-Powered Prayers',
-          'Get personalized prayers generated just for you, anytime.\n\n💎 Premium benefits:\n• Unlimited AI prayers (free: 3/day)\n• Streak freeze protection (once per week)\n• AI verse context & explanations\n• Early Story Mode access',
+          'Get personalized prayers generated just for you, anytime.\n\n💎 Pro Benefits:\n• 1-10 AI prayers per day (based on tier)\n• AI verse context & explanations\n• Multiple Bible translations\n• Streak freeze protection\n• Unlimited practice mode',
           [
             { text: 'Not Now', style: 'cancel' },
-            { text: 'See Premium Plans', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'prayer_ai' }) },
+            { text: 'See Pro Plans', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'prayer_ai' }) },
           ]
         );
         return;

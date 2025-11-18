@@ -74,9 +74,20 @@ export function LearnVerseScreen({ navigation, route }: Props) {
       setIsLoading(true);
       setError(null);
 
-      // Create a new random session (all chapters)
-      const newSession = await verseSessionService.createSession('KJV', null, null);
-      setSession(newSession);
+      // Check if a specific verseId was passed (e.g., from daily verse tap)
+      const { verseId } = route.params || {};
+
+      if (verseId) {
+        logger.log('[LearnVerseScreen] Loading specific verse:', verseId);
+        // TODO: For now, create a random session.
+        // Future: could create a session around this specific verse
+        const newSession = await verseSessionService.createSession('KJV', null, null);
+        setSession(newSession);
+      } else {
+        // Create a new random session (all chapters)
+        const newSession = await verseSessionService.createSession('KJV', null, null);
+        setSession(newSession);
+      }
 
       // Mark "understand" task as complete
       await completeTask('understand');
