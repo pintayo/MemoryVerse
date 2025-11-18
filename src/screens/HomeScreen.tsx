@@ -344,6 +344,102 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
         </Card>
 
+        {/* Story Mode Teaser - Coming Soon */}
+        <Card variant="warm" style={styles.storyModeTeaser}>
+          <View style={styles.storyModeHeader}>
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>COMING SOON</Text>
+            </View>
+          </View>
+
+          <View style={styles.storyModeContent}>
+            <View style={styles.storyModeIllustration}>
+              {/* Jesus placeholder illustration - beautiful golden cross */}
+              <Svg width="80" height="80" viewBox="0 0 80 80">
+                {/* Radiant background */}
+                <Path
+                  d="M40 10 L42 38 L70 40 L42 42 L40 70 L38 42 L10 40 L38 38 Z"
+                  fill={theme.colors.success.celebratoryGold}
+                  opacity="0.3"
+                />
+                {/* Cross */}
+                <Path
+                  d="M35 20 L45 20 L45 35 L60 35 L60 45 L45 45 L45 60 L35 60 L35 45 L20 45 L20 35 L35 35 Z"
+                  fill={theme.colors.success.celebratoryGold}
+                />
+                {/* Crown of thorns circle */}
+                <Path
+                  d="M40 15 A 15 15 0 1 1 39.99 15"
+                  stroke={theme.colors.secondary.warmTerracotta}
+                  strokeWidth="2"
+                  fill="none"
+                  strokeDasharray="2,3"
+                />
+              </Svg>
+            </View>
+
+            <View style={styles.storyModeText}>
+              <Text style={styles.storyModeTitle}>Story Mode</Text>
+              <Text style={styles.storyModeSubtitle}>Season 1: The Life of Jesus</Text>
+              <Text style={styles.storyModeDescription}>
+                Experience the Gospel through interactive stories with beautiful animations.
+                Make choices, answer questions, and walk in Jesus' footsteps.
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.storyModeFeatures}>
+            <View style={styles.featureItem}>
+              <Svg width="16" height="16" viewBox="0 0 16 16">
+                <Path d="M8 2L10 6L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 6Z" fill={theme.colors.success.celebratoryGold} />
+              </Svg>
+              <Text style={styles.featureText}>5 Episodes Weekly</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Svg width="16" height="16" viewBox="0 0 16 16">
+                <Path d="M8 2L10 6L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 6Z" fill={theme.colors.success.celebratoryGold} />
+              </Svg>
+              <Text style={styles.featureText}>Interactive Quizzes</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Svg width="16" height="16" viewBox="0 0 16 16">
+                <Path d="M8 2L10 6L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 6Z" fill={theme.colors.success.celebratoryGold} />
+              </Svg>
+              <Text style={styles.featureText}>Animated Scenes</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.notifyMeButton}
+            onPress={() => {
+              Alert.alert(
+                "You're on the list! 🎉",
+                "We'll notify you as soon as Story Mode launches. Get ready to experience the Bible like never before!",
+                [{ text: "Amen!", style: "default" }]
+              );
+              // TODO: Track interest in analytics
+              logger.log('[HomeScreen] User interested in Story Mode');
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.notifyMeButtonText}>Notify Me When It Launches</Text>
+            <Svg width="20" height="20" viewBox="0 0 20 20">
+              <Path
+                d="M10 2C10 2 4 5 4 10C4 15 10 18 10 18C10 18 16 15 16 10C16 5 10 2 10 2Z M8 10L9 11L12 8"
+                stroke="white"
+                strokeWidth="1.5"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </TouchableOpacity>
+
+          <Text style={styles.storyModeLaunchHint}>
+            Launching in 4-6 weeks • Stay tuned for weekly episodes
+          </Text>
+        </Card>
+
         {/* Today's Verse Card */}
         <Card variant="cream" outlined style={styles.verseCard}>
           <Text style={styles.verseLabel}>Today's Verse</Text>
@@ -830,6 +926,114 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.scripture.default,
     fontStyle: 'italic',
     lineHeight: 16,
+  },
+  // Story Mode Teaser
+  storyModeTeaser: {
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.background.lightCream,
+    borderWidth: 2,
+    borderColor: theme.colors.success.celebratoryGold + '40',
+    ...theme.shadows.lg,
+  },
+  storyModeHeader: {
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.md,
+  },
+  comingSoonBadge: {
+    backgroundColor: theme.colors.success.celebratoryGold,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+  },
+  comingSoonText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: 'white',
+    letterSpacing: 1.5,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  storyModeContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
+  storyModeIllustration: {
+    width: 80,
+    height: 80,
+    backgroundColor: theme.colors.background.offWhiteParchment,
+    borderRadius: theme.borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.sm,
+  },
+  storyModeText: {
+    flex: 1,
+  },
+  storyModeTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.xs,
+  },
+  storyModeSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.secondary.warmTerracotta,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+  },
+  storyModeDescription: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    lineHeight: 18,
+  },
+  storyModeFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.primary.oatmeal,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  featureText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  notifyMeButton: {
+    backgroundColor: theme.colors.success.celebratoryGold,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.md,
+  },
+  notifyMeButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: 'white',
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  storyModeLaunchHint: {
+    fontSize: 11,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 
