@@ -12,6 +12,7 @@ import { logger } from '../utils/logger';
 import { generateDailyPrayer, getFallbackDailyPrayer } from '../services/dailyPrayerService';
 import { canUseTalkAboutDay, useTalkAboutDay, getRemainingUsage, getUserSubscriptionTier, FEATURES } from '../services/usageLimitsService';
 import { validatePrayerInput, logAbuseAttempt, getTodayRequestCount } from '../services/prayerInputValidator';
+import { validatePrayerOutput, logInappropriateOutput } from '../services/prayerOutputValidator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pray'>;
 
@@ -228,22 +229,42 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       const result = await generateDailyPrayer(sanitizedInput);
 
       if (result.success && result.prayer) {
-        setGeneratedPrayer(result.prayer);
-        logger.log('[PrayScreen] Prayer generated successfully');
+        // STEP 4: Validate AI output to ensure it's appropriate and biblical
+        const outputValidation = await validatePrayerOutput(result.prayer);
 
-        // Show remaining uses
-        if (usageResult.remaining === 0) {
+        if (!outputValidation.isValid) {
+          // AI generated inappropriate content - log it and use fallback
+          logger.error('[PrayScreen] AI generated inappropriate prayer:', outputValidation.error);
+          await logInappropriateOutput(sanitizedInput, result.prayer, outputValidation.error || 'Unknown reason');
+
+          // Use fallback prayer instead
+          const fallbackPrayer = getFallbackDailyPrayer(sanitizedInput);
+          setGeneratedPrayer(fallbackPrayer);
+
           Alert.alert(
             'Prayer Generated',
-            `Your prayer is ready! This was your last prayer for today. Your limit resets at midnight.`,
+            'Your prayer is ready! We used our best template to create a meaningful prayer for you.',
             [{ text: 'OK' }]
           );
-        } else if (usageResult.remaining <= 2) {
-          Alert.alert(
-            'Prayer Generated',
-            `Your prayer is ready! You have ${usageResult.remaining} prayer${usageResult.remaining === 1 ? '' : 's'} remaining today.`,
-            [{ text: 'OK' }]
-          );
+        } else {
+          // AI output is valid - use it
+          setGeneratedPrayer(outputValidation.sanitizedOutput || result.prayer);
+          logger.log('[PrayScreen] Prayer generated and validated successfully');
+
+          // Show remaining uses
+          if (usageResult.remaining === 0) {
+            Alert.alert(
+              'Prayer Generated',
+              `Your prayer is ready! This was your last prayer for today. Your limit resets at midnight.`,
+              [{ text: 'OK' }]
+            );
+          } else if (usageResult.remaining <= 2) {
+            Alert.alert(
+              'Prayer Generated',
+              `Your prayer is ready! You have ${usageResult.remaining} prayer${usageResult.remaining === 1 ? '' : 's'} remaining today.`,
+              [{ text: 'OK' }]
+            );
+          }
         }
       } else {
         // Use fallback prayer if AI fails
