@@ -236,36 +236,49 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* TODAY'S VERSE - Hero Position */}
-        <Card variant="cream" outlined style={styles.heroVerseCard}>
-          <Text style={styles.verseLabel}>Today's Verse</Text>
+        {/* TODAY'S VERSE - Hero Position - Tap to see context */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={async () => {
+            if (todayVerse?.id) {
+              await completeTask('verse');
+              await loadDailyTasks();
+              navigation.navigate('Understand', { verseId: todayVerse.id });
+            }
+          }}
+          disabled={isLoading || !!error || !todayVerse}
+        >
+          <Card variant="cream" outlined style={styles.heroVerseCard}>
+            <Text style={styles.verseLabel}>Today's Verse</Text>
 
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
-              <Text style={styles.loadingText}>Loading verse...</Text>
-            </View>
-          ) : error ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={loadTodayVerse}
-              >
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : todayVerse ? (
-            <>
-              <VerseText size="large" style={styles.verseText}>
-                {todayVerse.text}
-              </VerseText>
-              <VerseReference style={styles.verseReference}>
-                {`${todayVerse.book} ${todayVerse.chapter}:${todayVerse.verse_number}`}
-              </VerseReference>
-            </>
-          ) : null}
-        </Card>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
+                <Text style={styles.loadingText}>Loading verse...</Text>
+              </View>
+            ) : error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={loadTodayVerse}
+                >
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : todayVerse ? (
+              <>
+                <VerseText size="large" style={styles.verseText}>
+                  {todayVerse.text}
+                </VerseText>
+                <VerseReference style={styles.verseReference}>
+                  {`${todayVerse.book} ${todayVerse.chapter}:${todayVerse.verse_number}`}
+                </VerseReference>
+                <Text style={styles.tapHint}>Tap to understand this verse</Text>
+              </>
+            ) : null}
+          </Card>
+        </TouchableOpacity>
 
         {/* Your Progress - Always Visible */}
         <Card variant="parchment" outlined style={styles.progressCard}>
@@ -568,6 +581,14 @@ const styles = StyleSheet.create({
   },
   verseReference: {
     marginTop: theme.spacing.sm,
+  },
+  tapHint: {
+    fontSize: 12,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    marginTop: theme.spacing.md,
+    fontStyle: 'italic',
   },
   // Story Mode Image Card
   storyModeImageCard: {
