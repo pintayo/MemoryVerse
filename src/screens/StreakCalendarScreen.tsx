@@ -145,10 +145,10 @@ const StreakCalendarScreen: React.FC<StreakCalendarScreenProps> = ({ navigation 
     if (!streakData) return null;
 
     const milestones = [
-      { days: 7, label: '7 Days', icon: '🌱' },
-      { days: 30, label: '1 Month', icon: '🌿' },
-      { days: 100, label: '100 Days', icon: '🌳' },
-      { days: 365, label: '1 Year', icon: '🏆' },
+      { days: 7, label: '7 Days', icon: '📖' },
+      { days: 30, label: '1 Month', icon: '📜' },
+      { days: 100, label: '100 Days', icon: '✝️' },
+      { days: 365, label: '1 Year', icon: '👑' },
     ];
 
     return (
@@ -405,8 +405,8 @@ const StreakCalendarScreen: React.FC<StreakCalendarScreenProps> = ({ navigation 
 
           <View style={styles.guestBenefits}>
             <Text style={styles.guestBenefitItem}>🔥 Track daily streaks</Text>
-            <Text style={styles.guestBenefitItem}>📊 Visual practice calendar</Text>
-            <Text style={styles.guestBenefitItem}>🏆 Reach milestones</Text>
+            <Text style={styles.guestBenefitItem}>📜 Visual practice calendar</Text>
+            <Text style={styles.guestBenefitItem}>✝️ Reach milestones</Text>
             <Text style={styles.guestBenefitItem}>❄️ Streak freeze (Premium)</Text>
           </View>
 

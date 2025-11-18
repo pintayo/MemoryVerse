@@ -387,7 +387,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             <Text style={styles.guestBenefitsTitle}>Benefits of Signing Up:</Text>
             <View style={styles.guestBenefitsList}>
               <View style={styles.guestBenefitItem}>
-                <Text style={styles.guestBenefitIcon}>📊</Text>
+                <Text style={styles.guestBenefitIcon}>📜</Text>
                 <View style={styles.guestBenefitTextContainer}>
                   <Text style={styles.guestBenefitName}>Track Your Progress</Text>
                   <Text style={styles.guestBenefitDescription}>
@@ -407,7 +407,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               </View>
 
               <View style={styles.guestBenefitItem}>
-                <Text style={styles.guestBenefitIcon}>⭐</Text>
+                <Text style={styles.guestBenefitIcon}>📖</Text>
                 <View style={styles.guestBenefitTextContainer}>
                   <Text style={styles.guestBenefitName}>Save Favorite Verses</Text>
                   <Text style={styles.guestBenefitDescription}>
@@ -417,7 +417,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               </View>
 
               <View style={styles.guestBenefitItem}>
-                <Text style={styles.guestBenefitIcon}>🏆</Text>
+                <Text style={styles.guestBenefitIcon}>✝️</Text>
                 <View style={styles.guestBenefitTextContainer}>
                   <Text style={styles.guestBenefitName}>Unlock Achievements</Text>
                   <Text style={styles.guestBenefitDescription}>
@@ -437,7 +437,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               </View>
 
               <View style={styles.guestBenefitItem}>
-                <Text style={styles.guestBenefitIcon}>📝</Text>
+                <Text style={styles.guestBenefitIcon}>📖</Text>
                 <View style={styles.guestBenefitTextContainer}>
                   <Text style={styles.guestBenefitName}>Add Study Notes</Text>
                   <Text style={styles.guestBenefitDescription}>
