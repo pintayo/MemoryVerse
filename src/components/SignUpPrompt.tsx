@@ -227,16 +227,18 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.ui.default,
   },
   secondaryButton: {
-    backgroundColor: theme.colors.primary.sandyBeige,
+    backgroundColor: theme.colors.background.warmParchment,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.primary.mutedStone,
   },
   secondaryButtonText: {
-    color: theme.colors.secondary.softClay,
+    color: theme.colors.text.primary,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     fontFamily: theme.typography.fonts.ui.default,
   },
   tertiaryButton: {

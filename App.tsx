@@ -195,10 +195,10 @@ const AppNavigator = () => {
 
       {/* Auth screens accessible from within the app */}
       <Stack.Screen name="Login">
-        {(props) => <LoginScreen {...props} onLoginSuccess={() => {}} />}
+        {(props) => <LoginScreen {...props} onLoginSuccess={() => props.navigation.navigate('Main')} />}
       </Stack.Screen>
       <Stack.Screen name="Signup">
-        {(props) => <SignupScreen {...props} onSignupSuccess={() => {}} />}
+        {(props) => <SignupScreen {...props} onSignupSuccess={() => props.navigation.navigate('Main')} />}
       </Stack.Screen>
     </Stack.Navigator>
   );

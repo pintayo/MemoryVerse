@@ -371,9 +371,6 @@ export async function getOrGenerateContext(verseId: string): Promise<{
   // Create new generation promise
   const generationPromise = (async () => {
     try {
-      // Fetch verse from database with a small delay to allow previous saves to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-
       const { data: verse, error: fetchError } = await supabase
         .from('verses')
         .select('*')

@@ -312,16 +312,14 @@ export const PremiumUpgradeScreen = () => {
 
                   {/* Show features for this specific tier */}
                   <View style={styles.tierFeatures}>
-                    {tier.features.slice(0, 3).map((feature, index) => (
+                    {tier.features.slice(0, 2).map((feature, index) => (
                       <Text key={index} style={styles.tierFeatureText}>
                         • {feature}
                       </Text>
                     ))}
-                    {tier.features.length > 3 && (
-                      <Text style={styles.tierFeatureText}>
-                        • And {tier.features.length - 3} more...
-                      </Text>
-                    )}
+                    <Text style={styles.tierFeatureText}>
+                      • And more...
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}
@@ -332,7 +330,7 @@ export const PremiumUpgradeScreen = () => {
         {/* Premium Features */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Premium Features</Text>
-          {premiumFeatureKeys.map((key) => {
+          {premiumFeatureKeys.slice(0, 4).map((key) => {
             const feature = featureFlags[key as keyof typeof featureFlags];
             const isAvailable = feature.enabled;
 
@@ -344,7 +342,7 @@ export const PremiumUpgradeScreen = () => {
                   !isAvailable && styles.featureRowDisabled
                 ]}
               >
-                <Svg width="24" height="24" viewBox="0 0 24 24" style={styles.checkmark}>
+                <Svg width="20" height="20" viewBox="0 0 24 24" style={styles.checkmark}>
                   <Path
                     d="M5 12 L10 17 L20 7"
                     stroke={isAvailable ? theme.colors.accent.burnishedGold : theme.colors.text.tertiary}
@@ -355,29 +353,31 @@ export const PremiumUpgradeScreen = () => {
                   />
                 </Svg>
                 <View style={styles.featureText}>
-                  <View style={styles.featureNameRow}>
-                    <Text style={[
-                      styles.featureName,
-                      !isAvailable && styles.featureNameDisabled
-                    ]}>
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </Text>
-                    {!isAvailable && (
-                      <View style={styles.comingSoonBadge}>
-                        <Text style={styles.comingSoonText}>Coming Soon</Text>
-                      </View>
-                    )}
-                  </View>
                   <Text style={[
-                    styles.featureDescription,
-                    !isAvailable && styles.featureDescriptionDisabled
+                    styles.featureName,
+                    !isAvailable && styles.featureNameDisabled
                   ]}>
-                    {feature.description}
+                    {key.replace(/([A-Z])/g, ' $1').trim()}
                   </Text>
                 </View>
               </View>
             );
           })}
+          <View style={styles.featureRow}>
+            <Svg width="20" height="20" viewBox="0 0 24 24" style={styles.checkmark}>
+              <Path
+                d="M5 12 L10 17 L20 7"
+                stroke={theme.colors.accent.burnishedGold}
+                strokeWidth="2.5"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <View style={styles.featureText}>
+              <Text style={styles.featureName}>And much more...</Text>
+            </View>
+          </View>
         </View>
 
         {/* Upgrade Button */}
@@ -423,29 +423,29 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-    paddingVertical: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
   },
   heroIcon: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   heroTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   heroSubtitle: {
-    fontSize: theme.typography.ui.body.fontSize,
+    fontSize: theme.typography.ui.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 20,
     paddingHorizontal: theme.spacing.md,
   },
   pricingSection: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
   sectionTitle: {
     fontSize: theme.typography.ui.heading.fontSize,
@@ -456,9 +456,9 @@ const styles = StyleSheet.create({
   },
   pricingCard: {
     backgroundColor: 'white',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
     borderWidth: 2,
     borderColor: theme.colors.primary.mutedStone,
     position: 'relative',
@@ -506,19 +506,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   planName: {
-    fontSize: theme.typography.ui.heading.fontSize,
+    fontSize: 18,
     fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 4,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: theme.spacing.xs,
+    marginBottom: 2,
   },
   price: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '700',
     color: theme.colors.accent.burnishedGold,
     fontFamily: theme.typography.fonts.ui.default,
@@ -535,12 +535,12 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.ui.default,
   },
   section: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   featureRowDisabled: {
     opacity: 0.5,
