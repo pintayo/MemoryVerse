@@ -405,25 +405,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           }}
           activeOpacity={0.9}
         >
-          {/* Image Background - 9:14 aspect ratio */}
-          {/* TO USE YOUR OWN IMAGE:
-              1. Place story-mode-preview.png (900x1400px) in assets/images/
-              2. Uncomment the ImageBackground below and remove the View wrapper
-              <ImageBackground
-                source={require('../../assets/images/story-mode-preview.png')}
-                style={styles.storyModeImageBackground}
-                resizeMode="cover"
-              >
-          */}
-          <View style={styles.storyModeImageBackground}>
-            {/* SVG Cross as background placeholder - remove when using custom image */}
-            <Svg width="120" height="120" viewBox="0 0 120 120" style={{ position: 'absolute', opacity: 0.15 }}>
-              <Path
-                d="M50 25 L70 25 L70 50 L95 50 L95 70 L70 70 L70 95 L50 95 L50 70 L25 70 L25 50 L50 50 Z"
-                fill={theme.colors.success.celebratoryGold}
-              />
-            </Svg>
-
+          {/* Image Background - 9:14 aspect ratio (900x1400px) */}
+          <ImageBackground
+            source={require('../../assets/images/story-mode-preview.png')}
+            style={styles.storyModeImageBackground}
+            resizeMode="cover"
+          >
             {/* Overlay with text */}
             <View style={styles.storyModeOverlay}>
               <View style={styles.comingSoonBadgeSmall}>
@@ -437,8 +424,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <Text style={styles.storyModeOverlayFeature}>❓ Quizzes</Text>
               </View>
             </View>
-          </View>
-          {/* When using custom image, change closing tag to: </ImageBackground> */}
+          </ImageBackground>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
