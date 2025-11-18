@@ -15,6 +15,7 @@ import { theme } from '../theme';
 import { streakService, StreakData, DayActivity } from '../services/streakService';
 import { useAuth } from '../contexts/AuthContext';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
+import { useGuestProtection } from '../hooks/useGuestProtection';
 import { logger } from '../utils/logger';
 
 interface StreakCalendarScreenProps {
@@ -22,16 +23,28 @@ interface StreakCalendarScreenProps {
 }
 
 const StreakCalendarScreen: React.FC<StreakCalendarScreenProps> = ({ navigation }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, isGuest } = useAuth();
+  const { guardAction, PromptComponent } = useGuestProtection();
   const [streakData, setStreakData] = useState<StreakData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Feature flag for streak freeze
   const canUseStreakFreeze = useFeatureFlag('streakFreeze');
 
+  // Show prompt when guests view streak calendar
   useEffect(() => {
-    loadStreakData();
-  }, []);
+    if (isGuest) {
+      guardAction('streaks');
+    }
+  }, [isGuest]);
+
+  useEffect(() => {
+    if (!isGuest) {
+      loadStreakData();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isGuest]);
 
   const loadStreakData = async () => {
     if (!user?.id) return;
@@ -358,6 +371,65 @@ const StreakCalendarScreen: React.FC<StreakCalendarScreenProps> = ({ navigation 
     );
   }
 
+  // Guest UI - Show nice message encouraging sign-up
+  if (isGuest) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Svg width="24" height="24" viewBox="0 0 24 24">
+              <Path
+                d="M15 18 L9 12 L15 6"
+                stroke={theme.colors.text.primary}
+                strokeWidth="2"
+                fill="none"
+              />
+            </Svg>
+          </TouchableOpacity>
+          <Text style={styles.title}>Streak Calendar</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <View style={styles.guestContainer}>
+          <Svg width="120" height="120" viewBox="0 0 120 120">
+            <Path
+              d="M60 20 C60 20 45 45 45 65 C45 85 52 100 60 100 C68 100 75 85 75 65 C75 45 60 20 60 20 Z"
+              fill={theme.colors.secondary.warmTerracotta}
+              opacity="0.3"
+            />
+          </Svg>
+          <Text style={styles.guestTitle}>Build Your Streak!</Text>
+          <Text style={styles.guestMessage}>
+            Sign up to track your daily practice streak and stay motivated!
+          </Text>
+
+          <View style={styles.guestBenefits}>
+            <Text style={styles.guestBenefitItem}>🔥 Track daily streaks</Text>
+            <Text style={styles.guestBenefitItem}>📊 Visual practice calendar</Text>
+            <Text style={styles.guestBenefitItem}>🏆 Reach milestones</Text>
+            <Text style={styles.guestBenefitItem}>❄️ Streak freeze (Premium)</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.guestSignUpButton}
+            onPress={() => navigation.navigate('Signup')}
+          >
+            <Text style={styles.guestSignUpButtonText}>Create Free Account</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.guestLoginButton}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={styles.guestLoginButtonText}>I Have an Account</Text>
+          </TouchableOpacity>
+        </View>
+
+        {PromptComponent}
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -387,6 +459,8 @@ const StreakCalendarScreen: React.FC<StreakCalendarScreenProps> = ({ navigation 
         {renderCalendarHeatmap()}
         {renderStreakFreeze()}
       </ScrollView>
+
+      {PromptComponent}
     </SafeAreaView>
   );
 };
@@ -641,6 +715,64 @@ const styles = StyleSheet.create({
   },
   freezeDescription: {
     fontSize: theme.typography.ui.bodySmall.fontSize,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+  },
+  guestContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  guestTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+  },
+  guestMessage: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: theme.spacing.xl,
+  },
+  guestBenefits: {
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.xl,
+    gap: theme.spacing.sm,
+  },
+  guestBenefitItem: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  guestSignUpButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xxl,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.md,
+    width: '100%',
+    maxWidth: 300,
+  },
+  guestSignUpButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+  },
+  guestLoginButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  guestLoginButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
     color: theme.colors.text.tertiary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',

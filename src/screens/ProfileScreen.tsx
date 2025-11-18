@@ -24,7 +24,7 @@ interface Badge {
 }
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, signOut, refreshProfile, isGuest } = useAuth();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -344,6 +344,116 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
           <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Guest UI - Show nice sign-up prompt
+  if (isGuest) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.guestScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.guestHeader}>
+            <View style={styles.guestAvatar}>
+              <Text style={styles.guestAvatarText}>👤</Text>
+            </View>
+            <Text style={styles.guestTitle}>You're Browsing as Guest</Text>
+            <Text style={styles.guestSubtitle}>
+              Sign up to track your progress, earn achievements, and sync across devices!
+            </Text>
+          </View>
+
+          <View style={styles.guestActions}>
+            <TouchableOpacity
+              style={styles.guestSignUpButton}
+              onPress={() => navigation.navigate('Signup')}
+            >
+              <Text style={styles.guestSignUpButtonText}>Create Free Account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.guestLoginButton}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.guestLoginButtonText}>I Have an Account</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Card variant="cream" style={styles.guestBenefitsCard}>
+            <Text style={styles.guestBenefitsTitle}>Benefits of Signing Up:</Text>
+            <View style={styles.guestBenefitsList}>
+              <View style={styles.guestBenefitItem}>
+                <Text style={styles.guestBenefitIcon}>📊</Text>
+                <View style={styles.guestBenefitTextContainer}>
+                  <Text style={styles.guestBenefitName}>Track Your Progress</Text>
+                  <Text style={styles.guestBenefitDescription}>
+                    See detailed stats, accuracy over time, and learning curves
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.guestBenefitItem}>
+                <Text style={styles.guestBenefitIcon}>🔥</Text>
+                <View style={styles.guestBenefitTextContainer}>
+                  <Text style={styles.guestBenefitName}>Build Daily Streaks</Text>
+                  <Text style={styles.guestBenefitDescription}>
+                    Stay motivated with streak tracking and freeze features
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.guestBenefitItem}>
+                <Text style={styles.guestBenefitIcon}>⭐</Text>
+                <View style={styles.guestBenefitTextContainer}>
+                  <Text style={styles.guestBenefitName}>Save Favorite Verses</Text>
+                  <Text style={styles.guestBenefitDescription}>
+                    Create collections and organize your favorite verses
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.guestBenefitItem}>
+                <Text style={styles.guestBenefitIcon}>🏆</Text>
+                <View style={styles.guestBenefitTextContainer}>
+                  <Text style={styles.guestBenefitName}>Unlock Achievements</Text>
+                  <Text style={styles.guestBenefitDescription}>
+                    Earn badges and reach milestones as you learn
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.guestBenefitItem}>
+                <Text style={styles.guestBenefitIcon}>☁️</Text>
+                <View style={styles.guestBenefitTextContainer}>
+                  <Text style={styles.guestBenefitName}>Sync Across Devices</Text>
+                  <Text style={styles.guestBenefitDescription}>
+                    Access your progress on phone, tablet, and web
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.guestBenefitItem}>
+                <Text style={styles.guestBenefitIcon}>📝</Text>
+                <View style={styles.guestBenefitTextContainer}>
+                  <Text style={styles.guestBenefitName}>Add Study Notes</Text>
+                  <Text style={styles.guestBenefitDescription}>
+                    Save personal reflections and insights on verses
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </Card>
+
+          <View style={styles.guestFooter}>
+            <Text style={styles.guestFooterText}>
+              It's completely free to get started!
+            </Text>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -758,6 +868,115 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.primary.oatmeal,
     marginBottom: theme.spacing.sm,
+  },
+  // Guest UI Styles
+  guestScrollContent: {
+    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.screen.horizontal,
+  },
+  guestHeader: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xxl,
+  },
+  guestAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.colors.primary.oatmeal,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  guestAvatarText: {
+    fontSize: 48,
+  },
+  guestTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.sm,
+  },
+  guestSubtitle: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: theme.spacing.md,
+  },
+  guestActions: {
+    width: '100%',
+    marginBottom: theme.spacing.xxl,
+    gap: theme.spacing.md,
+  },
+  guestSignUpButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+  },
+  guestSignUpButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  guestLoginButton: {
+    paddingVertical: theme.spacing.sm,
+    alignItems: 'center',
+  },
+  guestLoginButtonText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  guestBenefitsCard: {
+    marginBottom: theme.spacing.xl,
+  },
+  guestBenefitsTitle: {
+    fontSize: theme.typography.ui.heading.fontSize,
+    fontWeight: theme.typography.ui.heading.fontWeight,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.lg,
+  },
+  guestBenefitsList: {
+    gap: theme.spacing.lg,
+  },
+  guestBenefitItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  guestBenefitIcon: {
+    fontSize: 32,
+    marginRight: theme.spacing.md,
+  },
+  guestBenefitTextContainer: {
+    flex: 1,
+  },
+  guestBenefitName: {
+    fontSize: theme.typography.ui.body.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.xs,
+  },
+  guestBenefitDescription: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    lineHeight: 20,
+  },
+  guestFooter: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.lg,
+  },
+  guestFooterText: {
+    fontSize: theme.typography.ui.body.fontSize,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontStyle: 'italic',
   },
 });
 
