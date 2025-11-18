@@ -22,8 +22,8 @@ console.log('[RootNavigator] BlanksScreen imported');
 import ChoiceScreen from '../screens/ChoiceScreen';
 console.log('[RootNavigator] ChoiceScreen imported');
 
-import { UnderstandScreen } from '../screens/UnderstandScreen';
-console.log('[RootNavigator] UnderstandScreen imported');
+import { LearnVerseScreen } from '../screens/LearnVerseScreen';
+console.log('[RootNavigator] LearnVerseScreen imported');
 
 import PrayScreen from '../screens/PrayScreen';
 console.log('[RootNavigator] PrayScreen imported');
@@ -135,7 +135,7 @@ const RootNavigator = () => {
       />
       <Stack.Screen
         name="Understand"
-        component={UnderstandScreen}
+        component={LearnVerseScreen}
         options={{
           headerShown: false,
         }}

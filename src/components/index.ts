@@ -36,4 +36,7 @@ console.log('[components/index] FeatureCard exported');
 export { default as ChapterContext } from './ChapterContext';
 console.log('[components/index] ChapterContext exported');
 
+export { ChapterSelector } from './ChapterSelector';
+console.log('[components/index] ChapterSelector exported');
+
 console.log('[components/index] ALL COMPONENTS EXPORTED');
