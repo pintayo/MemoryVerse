@@ -116,6 +116,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     );
   };
 
+  // Daily checklist tasks
+  const dailyTasks = [
+    { id: 'verse', icon: '📖', label: 'Read today\'s verse', completed: todayVerse !== null },
+    { id: 'practice', icon: '🎯', label: 'Practice a verse', completed: false }, // TODO: Track from practice
+    { id: 'pray', icon: '🙏', label: 'Pray with AI', completed: false }, // TODO: Track from prayer
+    { id: 'chapter', icon: '📚', label: 'Read 1 Bible chapter', completed: false }, // TODO: Track from Bible
+    { id: 'share', icon: '💬', label: 'Share with a friend', completed: false }, // TODO: Track from share
+  ];
+
   const actionButtons = [
     {
       id: 'read',
@@ -177,271 +186,35 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with Bible Companion */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
+        {/* Simple Header */}
+        <View style={styles.simpleHeader}>
+          <View>
             <Text style={styles.greeting}>Good morning!</Text>
-            <View style={styles.statsRow}>
-              <TouchableOpacity
-                style={styles.statItem}
-                onPress={() => navigation.navigate('StreakCalendar')}
-                activeOpacity={0.7}
-              >
-                <Svg width="20" height="24" viewBox="0 0 16 20">
+            {streak > 0 && (
+              <View style={styles.miniStats}>
+                <Svg width="14" height="14" viewBox="0 0 16 20">
                   <Path
                     d="M8 0 C8 0 4 5 4 9 C4 12.3 5.8 15 8 15 C10.2 15 12 12.3 12 9 C12 5 8 0 8 0 Z"
                     fill={theme.colors.secondary.warmTerracotta}
                   />
-                  <Path
-                    d="M8 4 C8 4 6 7 6 9 C6 10.7 7 12 8 12 C9 12 10 10.7 10 9 C10 7 8 4 8 4 Z"
-                    fill={theme.colors.success.celebratoryGold}
-                  />
                 </Svg>
-                <Text style={styles.statText}>{streak} day streak</Text>
-              </TouchableOpacity>
-              <View style={styles.statItem}>
-                <Svg width="20" height="20" viewBox="0 0 20 20">
-                  <Path
-                    d="M10 2 L12 8 L18 8 L13 12 L15 18 L10 14 L5 18 L7 12 L2 8 L8 8 Z"
-                    fill={theme.colors.success.celebratoryGold}
-                  />
-                </Svg>
-                <Text style={styles.statText}>{xp} XP</Text>
+                <Text style={styles.miniStatText}>{streak} day streak · Level {currentLevel}</Text>
               </View>
-            </View>
+            )}
           </View>
-          <View style={styles.companionContainer}>
+          <TouchableOpacity onPress={handleCompanionPress}>
             <BibleCompanion
               streak={streak}
               xp={xp}
               isCelebrating={isCelebrating}
-              onPress={handleCompanionPress}
+              onPress={() => {}}
+              size={50}
             />
-          </View>
+          </TouchableOpacity>
         </View>
 
-        {/* Streak Urgency Banner - Show if haven't practiced today */}
-        {!practicedToday && streak > 0 && (
-          <TouchableOpacity
-            style={styles.streakUrgencyBanner}
-            onPress={() => navigation.navigate('Practice')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.streakUrgencyContent}>
-              <View style={styles.streakUrgencyLeft}>
-                <Svg width="32" height="32" viewBox="0 0 24 24">
-                  <Path
-                    d="M12 2C12 2 7 8 7 13C7 17.42 9.58 21 12 21C14.42 21 17 17.42 17 13C17 8 12 2 12 2Z"
-                    fill={theme.colors.secondary.warmTerracotta}
-                  />
-                  <Path
-                    d="M12 6C12 6 9 10 9 13C9 15.21 10.34 17 12 17C13.66 17 15 15.21 15 13C15 10 12 6 12 6Z"
-                    fill={theme.colors.success.celebratoryGold}
-                  />
-                </Svg>
-                <View style={styles.streakUrgencyText}>
-                  <Text style={styles.streakUrgencyTitle}>Protect Your {streak}-Day Streak! 🔥</Text>
-                  <Text style={styles.streakUrgencySubtitle}>
-                    "Train yourself to be godly" - 1 Timothy 4:7
-                  </Text>
-                </View>
-              </View>
-              <Svg width="24" height="24" viewBox="0 0 24 24">
-                <Path
-                  d="M9 6 L15 12 L9 18"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            </View>
-          </TouchableOpacity>
-        )}
-
-        {/* XP Progress to Next Level */}
-        <Card variant="warm" style={styles.xpProgressCard}>
-          <View style={styles.xpProgressHeader}>
-            <View style={styles.xpProgressInfo}>
-              <Text style={styles.xpProgressLevel}>LEVEL {currentLevel}</Text>
-              <Text style={styles.xpProgressNext}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
-            </View>
-            <View style={styles.levelBadge}>
-              <Svg width="28" height="28" viewBox="0 0 24 24">
-                <Path
-                  d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
-                  fill={theme.colors.success.celebratoryGold}
-                />
-              </Svg>
-            </View>
-          </View>
-          <View style={styles.xpProgressBarContainer}>
-            <View style={[styles.xpProgressBarFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
-          </View>
-          <Text style={styles.xpProgressText}>
-            Keep going! Every verse brings you closer to spiritual mastery 📖
-          </Text>
-        </Card>
-
-        {/* Daily Goal Widget */}
-        <Card variant="parchment" outlined style={styles.dailyGoalCard}>
-          <View style={styles.dailyGoalHeader}>
-            <Svg width="24" height="24" viewBox="0 0 24 24">
-              <Path
-                d="M12 2C12 2 4 6 4 12C4 18 12 22 12 22C12 22 20 18 20 12C20 6 12 2 12 2Z"
-                fill={theme.colors.accent.burnishedGold}
-              />
-              <Path
-                d="M9 12L11 14L15 10"
-                stroke="white"
-                strokeWidth="2"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-            <Text style={styles.dailyGoalTitle}>Today's Spiritual Goal</Text>
-          </View>
-          <View style={styles.dailyGoalContent}>
-            <View style={styles.dailyGoalCircle}>
-              <Svg width="80" height="80" viewBox="0 0 100 100">
-                {/* Background circle */}
-                <Path
-                  d="M 50 10 A 40 40 0 1 1 49.99 10"
-                  stroke={theme.colors.primary.oatmeal}
-                  strokeWidth="8"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                {/* Progress circle */}
-                <Path
-                  d={`M 50 10 A 40 40 0 ${dailyGoalProgress > 50 ? 1 : 0} 1 ${
-                    50 + 40 * Math.sin((dailyGoalProgress / 100) * 2 * Math.PI)
-                  } ${
-                    50 - 40 * Math.cos((dailyGoalProgress / 100) * 2 * Math.PI)
-                  }`}
-                  stroke={theme.colors.success.celebratoryGold}
-                  strokeWidth="8"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              </Svg>
-              <View style={styles.dailyGoalCircleText}>
-                <Text style={styles.dailyGoalCount}>{versesToday}/{DAILY_GOAL}</Text>
-              </View>
-            </View>
-            <View style={styles.dailyGoalRight}>
-              <Text style={styles.dailyGoalVersesText}>
-                {versesToday === 0 ? "Let's hide God's Word in your heart today! 💪" :
-                 versesToday < DAILY_GOAL ? `Only ${DAILY_GOAL - versesToday} more verse${DAILY_GOAL - versesToday === 1 ? '' : 's'} to reach your goal! 🎯` :
-                 "Goal crushed! You're building spiritual discipline! 🎉"}
-              </Text>
-              <Text style={styles.dailyGoalScripture}>
-                "I have hidden your word in my heart" - Psalm 119:11
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Story Mode Teaser - Coming Soon */}
-        <Card variant="warm" style={styles.storyModeTeaser}>
-          <View style={styles.storyModeHeader}>
-            <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>COMING SOON</Text>
-            </View>
-          </View>
-
-          <View style={styles.storyModeContent}>
-            <View style={styles.storyModeIllustration}>
-              {/* Jesus placeholder illustration - beautiful golden cross */}
-              <Svg width="80" height="80" viewBox="0 0 80 80">
-                {/* Radiant background */}
-                <Path
-                  d="M40 10 L42 38 L70 40 L42 42 L40 70 L38 42 L10 40 L38 38 Z"
-                  fill={theme.colors.success.celebratoryGold}
-                  opacity="0.3"
-                />
-                {/* Cross */}
-                <Path
-                  d="M35 20 L45 20 L45 35 L60 35 L60 45 L45 45 L45 60 L35 60 L35 45 L20 45 L20 35 L35 35 Z"
-                  fill={theme.colors.success.celebratoryGold}
-                />
-                {/* Crown of thorns circle */}
-                <Path
-                  d="M40 15 A 15 15 0 1 1 39.99 15"
-                  stroke={theme.colors.secondary.warmTerracotta}
-                  strokeWidth="2"
-                  fill="none"
-                  strokeDasharray="2,3"
-                />
-              </Svg>
-            </View>
-
-            <View style={styles.storyModeText}>
-              <Text style={styles.storyModeTitle}>Story Mode</Text>
-              <Text style={styles.storyModeSubtitle}>Season 1: The Life of Jesus</Text>
-              <Text style={styles.storyModeDescription}>
-                Experience the Gospel through interactive stories with beautiful animations.
-                Make choices, answer questions, and walk in Jesus' footsteps.
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.storyModeFeatures}>
-            <View style={styles.featureItem}>
-              <Svg width="16" height="16" viewBox="0 0 16 16">
-                <Path d="M8 2L10 6L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 6Z" fill={theme.colors.success.celebratoryGold} />
-              </Svg>
-              <Text style={styles.featureText}>5 Episodes Weekly</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Svg width="16" height="16" viewBox="0 0 16 16">
-                <Path d="M8 2L10 6L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 6Z" fill={theme.colors.success.celebratoryGold} />
-              </Svg>
-              <Text style={styles.featureText}>Interactive Quizzes</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Svg width="16" height="16" viewBox="0 0 16 16">
-                <Path d="M8 2L10 6L14 6L11 9L12 13L8 11L4 13L5 9L2 6L6 6Z" fill={theme.colors.success.celebratoryGold} />
-              </Svg>
-              <Text style={styles.featureText}>Animated Scenes</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.notifyMeButton}
-            onPress={() => {
-              Alert.alert(
-                "You're on the list! 🎉",
-                "We'll notify you as soon as Story Mode launches. Get ready to experience the Bible like never before!",
-                [{ text: "Amen!", style: "default" }]
-              );
-              // TODO: Track interest in analytics
-              logger.log('[HomeScreen] User interested in Story Mode');
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.notifyMeButtonText}>Notify Me When It Launches</Text>
-            <Svg width="20" height="20" viewBox="0 0 20 20">
-              <Path
-                d="M10 2C10 2 4 5 4 10C4 15 10 18 10 18C10 18 16 15 16 10C16 5 10 2 10 2Z M8 10L9 11L12 8"
-                stroke="white"
-                strokeWidth="1.5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-          </TouchableOpacity>
-
-          <Text style={styles.storyModeLaunchHint}>
-            Launching in 4-6 weeks • Stay tuned for weekly episodes
-          </Text>
-        </Card>
-
-        {/* Today's Verse Card */}
-        <Card variant="cream" outlined style={styles.verseCard}>
+        {/* TODAY'S VERSE - Hero Position */}
+        <Card variant="cream" outlined style={styles.heroVerseCard}>
           <Text style={styles.verseLabel}>Today's Verse</Text>
 
           {isLoading ? (
@@ -471,52 +244,104 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           ) : null}
         </Card>
 
-        {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
-          {actionButtons.map((action, index) => (
+        {/* Story Mode Teaser - Visual with Image Background */}
+        <TouchableOpacity
+          style={styles.storyModeImageCard}
+          onPress={() => {
+            Alert.alert(
+              "Story Mode Coming Soon! 🎬",
+              "Walk in Jesus' footsteps through interactive stories.\n\nSeason 1 launches in 4-6 weeks with weekly episodes!",
+              [{ text: "Notify Me!", style: "default" }]
+            );
+            logger.log('[HomeScreen] User interested in Story Mode');
+          }}
+          activeOpacity={0.9}
+        >
+          {/* Image Background Placeholder - 9:16 aspect ratio */}
+          <View style={styles.storyModeImageBackground}>
+            {/* Cross illustration as placeholder - replace with actual image later */}
+            <Svg width="120" height="120" viewBox="0 0 120 120" style={styles.storyModeBackgroundIcon}>
+              <Path
+                d="M60 10 L62 50 L100 52 L62 54 L60 92 L58 54 L20 52 L58 50 Z"
+                fill={theme.colors.success.celebratoryGold}
+                opacity="0.2"
+              />
+              <Path
+                d="M50 25 L70 25 L70 50 L95 50 L95 70 L70 70 L70 95 L50 95 L50 70 L25 70 L25 50 L50 50 Z"
+                fill={theme.colors.success.celebratoryGold}
+                opacity="0.3"
+              />
+            </Svg>
+
+            {/* Overlay with white text */}
+            <View style={styles.storyModeOverlay}>
+              <View style={styles.comingSoonBadgeSmall}>
+                <Text style={styles.comingSoonTextSmall}>COMING SOON</Text>
+              </View>
+              <Text style={styles.storyModeOverlayTitle}>Story Mode</Text>
+              <Text style={styles.storyModeOverlaySubtitle}>Season 1: The Life of Jesus</Text>
+              <View style={styles.storyModeOverlayFeatures}>
+                <Text style={styles.storyModeOverlayFeature}>📖 Interactive Stories</Text>
+                <Text style={styles.storyModeOverlayFeature}>🎨 Animations</Text>
+                <Text style={styles.storyModeOverlayFeature}>❓ Quizzes</Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* Daily Checklist - Simple & Clean */}
+        <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
+          <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
+          <Text style={styles.checklistSubtitle}>Complete these to build your faith daily</Text>
+
+          {dailyTasks.map((task) => (
+            <View key={task.id} style={styles.checklistItem}>
+              <View style={[styles.checkbox, task.completed && styles.checkboxCompleted]}>
+                {task.completed && (
+                  <Svg width="12" height="12" viewBox="0 0 12 12">
+                    <Path
+                      d="M2 6 L5 9 L10 3"
+                      stroke="white"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                )}
+              </View>
+              <Text style={styles.checklistLabel}>
+                {task.icon} {task.label}
+              </Text>
+            </View>
+          ))}
+        </Card>
+
+        {/* Quick Actions - Simplified */}
+        <View style={styles.quickActionsGrid}>
+          {actionButtons.slice(0, 4).map((action) => (
             <TouchableOpacity
               key={action.id}
-              style={[
-                styles.actionButton,
-                index === actionButtons.length - 1 && styles.actionButtonLast,
-              ]}
+              style={styles.quickActionCard}
               onPress={action.onPress}
               activeOpacity={0.8}
             >
-              <View style={styles.actionButtonContent}>
-                <View style={[
-                  styles.actionIconContainer,
-                  { backgroundColor: getActionColor(action.id) },
-                ]}>
-                  {renderActionIcon(action.icon)}
-                </View>
-                <View style={styles.actionTextContainer}>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
-                  <Text style={styles.actionDescription}>{action.description}</Text>
-                </View>
-                <Svg width="24" height="24" viewBox="0 0 24 24">
-                  <Path
-                    d="M9 6 L15 12 L9 18"
-                    stroke={theme.colors.text.tertiary}
-                    strokeWidth="2"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
+              <View style={[styles.quickActionIcon, { backgroundColor: getActionColor(action.id) }]}>
+                {renderActionIcon(action.icon)}
               </View>
+              <Text style={styles.quickActionTitle}>{action.title}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Daily Progress */}
-        <View style={styles.progressSection}>
-          <Text style={styles.progressTitle}>Your Progress</Text>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${Math.min((versesLearned / 10) * 100, 100)}%` }]} />
+        {/* Progress Summary - Compact */}
+        {versesLearned > 0 && (
+          <View style={styles.progressSummary}>
+            <Text style={styles.progressSummaryText}>
+              📚 {versesLearned} verses memorized · 🔥 {streak} day streak
+            </Text>
           </View>
-          <Text style={styles.progressText}>{versesLearned} verses memorized</Text>
-        </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -616,51 +441,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.screen.horizontal,
     paddingBottom: theme.spacing.xxl,
   },
-  header: {
+  // NEW: Simple Header
+  simpleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
-  },
-  headerLeft: {
-    flex: 1,
+    marginBottom: theme.spacing.lg,
   },
   greeting: {
-    fontSize: theme.typography.ui.title.fontSize,
-    lineHeight: theme.typography.ui.title.lineHeight,
-    fontWeight: theme.typography.ui.title.fontWeight,
+    fontSize: 24,
+    fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  statItem: {
+  miniStats: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
   },
-  statText: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
+  miniStatText: {
+    fontSize: 13,
     color: theme.colors.text.secondary,
-    fontWeight: '600',
     fontFamily: theme.typography.fonts.ui.default,
   },
-  companionContainer: {
-    marginLeft: theme.spacing.md,
-  },
-  verseCard: {
-    marginBottom: theme.spacing.xl,
+  // Hero Verse Card
+  heroVerseCard: {
+    marginBottom: theme.spacing.lg,
     paddingVertical: theme.spacing.xl,
-    minHeight: 200,
+    minHeight: 180,
   },
   verseLabel: {
-    fontSize: theme.typography.ui.caption.fontSize,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: theme.colors.secondary.lightGold,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -675,6 +489,162 @@ const styles = StyleSheet.create({
   verseReference: {
     marginTop: theme.spacing.sm,
   },
+  // Story Mode Image Card
+  storyModeImageCard: {
+    marginBottom: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+    ...theme.shadows.md,
+  },
+  storyModeImageBackground: {
+    width: '100%',
+    aspectRatio: 9 / 14, // Slightly wider than 9:16 for better mobile display
+    backgroundColor: theme.colors.primary.darkCharcoal,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  storyModeBackgroundIcon: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginLeft: -60,
+    marginTop: -60,
+  },
+  storyModeOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+  },
+  comingSoonBadgeSmall: {
+    backgroundColor: theme.colors.success.celebratoryGold,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.full,
+    marginBottom: theme.spacing.sm,
+  },
+  comingSoonTextSmall: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: 'white',
+    letterSpacing: 1,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  storyModeOverlayTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: 'white',
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 4,
+  },
+  storyModeOverlaySubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.success.celebratoryGold,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.md,
+  },
+  storyModeOverlayFeatures: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  storyModeOverlayFeature: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  // Daily Checklist
+  dailyChecklistCard: {
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.lg,
+  },
+  checklistTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 4,
+  },
+  checklistSubtitle: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.md,
+  },
+  checklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.primary.oatmeal,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: theme.colors.primary.mutedStone,
+    marginRight: theme.spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxCompleted: {
+    backgroundColor: theme.colors.success.celebratoryGold,
+    borderColor: theme.colors.success.celebratoryGold,
+  },
+  checklistLabel: {
+    fontSize: 15,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    flex: 1,
+  },
+  // Quick Actions Grid
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  quickActionCard: {
+    width: '47%',
+    backgroundColor: theme.colors.background.lightCream,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    ...theme.shadows.sm,
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  quickActionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+  },
+  // Progress Summary
+  progressSummary: {
+    backgroundColor: theme.colors.background.warmParchment,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+  },
+  progressSummaryText: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  // Loading & Error States
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -682,7 +652,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   loadingText: {
-    fontSize: theme.typography.ui.body.fontSize,
+    fontSize: 16,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
   },
@@ -693,7 +663,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   errorText: {
-    fontSize: theme.typography.ui.body.fontSize,
+    fontSize: 16,
     color: theme.colors.error.main,
     textAlign: 'center',
     fontFamily: theme.typography.fonts.ui.default,
@@ -707,333 +677,10 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   retryButtonText: {
-    fontSize: theme.typography.ui.body.fontSize,
+    fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text.onDark,
     fontFamily: theme.typography.fonts.ui.default,
-  },
-  actionsContainer: {
-    marginBottom: theme.spacing.xl,
-  },
-  actionButton: {
-    backgroundColor: theme.colors.background.lightCream,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.sm,
-  },
-  actionButtonLast: {
-    marginBottom: 0,
-  },
-  actionButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: theme.borderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: theme.spacing.md,
-  },
-  actionTextContainer: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: theme.typography.ui.subheading.fontSize,
-    fontWeight: theme.typography.ui.subheading.fontWeight,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  actionDescription: {
-    fontSize: theme.typography.ui.caption.fontSize,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  progressSection: {
-    marginTop: theme.spacing.lg,
-  },
-  progressTitle: {
-    fontSize: theme.typography.ui.subheading.fontSize,
-    fontWeight: theme.typography.ui.subheading.fontWeight,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: theme.colors.primary.oatmeal,
-    borderRadius: theme.borderRadius.sm,
-    overflow: 'hidden',
-    marginBottom: theme.spacing.sm,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: theme.colors.success.mutedOlive,
-    borderRadius: theme.borderRadius.sm,
-  },
-  progressText: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  // Streak Urgency Banner
-  streakUrgencyBanner: {
-    backgroundColor: theme.colors.secondary.warmTerracotta,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-    ...theme.shadows.md,
-  },
-  streakUrgencyContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  streakUrgencyLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: theme.spacing.sm,
-  },
-  streakUrgencyText: {
-    flex: 1,
-  },
-  streakUrgencyTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: 'white',
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 2,
-  },
-  streakUrgencySubtitle: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontFamily: theme.typography.fonts.ui.default,
-    fontStyle: 'italic',
-  },
-  // XP Progress Card
-  xpProgressCard: {
-    marginBottom: theme.spacing.md,
-  },
-  xpProgressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  xpProgressInfo: {
-    flex: 1,
-  },
-  xpProgressLevel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 2,
-    letterSpacing: 1,
-  },
-  xpProgressNext: {
-    fontSize: 12,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  levelBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.success.celebratoryGold + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  xpProgressBarContainer: {
-    height: 10,
-    backgroundColor: theme.colors.primary.oatmeal,
-    borderRadius: theme.borderRadius.full,
-    overflow: 'hidden',
-    marginBottom: theme.spacing.sm,
-  },
-  xpProgressBarFill: {
-    height: '100%',
-    backgroundColor: theme.colors.success.celebratoryGold,
-    borderRadius: theme.borderRadius.full,
-  },
-  xpProgressText: {
-    fontSize: 12,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-    fontStyle: 'italic',
-  },
-  // Daily Goal Card
-  dailyGoalCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  dailyGoalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  },
-  dailyGoalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  dailyGoalContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  dailyGoalCircle: {
-    position: 'relative',
-    width: 80,
-    height: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dailyGoalCircleText: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dailyGoalCount: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  dailyGoalRight: {
-    flex: 1,
-  },
-  dailyGoalVersesText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.xs,
-    lineHeight: 18,
-  },
-  dailyGoalScripture: {
-    fontSize: 11,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.scripture.default,
-    fontStyle: 'italic',
-    lineHeight: 16,
-  },
-  // Story Mode Teaser
-  storyModeTeaser: {
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.background.lightCream,
-    borderWidth: 2,
-    borderColor: theme.colors.success.celebratoryGold + '40',
-    ...theme.shadows.lg,
-  },
-  storyModeHeader: {
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
-  },
-  comingSoonBadge: {
-    backgroundColor: theme.colors.success.celebratoryGold,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.full,
-  },
-  comingSoonText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: 'white',
-    letterSpacing: 1.5,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  storyModeContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.lg,
-    gap: theme.spacing.md,
-  },
-  storyModeIllustration: {
-    width: 80,
-    height: 80,
-    backgroundColor: theme.colors.background.offWhiteParchment,
-    borderRadius: theme.borderRadius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...theme.shadows.sm,
-  },
-  storyModeText: {
-    flex: 1,
-  },
-  storyModeTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.xs,
-  },
-  storyModeSubtitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.secondary.warmTerracotta,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.sm,
-  },
-  storyModeDescription: {
-    fontSize: 13,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-    lineHeight: 18,
-  },
-  storyModeFeatures: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.primary.oatmeal,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-  featureText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  notifyMeButton: {
-    backgroundColor: theme.colors.success.celebratoryGold,
-    borderRadius: theme.borderRadius.lg,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.sm,
-    ...theme.shadows.md,
-  },
-  notifyMeButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: 'white',
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  storyModeLaunchHint: {
-    fontSize: 11,
-    color: theme.colors.text.tertiary,
-    fontFamily: theme.typography.fonts.ui.default,
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
 });
 
