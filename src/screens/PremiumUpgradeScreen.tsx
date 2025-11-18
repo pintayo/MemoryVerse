@@ -252,6 +252,9 @@ export const PremiumUpgradeScreen = () => {
         {/* Compact Hero */}
         <View style={styles.hero}>
           <Text style={styles.heroTitle}>Unlock Premium</Text>
+          <Text style={styles.heroSubtitle}>
+            Deepen your faith with unlimited AI prayers, advanced Bible study tools, and early access to Story Mode
+          </Text>
         </View>
 
         {/* Pricing Plans */}
@@ -300,30 +303,36 @@ export const PremiumUpgradeScreen = () => {
                     <Text style={styles.priceDetail}>{tier.pricePerMonth}</Text>
                   </View>
 
-                  {/* Show 3 unique features + "and many more" */}
+                  {/* Concrete, measurable premium features */}
                   <View style={styles.tierFeatures}>
                     <View style={styles.bulletPoint}>
                       <Text style={styles.bulletIcon}>✨</Text>
                       <Text style={styles.tierFeatureTextHighlight}>
-                        AI-powered daily prayers personalized just for you
+                        Unlimited AI prayers (free: 3/day) - Get personalized prayers anytime
                       </Text>
                     </View>
                     <View style={styles.bulletPoint}>
                       <Text style={styles.bulletIcon}>📖</Text>
                       <Text style={styles.tierFeatureTextHighlight}>
-                        Access to all premium Bible translations
+                        7 Bible translations (free: 1) - Study in KJV, NIV, ESV, NLT & more
                       </Text>
                     </View>
                     <View style={styles.bulletPoint}>
                       <Text style={styles.bulletIcon}>🔥</Text>
                       <Text style={styles.tierFeatureTextHighlight}>
-                        Unlimited streak freezes to protect your progress
+                        Unlimited streak freezes (free: 1/month) - Never lose your progress
                       </Text>
                     </View>
                     <View style={styles.bulletPoint}>
-                      <Text style={styles.bulletIcon}>🎁</Text>
+                      <Text style={styles.bulletIcon}>📊</Text>
+                      <Text style={styles.tierFeatureTextHighlight}>
+                        Advanced analytics - Track mastery levels, verse retention & study patterns
+                      </Text>
+                    </View>
+                    <View style={styles.bulletPoint}>
+                      <Text style={styles.bulletIcon}>📺</Text>
                       <Text style={styles.tierFeatureTextMore}>
-                        And many more premium features...
+                        Early access to Story Mode (launching soon!)
                       </Text>
                     </View>
                   </View>

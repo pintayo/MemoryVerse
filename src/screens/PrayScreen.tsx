@@ -104,11 +104,11 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
     if (category === 'daily') {
       if (!isPremiumUser) {
         Alert.alert(
-          'Premium Feature',
-          'Tell About Your Day prayer generation is a premium feature. Upgrade to access this and more!',
+          '✨ Unlock AI-Powered Prayers',
+          'Get personalized prayers generated just for you, anytime.\n\n💎 Premium includes:\n• Unlimited AI prayers (free: 3/day)\n• 7 Bible translations\n• Advanced analytics\n• Early Story Mode access',
           [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Upgrade', onPress: () => navigation.navigate('PremiumUpgrade') },
+            { text: 'Not Now', style: 'cancel' },
+            { text: 'See Premium Plans', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'prayer_ai' }) },
           ]
         );
         return;
@@ -169,11 +169,11 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
 
     if (!isPremiumUser) {
       Alert.alert(
-        'Premium Feature',
-        'This feature requires a premium subscription.',
+        '🙏 Premium Prayer Generation',
+        'Upgrade to get unlimited personalized AI prayers that speak directly to your heart.\n\n✨ What you get:\n• Unlimited prayers daily\n• Personalized to your situation\n• Biblically grounded responses\n• Plus all premium features',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => navigation.navigate('PremiumUpgrade') },
+          { text: 'Maybe Later', style: 'cancel' },
+          { text: 'Unlock Premium', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'prayer_generate' }) },
         ]
       );
       return;

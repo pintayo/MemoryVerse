@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -244,8 +245,15 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
         chapter: selectedChapter,
       });
     } else {
-      // Non-premium users see upgrade prompt
-      navigation.navigate('PremiumUpgrade');
+      // Non-premium users see value-driven upgrade prompt
+      Alert.alert(
+        '📖 Unlock Chapter Context',
+        `Get AI-powered insights for the entire ${selectedBook} ${selectedChapter}!\n\n💎 Premium Features:\n• Deep chapter analysis\n• Historical context\n• Theological insights\n• Cross-references\n• Plus unlimited AI prayers & more`,
+        [
+          { text: 'Not Now', style: 'cancel' },
+          { text: 'See Premium', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'chapter_context' }) },
+        ]
+      );
     }
   };
 
