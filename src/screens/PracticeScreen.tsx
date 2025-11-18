@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -9,6 +9,7 @@ import { verseService } from '../services/verseService';
 import { practiceService, PracticeMode, BlankQuestion, MultipleChoiceQuestion } from '../services/practiceService';
 import { profileService } from '../services/profileService';
 import { spacedRepetitionService, ReviewVerse } from '../services/spacedRepetitionService';
+import { guestProgressService } from '../services/guestProgressService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
@@ -47,6 +48,37 @@ const PracticeScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     loadVerses();
   }, [isReviewMode]);
+
+  // Show guest save progress prompt when session completes
+  useEffect(() => {
+    const showGuestPrompt = async () => {
+      if (isComplete && sessionResults && !user && sessionResults.totalXP > 0) {
+        const shouldShow = await guestProgressService.shouldShowPrompt();
+        if (shouldShow) {
+          Alert.alert(
+            'Save Your Progress! 📊',
+            `You just earned ${sessionResults.totalXP} XP! Create an account to save your progress and track your growth.`,
+            [
+              {
+                text: "Don't Show Again",
+                style: 'cancel',
+                onPress: () => guestProgressService.disablePrompt()
+              },
+              {
+                text: 'Login',
+                onPress: () => navigation.navigate('Login')
+              },
+              {
+                text: 'Create Account',
+                onPress: () => navigation.navigate('Signup')
+              }
+            ]
+          );
+        }
+      }
+    };
+    showGuestPrompt();
+  }, [isComplete, sessionResults, user]);
 
   const loadVerses = async () => {
     try {
