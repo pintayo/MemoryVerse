@@ -136,7 +136,7 @@ const AppNavigator = () => {
 
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
 
-  // Check if user has completed onboarding
+  // Check if user has completed onboarding (both authenticated and guest users)
   useEffect(() => {
     const checkOnboarding = async () => {
       try {
@@ -148,10 +148,9 @@ const AppNavigator = () => {
       }
     };
 
-    if (isAuthenticated) {
-      checkOnboarding();
-    }
-  }, [isAuthenticated]);
+    // Check onboarding for all users (guest and authenticated)
+    checkOnboarding();
+  }, []);
 
   // Track app sessions for review prompt
   useEffect(() => {
@@ -170,7 +169,7 @@ const AppNavigator = () => {
   }, [isAuthenticated, hasCompletedOnboarding]);
 
   // Show loading spinner while checking authentication or onboarding
-  if (isLoading || (isAuthenticated && hasCompletedOnboarding === null)) {
+  if (isLoading || hasCompletedOnboarding === null) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
@@ -178,31 +177,31 @@ const AppNavigator = () => {
     );
   }
 
-  // Show auth screens if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="Login">
-          {(props) => <LoginScreen {...props} onLoginSuccess={() => {}} />}
-        </Stack.Screen>
-        <Stack.Screen name="Signup">
-          {(props) => <SignupScreen {...props} onSignupSuccess={() => {}} />}
-        </Stack.Screen>
-      </Stack.Navigator>
-    );
-  }
-
-  // Show onboarding for first-time users
-  if (!hasCompletedOnboarding) {
+  // Show onboarding for first-time users (both authenticated and guest users)
+  if (hasCompletedOnboarding === false) {
     return <OnboardingScreen onComplete={() => setHasCompletedOnboarding(true)} />;
   }
 
-  // Show main app if authenticated and onboarding completed
-  return <RootNavigator />;
+  // Allow both authenticated and guest users to access main app
+  // Guest users will see sign-up prompts when trying to use certain features
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      {/* Main app available to both authenticated and guest users */}
+      <Stack.Screen name="Main" component={RootNavigator} />
+
+      {/* Auth screens accessible from within the app */}
+      <Stack.Screen name="Login">
+        {(props) => <LoginScreen {...props} onLoginSuccess={() => {}} />}
+      </Stack.Screen>
+      <Stack.Screen name="Signup">
+        {(props) => <SignupScreen {...props} onSignupSuccess={() => {}} />}
+      </Stack.Screen>
+    </Stack.Navigator>
+  );
 };
 
 console.log('[App.tsx] About to define App component...');
