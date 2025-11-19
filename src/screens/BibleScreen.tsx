@@ -458,7 +458,35 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
           </TouchableOpacity>
         )}
 
-        {/* Show verse search results if searching */}
+        {/* Show book/chapter results first when searching */}
+        {searchQuery && filteredBooks.length > 0 && (
+          <View style={styles.searchResultsSection}>
+            <Text style={styles.searchResultsTitle}>
+              Books ({filteredBooks.length})
+            </Text>
+            {filteredBooks.map((book) => (
+              <TouchableOpacity
+                key={book}
+                style={styles.bookResultCard}
+                onPress={() => handleBookSelect(book)}
+              >
+                <Text style={styles.bookResultName}>{book}</Text>
+                <Svg width={20} height={20} viewBox="0 0 24 24">
+                  <Path
+                    d="M9 6 L15 12 L9 18"
+                    stroke={theme.colors.text.tertiary}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </Svg>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Show verse search results below book results */}
         {searchQuery.length >= 3 && (
           <View style={styles.searchResultsSection}>
             {isSearching ? (
@@ -469,7 +497,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
             ) : searchResults.length > 0 ? (
               <>
                 <Text style={styles.searchResultsTitle}>
-                  {searchResults.length} verse{searchResults.length !== 1 ? 's' : ''} found
+                  Verses ({searchResults.length})
                 </Text>
                 {searchResults.map((result) => (
                   <TouchableOpacity
@@ -486,17 +514,16 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
                   </TouchableOpacity>
                 ))}
               </>
-            ) : (
-              <Text style={styles.noResultsText}>No verses found matching "{searchQuery}"</Text>
-            )}
+            ) : null}
           </View>
         )}
 
-        {/* Always show books list */}
-        {filteredBooks.length === 0 ? (
-          <Text style={styles.noResultsText}>No books found</Text>
-        ) : (
-          <>
+        {/* Show full books list when not searching */}
+        {!searchQuery && (
+          filteredBooks.length === 0 ? (
+            <Text style={styles.noResultsText}>No books found</Text>
+          ) : (
+            <>
             {OLD_TESTAMENT.some(book => filteredBooks.includes(book)) && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Old Testament</Text>
@@ -547,6 +574,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
               </View>
             )}
           </>
+          )
         )}
       </ScrollView>
     );
@@ -894,6 +922,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.tertiary,
     marginBottom: 16,
+  },
+  bookResultCard: {
+    backgroundColor: theme.colors.background.warmParchment,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: theme.colors.secondary.lightGold,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bookResultName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   verseResultCard: {
     backgroundColor: theme.colors.background.lightCream,
