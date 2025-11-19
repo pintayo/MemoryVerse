@@ -377,11 +377,12 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
 
   const handleContinueReading = () => {
     if (bookmark) {
-      handleBookSelect(bookmark.book);
-      // Will automatically navigate to the bookmarked chapter
+      // Set the book and navigate directly to reading the chapter
+      setSelectedBook(bookmark.book);
+      // Small delay to ensure state is updated before loading chapter
       setTimeout(() => {
         handleChapterSelect(bookmark.chapter);
-      }, 100);
+      }, 50);
     }
   };
 
