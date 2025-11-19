@@ -236,36 +236,16 @@ export async function logAbuseAttempt(
 /**
  * Gets the number of prayer requests made today by user
  * Used for rate limiting
+ *
+ * NOTE: This function is deprecated. Rate limiting is now handled by usageLimitsService.
+ * Returning 0 always since the real usage tracking is done via usageLimitsService RPC functions.
  */
 export async function getTodayRequestCount(userId: string): Promise<number> {
-  try {
-    // Import supabase dynamically to avoid circular dependencies
-    const { supabase } = await import('../lib/supabase');
-
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-
-    const { data, error } = await supabase
-      .from('usage_tracking')
-      .select('usage_count')
-      .eq('user_id', userId)
-      .eq('feature_name', 'prayer_generation')
-      .eq('date', today)
-      .single();
-
-    if (error) {
-      // If no record found, that means 0 requests today
-      if (error.code === 'PGRST116') {
-        return 0;
-      }
-      logger.error('[PrayerValidator] Error getting request count', error);
-      return 0; // Fail open - don't block user if DB error
-    }
-
-    return data?.usage_count || 0;
-  } catch (error) {
-    logger.error('[PrayerValidator] Error getting request count', error);
-    return 0; // Fail open
-  }
+  // Rate limiting is now handled by usageLimitsService using RPC functions
+  // This function is kept for backward compatibility but always returns 0
+  // The actual usage checks happen in usageLimitsService.checkAndIncrementUsage()
+  logger.log('[PrayerValidator] getTodayRequestCount called (deprecated, returning 0)');
+  return 0;
 }
 
 /**

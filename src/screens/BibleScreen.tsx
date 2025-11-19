@@ -8,8 +8,9 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Share,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { theme } from '../theme';
 import { supabase } from '../lib/supabase';
@@ -57,6 +58,7 @@ const NEW_TESTAMENT = [
 const ALL_BOOKS = [...OLD_TESTAMENT, ...NEW_TESTAMENT];
 
 export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const isPremiumUser = profile?.is_premium || false;
 
@@ -283,10 +285,10 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
       // Non-premium users see value-driven upgrade prompt
       Alert.alert(
         '📖 Unlock Chapter Context',
-        `Get AI-powered insights for the entire ${selectedBook} ${selectedChapter}!\n\n💎 Premium Features:\n• Deep chapter analysis\n• Historical context\n• Theological insights\n• Cross-references\n• Plus unlimited AI prayers & more`,
+        `Get AI-powered insights for the entire ${selectedBook} ${selectedChapter}!\n\n💎 Pro Features:\n• Deep chapter analysis\n• Historical context\n• Theological insights\n• Cross-references\n• 1-10 AI prayers per day (based on tier)`,
         [
           { text: 'Not Now', style: 'cancel' },
-          { text: 'See Premium', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'chapter_context' }) },
+          { text: 'See Pro Plans', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'chapter_context' }) },
         ]
       );
     }
@@ -294,6 +296,20 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
 
   const handleRequestVerseContext = (verseId: string) => {
     navigation.navigate('Understand', { verseId });
+  };
+
+  const handleShareVerse = async (verse: any) => {
+    try {
+      const shareMessage = `"${verse.text}"\n\n— ${verse.book} ${verse.chapter}:${verse.verse_number} (KJV)`;
+
+      await Share.share({
+        message: shareMessage,
+      });
+
+      logger.log('[BibleScreen] Verse shared successfully');
+    } catch (error) {
+      logger.error('[BibleScreen] Error sharing verse:', error);
+    }
   };
 
   const handleFavorites = () => {
@@ -375,13 +391,52 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
     );
   };
 
-  const handleContinueReading = () => {
-    if (bookmark) {
-      handleBookSelect(bookmark.book);
-      // Will automatically navigate to the bookmarked chapter
-      setTimeout(() => {
-        handleChapterSelect(bookmark.chapter);
-      }, 100);
+  const handleContinueReading = async () => {
+    if (!bookmark) return;
+
+    setIsLoading(true);
+    setSelectedBook(bookmark.book);
+    setSelectedChapter(bookmark.chapter);
+    setMode('verses');
+
+    try {
+      // Load chapters for this book (for next/prev navigation)
+      const chaptersQuery = await supabase
+        .from('verses')
+        .select('chapter')
+        .eq('book', bookmark.book)
+        .eq('translation', 'KJV')
+        .order('chapter');
+
+      if (chaptersQuery.error) throw chaptersQuery.error;
+
+      const uniqueChapters = [...new Set(chaptersQuery.data.map((v: any) => v.chapter))];
+      setChapters(uniqueChapters);
+
+      // Load verses for the bookmarked chapter
+      const versesQuery = await supabase
+        .from('verses')
+        .select('*')
+        .eq('book', bookmark.book)
+        .eq('chapter', bookmark.chapter)
+        .eq('translation', 'KJV')
+        .order('verse_number');
+
+      if (versesQuery.error) throw versesQuery.error;
+      setVerses(versesQuery.data || []);
+
+      // Save bookmark and mark as read
+      await readingProgressService.saveBookmark(bookmark.book, bookmark.chapter);
+      await readingProgressService.markChapterRead(bookmark.book, bookmark.chapter);
+      await loadBookmark();
+      await loadBookProgress(bookmark.book);
+
+      // Complete the daily chapter task
+      await completeTask('chapter');
+    } catch (error) {
+      logger.error('[BibleScreen] Error in continue reading:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -418,7 +473,35 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
           </TouchableOpacity>
         )}
 
-        {/* Show verse search results if searching */}
+        {/* Show book/chapter results first when searching */}
+        {searchQuery && filteredBooks.length > 0 && (
+          <View style={styles.searchResultsSection}>
+            <Text style={styles.searchResultsTitle}>
+              Books ({filteredBooks.length})
+            </Text>
+            {filteredBooks.map((book) => (
+              <TouchableOpacity
+                key={book}
+                style={styles.bookResultCard}
+                onPress={() => handleBookSelect(book)}
+              >
+                <Text style={styles.bookResultName}>{book}</Text>
+                <Svg width={20} height={20} viewBox="0 0 24 24">
+                  <Path
+                    d="M9 6 L15 12 L9 18"
+                    stroke={theme.colors.text.tertiary}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </Svg>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Show verse search results below book results */}
         {searchQuery.length >= 3 && (
           <View style={styles.searchResultsSection}>
             {isSearching ? (
@@ -429,7 +512,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
             ) : searchResults.length > 0 ? (
               <>
                 <Text style={styles.searchResultsTitle}>
-                  {searchResults.length} verse{searchResults.length !== 1 ? 's' : ''} found
+                  Verses ({searchResults.length})
                 </Text>
                 {searchResults.map((result) => (
                   <TouchableOpacity
@@ -446,17 +529,16 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
                   </TouchableOpacity>
                 ))}
               </>
-            ) : (
-              <Text style={styles.noResultsText}>No verses found matching "{searchQuery}"</Text>
-            )}
+            ) : null}
           </View>
         )}
 
-        {/* Always show books list */}
-        {filteredBooks.length === 0 ? (
-          <Text style={styles.noResultsText}>No books found</Text>
-        ) : (
-          <>
+        {/* Show full books list when not searching */}
+        {!searchQuery && (
+          filteredBooks.length === 0 ? (
+            <Text style={styles.noResultsText}>No books found</Text>
+          ) : (
+            <>
             {OLD_TESTAMENT.some(book => filteredBooks.includes(book)) && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Old Testament</Text>
@@ -507,6 +589,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
               </View>
             )}
           </>
+          )
         )}
       </ScrollView>
     );
@@ -638,6 +721,17 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
                     <Text style={styles.verseNumberInline}>{verse.verse_number}</Text>
                   </TouchableOpacity>
                   <StarButton verseId={verse.id} size={16} />
+                  <TouchableOpacity
+                    style={styles.verseShareButton}
+                    onPress={() => handleShareVerse(verse)}
+                  >
+                    <Svg width={14} height={14} viewBox="0 0 24 24">
+                      <Path
+                        d="M18 16.08C17.24 16.08 16.56 16.38 16.04 16.85L8.91 12.7C8.96 12.47 9 12.24 9 12C9 11.76 8.96 11.53 8.91 11.3L15.96 7.19C16.5 7.69 17.21 8 18 8C19.66 8 21 6.66 21 5C21 3.34 19.66 2 18 2C16.34 2 15 3.34 15 5C15 5.24 15.04 5.47 15.09 5.7L8.04 9.81C7.5 9.31 6.79 9 6 9C4.34 9 3 10.34 3 12C3 13.66 4.34 15 6 15C6.79 15 7.5 14.69 8.04 14.19L15.16 18.35C15.11 18.56 15.08 18.78 15.08 19C15.08 20.61 16.39 21.92 18 21.92C19.61 21.92 20.92 20.61 20.92 19C20.92 17.39 19.61 16.08 18 16.08Z"
+                        fill={theme.colors.secondary.lightGold}
+                      />
+                    </Svg>
+                  </TouchableOpacity>
                 </View>
                 <Text style={styles.verseContinuousText}>
                   {verse.text}
@@ -647,49 +741,50 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
             ))}
           </View>
 
-          {/* Chapter Navigation Buttons */}
-          <View style={styles.chapterNavigation}>
-            <TouchableOpacity
-              style={[styles.navButton, !hasPrevious && styles.navButtonDisabled]}
-              onPress={handlePreviousChapter}
-              disabled={!hasPrevious}
-            >
-              <Svg width={20} height={20} viewBox="0 0 24 24">
-                <Path
-                  d="M15 18 L9 12 L15 6"
-                  stroke={hasPrevious ? theme.colors.text.primary : theme.colors.text.tertiary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </Svg>
-              <Text style={[styles.navButtonText, !hasPrevious && styles.navButtonTextDisabled]}>
-                Previous Chapter
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.nextButton, !hasNext && styles.navButtonDisabled]}
-              onPress={handleNextChapter}
-              disabled={!hasNext}
-            >
-              <Text style={[styles.nextButtonText, !hasNext && styles.nextButtonTextDisabled]}>
-                Next Chapter
-              </Text>
-              <Svg width={20} height={20} viewBox="0 0 24 24">
-                <Path
-                  d="M9 6 L15 12 L9 18"
-                  stroke={hasNext ? theme.colors.background.lightCream : theme.colors.text.tertiary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </Svg>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
+
+        {/* Sticky Chapter Navigation Buttons */}
+        <View style={[styles.chapterNavigation, { paddingBottom: Math.max(insets.bottom, theme.spacing.md) }]}>
+          <TouchableOpacity
+            style={[styles.navButton, !hasPrevious && styles.navButtonDisabled]}
+            onPress={handlePreviousChapter}
+            disabled={!hasPrevious}
+          >
+            <Svg width={20} height={20} viewBox="0 0 24 24">
+              <Path
+                d="M15 18 L9 12 L15 6"
+                stroke={hasPrevious ? theme.colors.text.primary : theme.colors.text.tertiary}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+            <Text style={[styles.navButtonText, !hasPrevious && styles.navButtonTextDisabled]}>
+              Previous Chapter
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.nextButton, !hasNext && styles.navButtonDisabled]}
+            onPress={handleNextChapter}
+            disabled={!hasNext}
+          >
+            <Text style={[styles.nextButtonText, !hasNext && styles.nextButtonTextDisabled]}>
+              Next Chapter
+            </Text>
+            <Svg width={20} height={20} viewBox="0 0 24 24">
+              <Path
+                d="M9 6 L15 12 L9 18"
+                stroke={hasNext ? theme.colors.background.lightCream : theme.colors.text.tertiary}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -854,6 +949,23 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     marginBottom: 16,
   },
+  bookResultCard: {
+    backgroundColor: theme.colors.background.warmParchment,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: theme.colors.secondary.lightGold,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bookResultName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
   verseResultCard: {
     backgroundColor: theme.colors.background.lightCream,
     padding: 16,
@@ -932,6 +1044,7 @@ const styles = StyleSheet.create({
   },
   chapterScrollContent: {
     padding: 16,
+    paddingBottom: 100, // Space for sticky navigation buttons
   },
   chapterTextContainer: {
     backgroundColor: theme.colors.background.lightCream,
@@ -953,6 +1066,10 @@ const styles = StyleSheet.create({
   verseNumberButton: {
     marginTop: 2,
   },
+  verseShareButton: {
+    marginTop: 2,
+    padding: 2,
+  },
   verseNumberInline: {
     fontSize: 12,
     fontWeight: '700',
@@ -970,10 +1087,23 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.scripture.default,
   },
   chapterNavigation: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-    marginBottom: 32,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    backgroundColor: theme.colors.background.lightCream,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.primary.oatmeal,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
   navButton: {
     flex: 1,
@@ -1005,7 +1135,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: theme.colors.primary.softOlive,
+    backgroundColor: theme.colors.success.mutedOlive,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,

@@ -6,7 +6,7 @@ console.log('[BottomTabNavigator] React imported');
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 console.log('[BottomTabNavigator] createBottomTabNavigator imported');
 
-import { HomeScreen, ProfileScreen, BibleScreen } from '../screens';
+import { HomeScreen, ProfileScreen, BibleScreen, StoryModeScreen } from '../screens';
 console.log('[BottomTabNavigator] Screens imported');
 
 import { theme } from '../theme';
@@ -72,7 +72,21 @@ const BottomTabNavigator = () => {
           ),
         }}
       />
-      {/* Leaderboard tab removed - feature flag disabled for soft launch */}
+      <Tab.Screen
+        name="Story"
+        component={StoryModeScreen}
+        options={{
+          tabBarLabel: 'Story',
+          tabBarIcon: ({ color, size }) => (
+            <Svg width={size} height={size} viewBox="0 0 24 24">
+              <Path
+                d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15l3.5-4.5 2.5 3.01L14.5 9l4.5 6H5z"
+                fill={color}
+              />
+            </Svg>
+          ),
+        }}
+      />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

@@ -124,18 +124,18 @@ export const SettingsScreen = () => {
 
   const isPremiumUser = profile?.is_premium || false;
 
-  // Translation options
+  // Translation options (matching available translation files)
   const freeTranslations = [
-    { id: 'KJV', name: 'King James Version', subtitle: 'Classic, poetic' },
-    { id: 'NIV', name: 'New International', subtitle: 'Modern, readable' },
-    { id: 'WEB', name: 'World English Bible', subtitle: 'Accurate, clear' },
+    { id: 'KJV', name: 'King James Version', subtitle: 'Classic, poetic, 1611' },
+    { id: 'WEB', name: 'World English Bible', subtitle: 'Modern, accurate' },
+    { id: 'BBE', name: 'Bible in Basic English', subtitle: 'Simple, clear' },
   ];
 
   const premiumTranslations = [
-    { id: 'ESV', name: 'English Standard', subtitle: 'Literal, scholarly' },
-    { id: 'NLT', name: 'New Living Translation', subtitle: 'Easy to understand' },
-    { id: 'NASB', name: 'New American Standard', subtitle: 'Most literal' },
-    { id: 'YLT', name: "Young's Literal", subtitle: 'Word-for-word' },
+    { id: 'ASV', name: 'American Standard', subtitle: 'Revised, literal, 1901' },
+    { id: 'YLT', name: "Young's Literal", subtitle: 'Word-for-word translation' },
+    { id: 'DBY', name: "Darby Bible", subtitle: 'Formal equivalence, 1890' },
+    { id: 'WBT', name: "Webster's Bible", subtitle: 'American English, 1833' },
   ];
 
   // Load translation preference on mount
@@ -819,7 +819,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.offWhiteParchment,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
-    maxHeight: '80%',
+    height: '80%',
     paddingBottom: theme.spacing.xl,
   },
   modalHeader: {
@@ -840,9 +840,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xs,
   },
   modalScroll: {
-    flex: 1,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
+    flexGrow: 1,
   },
   translationSectionTitle: {
     fontSize: 12,

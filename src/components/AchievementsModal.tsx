@@ -14,6 +14,7 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme';
 import { Achievement, AchievementCategory } from '../services/achievementsService';
@@ -84,7 +85,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
@@ -223,7 +224,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
             </View>
           )}
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -272,13 +273,14 @@ const styles = StyleSheet.create({
   categoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: theme.borderRadius.full,
     backgroundColor: theme.colors.background.warmParchment,
     borderWidth: 1,
     borderColor: theme.colors.primary.oatmeal,
+    minWidth: 100,
   },
   categoryButtonActive: {
     backgroundColor: theme.colors.secondary.lightGold,

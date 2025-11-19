@@ -105,7 +105,7 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
       if (!isPremiumUser) {
         Alert.alert(
           '✨ Unlock AI-Powered Prayers',
-          'Get personalized prayers generated just for you, anytime.\n\n💎 Pro Benefits:\n• 1-10 AI prayers per day (based on tier)\n• AI verse context & explanations\n• Multiple Bible translations\n• Streak freeze protection\n• Unlimited practice mode',
+          'Get personalized prayers generated just for you.\n\n💎 Pro Benefits:\n• 1-10 AI prayers per day (based on tier)\n• AI verse context & explanations\n• Multiple Bible translations\n• Streak freeze protection\n• Unlimited practice mode',
           [
             { text: 'Not Now', style: 'cancel' },
             { text: 'See Pro Plans', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'prayer_ai' }) },
@@ -169,11 +169,11 @@ const PrayScreen: React.FC<Props> = ({ navigation }) => {
 
     if (!isPremiumUser) {
       Alert.alert(
-        '🙏 Premium Prayer Generation',
-        'Upgrade to get unlimited personalized AI prayers that speak directly to your heart.\n\n✨ What you get:\n• Unlimited prayers daily\n• Personalized to your situation\n• Biblically grounded responses\n• Plus all premium features',
+        '🙏 Pro Prayer Generation',
+        'Upgrade to get personalized AI prayers that speak directly to your heart.\n\n✨ What you get:\n• 1-10 AI prayers daily (based on tier)\n• Personalized to your situation\n• Biblically grounded responses\n• Plus all pro features',
         [
           { text: 'Maybe Later', style: 'cancel' },
-          { text: 'Unlock Premium', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'prayer_generate' }) },
+          { text: 'Unlock Pro', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'prayer_generate' }) },
         ]
       );
       return;

@@ -109,6 +109,12 @@ export const ChapterSelector: React.FC<ChapterSelectorProps> = ({
     onClose();
   };
 
+  const handleAllChaptersFromBook = () => {
+    // Select all chapters from the selected book (book specified, chapter null)
+    onSelect(selectedBook, null);
+    onClose();
+  };
+
   const handleBack = () => {
     if (step === 'chapter') {
       setStep('book');
@@ -217,17 +223,37 @@ export const ChapterSelector: React.FC<ChapterSelectorProps> = ({
             )}
 
             {step === 'chapter' && (
-              <View style={styles.chaptersGrid}>
-                {chapters.map((chapter) => (
-                  <TouchableOpacity
-                    key={chapter}
-                    style={styles.chapterButton}
-                    onPress={() => handleChapterSelect(chapter)}
-                  >
-                    <Text style={styles.chapterNumber}>{chapter}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={handleAllChaptersFromBook}
+                >
+                  <View style={styles.iconContainer}>
+                    <Ionicons name="book-outline" size={24} color={theme.colors.secondary.lightGold} />
+                  </View>
+                  <View style={styles.optionTextContainer}>
+                    <Text style={styles.optionTitle}>All Chapters from {selectedBook}</Text>
+                    <Text style={styles.optionSubtitle}>Learn from any chapter in this book</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={theme.colors.text.tertiary} />
+                </TouchableOpacity>
+
+                <View style={styles.divider} />
+
+                <Text style={styles.sectionLabel}>Or choose a specific chapter:</Text>
+
+                <View style={styles.chaptersGrid}>
+                  {chapters.map((chapter) => (
+                    <TouchableOpacity
+                      key={chapter}
+                      style={styles.chapterButton}
+                      onPress={() => handleChapterSelect(chapter)}
+                    >
+                      <Text style={styles.chapterNumber}>{chapter}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
             )}
           </ScrollView>
         )}
@@ -311,6 +337,14 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: theme.colors.primary.oatmeal,
     marginVertical: theme.spacing.sm,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
   booksGrid: {
     flexDirection: 'row',

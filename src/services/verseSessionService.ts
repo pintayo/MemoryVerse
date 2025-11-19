@@ -28,6 +28,7 @@ class VerseSessionService {
 
   /**
    * Create a new 5-verse learning session starting with a specific verse
+   * Loads all 5 verses before returning to ensure proper progress display
    */
   async createSessionWithVerse(
     verseId: string,
@@ -42,22 +43,9 @@ class VerseSessionService {
         throw new Error('Verse not found');
       }
 
-      const verses: Verse[] = [specificVerse];
-
-      // Load 4 more random verses from the same book/chapter
-      for (let i = 0; i < 4; i++) {
-        const verse = await verseService.getRandomVerse(
-          translation,
-          specificVerse.book,
-          specificVerse.chapter
-        );
-        if (verse && verse.id !== specificVerse.id) {
-          verses.push(verse);
-        }
-      }
-
+      // Create session with just the specific verse
       const session: VerseSession = {
-        verses,
+        verses: [specificVerse],
         currentIndex: 0,
         book: specificVerse.book,
         chapter: specificVerse.chapter,
@@ -66,10 +54,17 @@ class VerseSessionService {
       const sessionId = this.generateSessionId(specificVerse.book, specificVerse.chapter);
       this.sessions.set(sessionId, session);
 
-      // Start pre-loading context for all verses
-      this.preloadContextForSession(session);
+      // Pre-load context for the first verse immediately
+      this.preloadContextForVerse(specificVerse);
 
-      logger.log('[VerseSession] Session created with specific verse, total:', verses.length, 'verses');
+      logger.log('[VerseSession] Session created with specific verse, loading remaining 4 verses...');
+
+      // WAIT for remaining 4 verses to load before returning
+      // This ensures UI shows "1 of 5" instead of "1 of 1"
+      await this.loadRemainingVerses(session, translation, specificVerse.book, specificVerse.chapter);
+
+      logger.log('[VerseSession] All 5 verses loaded, session ready');
+
       return session;
     } catch (error) {
       logger.error('[VerseSession] Error creating session with verse:', error);
@@ -79,6 +74,7 @@ class VerseSessionService {
 
   /**
    * Create a new 5-verse learning session
+   * Loads all 5 verses before returning to ensure proper progress display
    */
   async createSession(
     translation: string = 'KJV',
@@ -88,22 +84,16 @@ class VerseSessionService {
     try {
       logger.log('[VerseSession] Creating session:', { book, chapter });
 
-      const verses: Verse[] = [];
+      // Load first verse immediately
+      const firstVerse = await verseService.getRandomVerse(translation, book ?? undefined, chapter ?? undefined);
 
-      // Load 5 random verses from the specified chapter/book or all
-      for (let i = 0; i < 5; i++) {
-        const verse = await verseService.getRandomVerse(translation, book ?? undefined, chapter ?? undefined);
-        if (verse) {
-          verses.push(verse);
-        }
-      }
-
-      if (verses.length === 0) {
+      if (!firstVerse) {
         throw new Error('No verses found');
       }
 
+      // Create session with just the first verse
       const session: VerseSession = {
-        verses,
+        verses: [firstVerse],
         currentIndex: 0,
         book: book || null,
         chapter: chapter || null,
@@ -112,15 +102,66 @@ class VerseSessionService {
       const sessionId = this.generateSessionId(book, chapter);
       this.sessions.set(sessionId, session);
 
-      // Start pre-loading context for all verses
-      this.preloadContextForSession(session);
+      // Pre-load context for the first verse immediately
+      this.preloadContextForVerse(firstVerse);
 
-      logger.log('[VerseSession] Session created with', verses.length, 'verses');
+      logger.log('[VerseSession] Session created with first verse, loading remaining 4 verses...');
+
+      // WAIT for remaining 4 verses to load before returning
+      // This ensures UI shows "1 of 5" instead of "1 of 1"
+      await this.loadRemainingVerses(session, translation, book ?? undefined, chapter ?? undefined);
+
+      logger.log('[VerseSession] All 5 verses loaded, session ready');
+
       return session;
     } catch (error) {
       logger.error('[VerseSession] Error creating session:', error);
       throw error;
     }
+  }
+
+  /**
+   * Load remaining verses in the background and update the session
+   * Context pre-loading happens later when user views verse 1
+   */
+  private async loadRemainingVerses(
+    session: VerseSession,
+    translation: string,
+    book?: string,
+    chapter?: number
+  ): Promise<void> {
+    try {
+      const remainingVerses: Verse[] = [];
+
+      // Load 4 more verses
+      for (let i = 0; i < 4; i++) {
+        const verse = await verseService.getRandomVerse(translation, book, chapter);
+        if (verse && !session.verses.some(v => v.id === verse.id)) {
+          remainingVerses.push(verse);
+        }
+      }
+
+      // Update the session with all verses
+      session.verses.push(...remainingVerses);
+
+      logger.log('[VerseSession] Background verse loading complete. Total verses:', session.verses.length);
+      logger.log('[VerseSession] Context will be pre-loaded when user views verse 1');
+    } catch (error) {
+      logger.error('[VerseSession] Error loading remaining verses:', error);
+      // Don't throw - first verse is already loaded
+    }
+  }
+
+  /**
+   * Pre-load context for a single verse
+   */
+  private preloadContextForVerse(verse: Verse): void {
+    // Don't await - let it run in background
+    import('./contextGenerator').then(module => {
+      module.getOrGenerateContext(verse.id).catch(err => {
+        logger.error('[VerseSession] Error pre-loading context for verse:', err);
+      });
+    });
   }
 
   /**
@@ -131,6 +172,12 @@ class VerseSessionService {
 
     if (!verse) {
       throw new Error('No verse at current index');
+    }
+
+    // If this is the first verse (index 0), trigger aggressive pre-loading of ALL remaining verses' context
+    if (session.currentIndex === 0 && session.verses.length > 1) {
+      logger.log('[VerseSession] First verse loaded, starting aggressive pre-load of context for verses 2-5');
+      this.preloadRemainingContexts(session);
     }
 
     // Check cache first
@@ -154,6 +201,56 @@ class VerseSessionService {
       context: result.context,
       isLoading: false,
     };
+  }
+
+  /**
+   * Aggressively pre-load context for all remaining verses (2-5)
+   * Called when user is viewing the first verse to ensure context is ready
+   */
+  private preloadRemainingContexts(session: VerseSession): void {
+    // Get all verses except the first one
+    const remainingVerses = session.verses.slice(1);
+
+    if (remainingVerses.length === 0) {
+      logger.log('[VerseSession] No remaining verses to pre-load');
+      return;
+    }
+
+    logger.log(`[VerseSession] Aggressively pre-loading context for ${remainingVerses.length} remaining verses`);
+
+    // Pre-load context for each remaining verse in parallel
+    remainingVerses.forEach((verse, index) => {
+      // Skip if already in cache or being loaded
+      if (this.contextCache.has(verse.id)) {
+        logger.log(`[VerseSession] Verse ${index + 2} context already cached`);
+        return;
+      }
+
+      if (this.preloadQueue.has(verse.id)) {
+        logger.log(`[VerseSession] Verse ${index + 2} context already loading`);
+        return;
+      }
+
+      this.preloadQueue.add(verse.id);
+      logger.log(`[VerseSession] Starting context pre-load for verse ${index + 2} (${verse.book} ${verse.chapter}:${verse.verse_number})`);
+
+      // Load context in background (don't await - fire and forget)
+      verseService.getVerseWithContext(verse.id)
+        .then(result => {
+          if (result.context) {
+            this.contextCache.set(verse.id, result.context);
+            logger.log(`[VerseSession] ✓ Context pre-loaded for verse ${index + 2} - ready for instant display`);
+          } else {
+            logger.warn(`[VerseSession] No context returned for verse ${index + 2}`);
+          }
+        })
+        .catch(error => {
+          logger.error(`[VerseSession] Failed to pre-load context for verse ${index + 2}:`, error);
+        })
+        .finally(() => {
+          this.preloadQueue.delete(verse.id);
+        });
+    });
   }
 
   /**

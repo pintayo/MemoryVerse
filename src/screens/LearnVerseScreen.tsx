@@ -14,7 +14,7 @@ import {
   Alert,
   Text,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -41,6 +41,7 @@ type RootStackParamList = {
 type Props = NativeStackScreenProps<RootStackParamList, 'Understand'>;
 
 export function LearnVerseScreen({ navigation, route }: Props) {
+  const insets = useSafeAreaInsets();
   const [session, setSession] = useState<VerseSession | null>(null);
   const [currentVerse, setCurrentVerse] = useState<Verse | null>(null);
   const [context, setContext] = useState<string | null>(null);
@@ -67,7 +68,7 @@ export function LearnVerseScreen({ navigation, route }: Props) {
     if (session) {
       loadCurrentVerse();
     }
-  }, [session?.currentIndex]);
+  }, [session]);
 
   const initializeSession = async () => {
     try {
@@ -103,15 +104,25 @@ export function LearnVerseScreen({ navigation, route }: Props) {
     if (!session) return;
 
     try {
+      // Get the verse from the session immediately
+      const verse = session.verses[session.currentIndex];
+      if (!verse) {
+        setError('No verse at current index');
+        setIsLoading(false);
+        return;
+      }
+
+      // Update the verse UI immediately - don't wait for context
+      setCurrentVerse(verse);
+      setIsLoading(false);
+
+      // Load context in the background
       setIsLoadingContext(true);
+      setContext(null); // Clear old context while loading new one
 
       const result = await verseSessionService.getCurrentVerse(session);
-      setCurrentVerse(result.verse);
       setContext(result.context);
       setShowAiBadge(result.verse?.context_generated_by_ai || false);
-
-      // Clear main loading state after first verse loads
-      setIsLoading(false);
     } catch (err) {
       logger.error('[LearnVerseScreen] Error loading verse:', err);
       setError(err instanceof Error ? err.message : 'Failed to load verse');
@@ -330,36 +341,35 @@ export function LearnVerseScreen({ navigation, route }: Props) {
           </Card>
         </View>
 
-        {/* Navigation Buttons */}
-        <View style={styles.navigationContainer}>
-          <TouchableOpacity
-            style={[styles.navButton, !hasPrevious && styles.navButtonDisabled]}
-            onPress={handlePrevious}
-            disabled={!hasPrevious}
-          >
-            <Ionicons
-              name="chevron-back"
-              size={20}
-              color={hasPrevious ? colors.accent.gold : colors.primary.mutedStone}
-            />
-            <Text style={[styles.navButtonText, !hasPrevious && styles.navButtonTextDisabled]}>
-              Previous
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={handleNext}
-          >
-            <Text style={styles.nextButtonText}>
-              {hasNext ? 'Next Verse' : 'Complete Session'}
-            </Text>
-            <Ionicons name="chevron-forward" size={20} color="white" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* Sticky Navigation Buttons */}
+      <View style={[styles.navigationContainer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        <TouchableOpacity
+          style={[styles.navButton, !hasPrevious && styles.navButtonDisabled]}
+          onPress={handlePrevious}
+          disabled={!hasPrevious}
+        >
+          <Ionicons
+            name="chevron-back"
+            size={20}
+            color={hasPrevious ? colors.accent.gold : colors.primary.mutedStone}
+          />
+          <Text style={[styles.navButtonText, !hasPrevious && styles.navButtonTextDisabled]}>
+            Previous
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.nextButton}
+          onPress={handleNext}
+        >
+          <Text style={styles.nextButtonText}>
+            {hasNext ? 'Next Verse' : 'Complete Session'}
+          </Text>
+          <Ionicons name="chevron-forward" size={20} color="white" />
+        </TouchableOpacity>
+      </View>
 
       {/* Chapter Selector Modal */}
       <ChapterSelector
@@ -421,6 +431,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
+    paddingBottom: 100, // Space for sticky navigation buttons
   },
   loadingContainer: {
     flex: 1,
@@ -571,9 +582,22 @@ const styles = StyleSheet.create({
     color: colors.accent.gold,
   },
   navigationContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     gap: spacing.md,
-    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    backgroundColor: colors.primary.parchmentCream,
+    borderTopWidth: 1,
+    borderTopColor: colors.primary.oatmeal,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
   navButton: {
     flex: 1,
@@ -606,7 +630,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.primary.softOlive,
+    backgroundColor: colors.success.mutedOlive,
     paddingVertical: spacing.md,
     borderRadius: 12,
     shadowColor: '#000',
@@ -620,8 +644,5 @@ const styles = StyleSheet.create({
     fontFamily: typography.fonts.ui.default,
     color: colors.background.lightCream,
     fontWeight: '700',
-  },
-  bottomPadding: {
-    height: spacing.xl,
   },
 });

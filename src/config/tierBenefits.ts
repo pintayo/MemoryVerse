@@ -52,8 +52,7 @@ export const TIER_BENEFITS: Record<SubscriptionTier, TierBenefits> = {
       aiChapterSummaries: false,
       translations: ['KJV'],
       translationsCount: 1,
-      unlimitedPractice: false,
-      practiceLimit: 3,
+      unlimitedPractice: true,
       streakFreeze: false,
       prayerHistory: false,
       progressExport: false,
@@ -64,7 +63,7 @@ export const TIER_BENEFITS: Record<SubscriptionTier, TierBenefits> = {
       highlights: [
         'Daily Bible verse',
         '1 Bible translation (KJV)',
-        'Basic practice mode (3 verses/day)',
+        'Unlimited practice mode',
         'Daily spiritual goals tracking',
       ],
     },
@@ -81,8 +80,7 @@ export const TIER_BENEFITS: Record<SubscriptionTier, TierBenefits> = {
       aiChapterSummaries: false,
       translations: ['KJV', 'NIV', 'WEB'],
       translationsCount: 3,
-      unlimitedPractice: false,
-      practiceLimit: 10,
+      unlimitedPractice: true,
       streakFreeze: true,
       streakFreezeLimit: '1x per week',
       prayerHistory: false,
@@ -96,7 +94,7 @@ export const TIER_BENEFITS: Record<SubscriptionTier, TierBenefits> = {
         'AI verse context & explanations',
         '3 Bible translations',
         'Streak freeze (1x/week)',
-        'Extended practice (10 verses/day)',
+        'Unlimited practice mode',
       ],
     },
   },
@@ -136,7 +134,7 @@ export const TIER_BENEFITS: Record<SubscriptionTier, TierBenefits> = {
 
   premium: {
     name: 'premium',
-    displayName: 'Premium',
+    displayName: 'Pro',
     price: '€14.99/month',
     pricePerMonth: 14.99,
     features: {
@@ -217,14 +215,14 @@ export function getUpgradePrompt(
   if (currentTier === 'basic') {
     return {
       title: '🚀 Upgrade to Standard',
-      message: `${feature} is available in Standard tier and higher.\n\nUnlock unlimited prayers, all translations, and chapter summaries!`,
+      message: `${feature} is available in Standard tier and higher.\n\nUnlock 3 AI prayers per day, all translations, and chapter summaries!`,
     };
   }
 
   if (currentTier === 'standard') {
     return {
-      title: '💎 Upgrade to Premium',
-      message: `${feature} is available in Premium tier.\n\nGet early Story Mode access, personalized plans, and advanced analytics!`,
+      title: '💎 Upgrade to Pro',
+      message: `${feature} is available in Pro tier.\n\nGet 10 AI prayers per day, early Story Mode access, personalized plans, and advanced analytics!`,
     };
   }
 

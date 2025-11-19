@@ -1,7 +1,7 @@
 logger.log('[HomeScreen] Module loading...');
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
 import { AchievementsModal } from '../components/AchievementsModal';
@@ -175,6 +175,20 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     );
   };
 
+  const handleShareVerse = async (verse: Verse) => {
+    try {
+      const shareMessage = `"${verse.text}"\n\n— ${verse.book} ${verse.chapter}:${verse.verse_number} (KJV)`;
+
+      await Share.share({
+        message: shareMessage,
+      });
+
+      logger.log('[HomeScreen] Verse shared successfully');
+    } catch (error) {
+      logger.error('[HomeScreen] Error sharing verse:', error);
+    }
+  };
+
   // Daily checklist tasks (free user-friendly, no premium features)
   const dailyTasks = [
     { id: 'verse' as DailyTaskId, icon: '📖', label: 'Read today\'s verse', completed: dailyTasksCompletion.verse },
@@ -183,6 +197,69 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     { id: 'chapter' as DailyTaskId, icon: '📚', label: 'Read 1 Bible chapter', completed: dailyTasksCompletion.chapter },
     { id: 'review' as DailyTaskId, icon: '🔄', label: 'Review learned verses', completed: dailyTasksCompletion.review },
   ];
+
+  // Handle clicking on a daily task goal
+  const handleTaskClick = async (taskId: DailyTaskId, isCompleted: boolean) => {
+    // Don't do anything if already completed
+    if (isCompleted) return;
+
+    // Map task IDs to navigation actions
+    const taskActions: Record<DailyTaskId, () => void> = {
+      verse: () => {
+        // Scroll to today's verse (already visible on this screen)
+        // Or navigate to daily verse if on different screen
+      },
+      practice: () => {
+        if (!user) {
+          Alert.alert(
+            'Account Required',
+            'This action requires an account to save your progress. Please sign in or create an account.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        navigation.navigate('Practice');
+      },
+      understand: () => {
+        if (!user) {
+          Alert.alert(
+            'Account Required',
+            'This action requires an account to save your progress. Please sign in or create an account.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        if (todayVerse?.id) {
+          navigation.navigate('Understand', { verseId: todayVerse.id });
+        }
+      },
+      chapter: () => {
+        if (!user) {
+          Alert.alert(
+            'Account Required',
+            'This action requires an account to save your reading progress. Please sign in or create an account.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        navigation.navigate('Bible');
+      },
+      review: () => {
+        if (!user) {
+          Alert.alert(
+            'Account Required',
+            'This action requires an account to save your progress. Please sign in or create an account.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        navigation.navigate('Review');
+      },
+    };
+
+    // Execute the action for this task
+    taskActions[taskId]();
+  };
 
   const actionButtons = [
     {
@@ -315,114 +392,27 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <VerseReference style={styles.verseReference}>
                   {`${todayVerse.book} ${todayVerse.chapter}:${todayVerse.verse_number}`}
                 </VerseReference>
-                <Text style={styles.tapHint}>Tap to understand this verse</Text>
+                <View style={styles.verseCardFooter}>
+                  <Text style={styles.tapHint}>Tap to understand this verse</Text>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleShareVerse(todayVerse);
+                    }}
+                    style={styles.shareButton}
+                  >
+                    <Svg width={20} height={20} viewBox="0 0 24 24">
+                      <Path
+                        d="M18 16.08C17.24 16.08 16.56 16.38 16.04 16.85L8.91 12.7C8.96 12.47 9 12.24 9 12C9 11.76 8.96 11.53 8.91 11.3L15.96 7.19C16.5 7.69 17.21 8 18 8C19.66 8 21 6.66 21 5C21 3.34 19.66 2 18 2C16.34 2 15 3.34 15 5C15 5.24 15.04 5.47 15.09 5.7L8.04 9.81C7.5 9.31 6.79 9 6 9C4.34 9 3 10.34 3 12C3 13.66 4.34 15 6 15C6.79 15 7.5 14.69 8.04 14.19L15.16 18.35C15.11 18.56 15.08 18.78 15.08 19C15.08 20.61 16.39 21.92 18 21.92C19.61 21.92 20.92 20.61 20.92 19C20.92 17.39 19.61 16.08 18 16.08Z"
+                        fill={theme.colors.secondary.lightGold}
+                      />
+                    </Svg>
+                  </TouchableOpacity>
+                </View>
               </>
             ) : null}
           </Card>
         </TouchableOpacity>
-
-        {/* Your Progress - Always Visible */}
-        <Card variant="parchment" outlined style={styles.progressCard}>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Your Progress</Text>
-            <TouchableOpacity
-              onPress={() => setShowAchievementsModal(true)}
-              style={styles.achievementsButton}
-            >
-              <Svg width="20" height="20" viewBox="0 0 24 24">
-                <Path
-                  d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
-                  fill={theme.colors.secondary.lightGold}
-                />
-              </Svg>
-              <Text style={styles.achievementsButtonText}>
-                {achievements.filter(a => a.unlocked).length}/{achievements.length}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.progressStatsRow}>
-            {/* Verses Memorized */}
-            <View style={styles.progressStat}>
-              <View style={styles.progressStatIconContainer}>
-                <Svg width="24" height="24" viewBox="0 0 24 24">
-                  <Path
-                    d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2ZM9 4H11V9L10 8.25L9 9V4ZM18 20H6V4H7V13L10 10.75L13 13V4H18V20Z"
-                    fill={theme.colors.secondary.lightGold}
-                  />
-                </Svg>
-              </View>
-              <Text style={styles.progressStatValue}>{versesLearned}</Text>
-              <Text style={styles.progressStatLabel}>Verses{'\n'}Memorized</Text>
-            </View>
-
-            {/* Current Streak */}
-            <View style={styles.progressStat}>
-              <View style={styles.progressStatIconContainer}>
-                <Svg width="24" height="24" viewBox="0 0 24 24">
-                  <Path
-                    d="M12 2C12 2 8 6 8 10C8 13.31 10.69 16 14 16C17.31 16 20 13.31 20 10C20 6 16 2 16 2C16 2 14.5 4.5 14 7C13.5 4.5 12 2 12 2ZM14 14C11.79 14 10 12.21 10 10C10 8.5 10.67 7.25 11.5 6.25C11.5 9.25 13.25 11.5 15 13C14.67 13.66 14.37 14 14 14Z"
-                    fill={theme.colors.secondary.warmTerracotta}
-                  />
-                </Svg>
-              </View>
-              <Text style={styles.progressStatValue}>{streak}</Text>
-              <Text style={styles.progressStatLabel}>Day{'\n'}Streak</Text>
-            </View>
-
-            {/* Total XP */}
-            <View style={styles.progressStat}>
-              <View style={styles.progressStatIconContainer}>
-                <Svg width="24" height="24" viewBox="0 0 24 24">
-                  <Path
-                    d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
-                    fill={theme.colors.success.celebratoryGold}
-                  />
-                </Svg>
-              </View>
-              <Text style={styles.progressStatValue}>{xp}</Text>
-              <Text style={styles.progressStatLabel}>Total{'\n'}XP</Text>
-            </View>
-          </View>
-
-          {/* Level Progress Bar */}
-          <View style={styles.levelProgressContainer}>
-            <View style={styles.levelProgressHeader}>
-              <Text style={styles.levelProgressLabel}>Level {currentLevel}</Text>
-              <Text style={styles.levelProgressXP}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
-            </View>
-            <View style={styles.levelProgressBar}>
-              <View style={[styles.levelProgressFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
-            </View>
-          </View>
-        </Card>
-
-        {/* Daily Checklist - Simple & Clean */}
-        <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
-          <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
-          <Text style={styles.checklistSubtitle}>Complete these to build your faith daily</Text>
-
-          {dailyTasks.map((task) => (
-            <View key={task.id} style={styles.checklistItem}>
-              <View style={[styles.checkbox, task.completed && styles.checkboxCompleted]}>
-                {task.completed && (
-                  <Svg width="12" height="12" viewBox="0 0 12 12">
-                    <Path
-                      d="M2 6 L5 9 L10 3"
-                      stroke="white"
-                      strokeWidth="2"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                )}
-              </View>
-              <Text style={styles.checklistLabel}>
-                {task.icon} {task.label}
-              </Text>
-            </View>
-          ))}
-        </Card>
 
         {/* Quick Actions - Full Width List (calmer vibe) */}
         <View style={styles.actionsContainer}>
@@ -449,44 +439,115 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           ))}
         </View>
 
+        {/* Daily Checklist - Simple & Clean */}
+        <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
+          <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
+          <Text style={styles.checklistSubtitle}>Complete these to build your faith daily</Text>
 
-        {/* Story Mode Teaser - Visual with Image Background (Moved to Bottom) */}
-        <TouchableOpacity
-          style={styles.storyModeImageCard}
-          onPress={() => {
-            Alert.alert(
-              "Story Mode Coming Soon! 🎬",
-              "Walk in Jesus' footsteps through interactive stories.\n\nSeason 1 launches in 4-6 weeks with weekly episodes!",
-              [
-                { text: "Maybe Later", style: "cancel" },
-                { text: "Notify Me!", style: "default" }
-              ]
-            );
-            logger.log('[HomeScreen] User interested in Story Mode');
-          }}
-          activeOpacity={0.9}
-        >
-          {/* Image Background - 9:14 aspect ratio (900x1400px) */}
-          <ImageBackground
-            source={require('../../assets/images/story-mode-preview.png')}
-            style={styles.storyModeImageBackground}
-            resizeMode="cover"
-          >
-            {/* Overlay with text */}
-            <View style={styles.storyModeOverlay}>
-              <View style={styles.comingSoonBadgeSmall}>
-                <Text style={styles.comingSoonTextSmall}>COMING SOON</Text>
+          {dailyTasks.map((task) => (
+            <TouchableOpacity
+              key={task.id}
+              style={styles.checklistItem}
+              onPress={() => handleTaskClick(task.id, task.completed)}
+              disabled={task.completed}
+            >
+              <View style={[styles.checkbox, task.completed && styles.checkboxCompleted]}>
+                {task.completed && (
+                  <Svg width="12" height="12" viewBox="0 0 12 12">
+                    <Path
+                      d="M2 6 L5 9 L10 3"
+                      stroke="white"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                )}
               </View>
-              <Text style={styles.storyModeOverlayTitle}>Story Mode</Text>
-              <Text style={styles.storyModeOverlaySubtitle}>Season 1: The Life of Jesus</Text>
-              <View style={styles.storyModeOverlayFeatures}>
-                <Text style={styles.storyModeOverlayFeature}>📖 Interactive Stories</Text>
-                <Text style={styles.storyModeOverlayFeature}>🎨 Animations</Text>
-                <Text style={styles.storyModeOverlayFeature}>❓ Quizzes</Text>
+              <Text style={[styles.checklistLabel, task.completed && styles.checklistLabelCompleted]}>
+                {task.icon} {task.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </Card>
+
+        {/* Your Progress - Only visible when logged in - Moved to bottom */}
+        {user && (
+          <Card variant="parchment" outlined style={styles.progressCard}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressTitle}>Your Progress</Text>
+              <TouchableOpacity
+                onPress={() => setShowAchievementsModal(true)}
+                style={styles.achievementsButton}
+              >
+                <Svg width="20" height="20" viewBox="0 0 24 24">
+                  <Path
+                    d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
+                    fill={theme.colors.secondary.lightGold}
+                  />
+                </Svg>
+                <Text style={styles.achievementsButtonText}>
+                  {achievements.filter(a => a.unlocked).length}/{achievements.length}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.progressStatsRow}>
+              {/* Verses Memorized */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2ZM9 4H11V9L10 8.25L9 9V4ZM18 20H6V4H7V13L10 10.75L13 13V4H18V20Z"
+                      fill={theme.colors.secondary.lightGold}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{versesLearned}</Text>
+                <Text style={styles.progressStatLabel}>Verses{'\n'}Memorized</Text>
+              </View>
+
+              {/* Current Streak */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M12 2C12 2 8 6 8 10C8 13.31 10.69 16 14 16C17.31 16 20 13.31 20 10C20 6 16 2 16 2C16 2 14.5 4.5 14 7C13.5 4.5 12 2 12 2ZM14 14C11.79 14 10 12.21 10 10C10 8.5 10.67 7.25 11.5 6.25C11.5 9.25 13.25 11.5 15 13C14.67 13.66 14.37 14 14 14Z"
+                      fill={theme.colors.secondary.warmTerracotta}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{streak}</Text>
+                <Text style={styles.progressStatLabel}>Day{'\n'}Streak</Text>
+              </View>
+
+              {/* Total XP */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
+                      fill={theme.colors.success.celebratoryGold}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{xp}</Text>
+                <Text style={styles.progressStatLabel}>Total{'\n'}XP</Text>
               </View>
             </View>
-          </ImageBackground>
-        </TouchableOpacity>
+
+            {/* Level Progress Bar */}
+            <View style={styles.levelProgressContainer}>
+              <View style={styles.levelProgressHeader}>
+                <Text style={styles.levelProgressLabel}>Level {currentLevel}</Text>
+                <Text style={styles.levelProgressXP}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
+              </View>
+              <View style={styles.levelProgressBar}>
+                <View style={[styles.levelProgressFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
+              </View>
+            </View>
+          </Card>
+        )}
       </ScrollView>
 
       {/* Achievements Modal */}
@@ -652,68 +713,18 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
-    marginTop: theme.spacing.md,
     fontStyle: 'italic',
+    flex: 1,
   },
-  // Story Mode Image Card
-  storyModeImageCard: {
-    marginBottom: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    overflow: 'hidden',
-    ...theme.shadows.md,
-  },
-  storyModeImageBackground: {
-    width: '100%',
-    aspectRatio: 9 / 14, // Slightly wider than 9:16 for better mobile display
-    backgroundColor: theme.colors.primary.darkCharcoal, // Fallback if image fails to load
-    justifyContent: 'flex-end', // Align overlay to bottom
-    alignItems: 'center',
-  },
-  storyModeOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    padding: theme.spacing.lg,
-    alignItems: 'center',
-  },
-  comingSoonBadgeSmall: {
-    backgroundColor: theme.colors.success.celebratoryGold,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 4,
-    borderRadius: theme.borderRadius.full,
-    marginBottom: theme.spacing.sm,
-  },
-  comingSoonTextSmall: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: 'white',
-    letterSpacing: 1,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  storyModeOverlayTitle: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: 'white',
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 4,
-  },
-  storyModeOverlaySubtitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.success.celebratoryGold,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.md,
-  },
-  storyModeOverlayFeatures: {
+  verseCardFooter: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
-  storyModeOverlayFeature: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontFamily: theme.typography.fonts.ui.default,
+  shareButton: {
+    padding: theme.spacing.xs,
   },
   // Progress Card
   progressCard: {
@@ -855,6 +866,10 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
     flex: 1,
+  },
+  checklistLabelCompleted: {
+    color: theme.colors.text.tertiary,
+    textDecorationLine: 'line-through' as const,
   },
   // Quick Actions - Full Width List
   actionsContainer: {

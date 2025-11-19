@@ -48,4 +48,7 @@ console.log('[screens/index] NotesScreen exported');
 export { BibleScreen } from './BibleScreen';
 console.log('[screens/index] BibleScreen exported');
 
+export { StoryModeScreen } from './StoryModeScreen';
+console.log('[screens/index] StoryModeScreen exported');
+
 console.log('[screens/index] ALL SCREENS EXPORTED SUCCESSFULLY');
