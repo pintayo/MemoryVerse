@@ -17,6 +17,7 @@ import { loadTodaysTasks, completeTask, DailyTaskId } from '../services/dailyTas
 import { achievementsService, Achievement } from '../services/achievementsService';
 import { readingProgressService } from '../services/readingProgressService';
 import { practiceStatsService } from '../services/practiceStatsService';
+import { memorizationService } from '../services/memorizationService';
 
 logger.log('[HomeScreen] All imports complete');
 
@@ -50,7 +51,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   // Get real stats from profile
   const streak = profile?.current_streak || 0;
   const xp = profile?.total_xp || 0;
-  const versesLearned = profile?.verses_memorized || 0;
+  const [versesLearned, setVersesLearned] = useState(0);
 
   // Calculate level and XP progress
   const currentLevel = Math.floor(Math.sqrt(xp / 100)) + 1;
@@ -88,9 +89,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       // Get stats from various sources
       const readingStats = await readingProgressService.getReadingStats();
       const practiceStats = await practiceStatsService.getPracticeStats();
+      const memorizedCount = await memorizationService.getMemorizedCount(user?.id || null);
+
+      // Update verses learned state
+      setVersesLearned(memorizedCount);
 
       const stats = {
-        versesLearned: profile?.verses_memorized || 0,
+        versesLearned: memorizedCount,
         currentStreak: profile?.current_streak || 0,
         currentLevel: currentLevel,
         practiceSessionsCompleted: practiceStats.totalSessionsCompleted,

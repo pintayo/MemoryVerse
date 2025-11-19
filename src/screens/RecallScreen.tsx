@@ -19,6 +19,7 @@ import { spacedRepetitionService } from '../services/spacedRepetitionService';
 import { streakService } from '../services/streakService';
 import { appReviewService } from '../services/appReviewService';
 import { practiceStatsService } from '../services/practiceStatsService';
+import { memorizationService } from '../services/memorizationService';
 import { Audio } from 'expo-av';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
@@ -811,6 +812,16 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
             currentXP={lessonSummary.currentXP}
             currentLevel={lessonSummary.currentLevel}
             xpForNextLevel={lessonSummary.xpForNextLevel}
+            correctVerseIds={lessonResults.filter(r => r.isCorrect).map(r => r.verseId)}
+            onMarkAsMemorized={async (verseIds) => {
+              // Mark verses as memorized
+              for (const verseId of verseIds) {
+                const success = await memorizationService.markAsMemorized(user?.id || null, verseId);
+                if (success) {
+                  logger.log('[RecallScreen] Marked verse as memorized:', verseId);
+                }
+              }
+            }}
             onClose={handleModalClose}
           />
         )
