@@ -38,7 +38,8 @@
       "cocoapods": {
         "useFrameworks": "static",
         "useModularHeaders": true
-      }
+      },
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
@@ -50,7 +51,8 @@
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "RECORD_AUDIO"
-      ]
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       [
@@ -60,7 +62,7 @@
           "color": "#D4AF37"
         }
       ],
-      "expo-firebase-core"
+      "@react-native-firebase/app"
     ],
     "notification": {
       "icon": "./assets/icon.png",
