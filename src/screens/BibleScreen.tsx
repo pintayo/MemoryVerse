@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { theme } from '../theme';
 import { supabase } from '../lib/supabase';
@@ -57,6 +57,7 @@ const NEW_TESTAMENT = [
 const ALL_BOOKS = [...OLD_TESTAMENT, ...NEW_TESTAMENT];
 
 export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const isPremiumUser = profile?.is_premium || false;
 
@@ -686,49 +687,50 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
             ))}
           </View>
 
-          {/* Chapter Navigation Buttons */}
-          <View style={styles.chapterNavigation}>
-            <TouchableOpacity
-              style={[styles.navButton, !hasPrevious && styles.navButtonDisabled]}
-              onPress={handlePreviousChapter}
-              disabled={!hasPrevious}
-            >
-              <Svg width={20} height={20} viewBox="0 0 24 24">
-                <Path
-                  d="M15 18 L9 12 L15 6"
-                  stroke={hasPrevious ? theme.colors.text.primary : theme.colors.text.tertiary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </Svg>
-              <Text style={[styles.navButtonText, !hasPrevious && styles.navButtonTextDisabled]}>
-                Previous Chapter
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.nextButton, !hasNext && styles.navButtonDisabled]}
-              onPress={handleNextChapter}
-              disabled={!hasNext}
-            >
-              <Text style={[styles.nextButtonText, !hasNext && styles.nextButtonTextDisabled]}>
-                Next Chapter
-              </Text>
-              <Svg width={20} height={20} viewBox="0 0 24 24">
-                <Path
-                  d="M9 6 L15 12 L9 18"
-                  stroke={hasNext ? theme.colors.background.lightCream : theme.colors.text.tertiary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </Svg>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
+
+        {/* Sticky Chapter Navigation Buttons */}
+        <View style={[styles.chapterNavigation, { paddingBottom: Math.max(insets.bottom, theme.spacing.md) }]}>
+          <TouchableOpacity
+            style={[styles.navButton, !hasPrevious && styles.navButtonDisabled]}
+            onPress={handlePreviousChapter}
+            disabled={!hasPrevious}
+          >
+            <Svg width={20} height={20} viewBox="0 0 24 24">
+              <Path
+                d="M15 18 L9 12 L15 6"
+                stroke={hasPrevious ? theme.colors.text.primary : theme.colors.text.tertiary}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+            <Text style={[styles.navButtonText, !hasPrevious && styles.navButtonTextDisabled]}>
+              Previous Chapter
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.nextButton, !hasNext && styles.navButtonDisabled]}
+            onPress={handleNextChapter}
+            disabled={!hasNext}
+          >
+            <Text style={[styles.nextButtonText, !hasNext && styles.nextButtonTextDisabled]}>
+              Next Chapter
+            </Text>
+            <Svg width={20} height={20} viewBox="0 0 24 24">
+              <Path
+                d="M9 6 L15 12 L9 18"
+                stroke={hasNext ? theme.colors.background.lightCream : theme.colors.text.tertiary}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -971,6 +973,7 @@ const styles = StyleSheet.create({
   },
   chapterScrollContent: {
     padding: 16,
+    paddingBottom: 100, // Space for sticky navigation buttons
   },
   chapterTextContainer: {
     backgroundColor: theme.colors.background.lightCream,
@@ -1009,10 +1012,23 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.scripture.default,
   },
   chapterNavigation: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-    marginBottom: 32,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    backgroundColor: theme.colors.background.lightCream,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.primary.oatmeal,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
   navButton: {
     flex: 1,

@@ -384,83 +384,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </Card>
         </TouchableOpacity>
 
-        {/* Your Progress - Only visible when logged in */}
-        {user && (
-          <Card variant="parchment" outlined style={styles.progressCard}>
-            <View style={styles.progressHeader}>
-              <Text style={styles.progressTitle}>Your Progress</Text>
-              <TouchableOpacity
-                onPress={() => setShowAchievementsModal(true)}
-                style={styles.achievementsButton}
-              >
-                <Svg width="20" height="20" viewBox="0 0 24 24">
-                  <Path
-                    d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
-                    fill={theme.colors.secondary.lightGold}
-                  />
-                </Svg>
-                <Text style={styles.achievementsButtonText}>
-                  {achievements.filter(a => a.unlocked).length}/{achievements.length}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.progressStatsRow}>
-              {/* Verses Memorized */}
-              <View style={styles.progressStat}>
-                <View style={styles.progressStatIconContainer}>
-                  <Svg width="24" height="24" viewBox="0 0 24 24">
-                    <Path
-                      d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2ZM9 4H11V9L10 8.25L9 9V4ZM18 20H6V4H7V13L10 10.75L13 13V4H18V20Z"
-                      fill={theme.colors.secondary.lightGold}
-                    />
-                  </Svg>
-                </View>
-                <Text style={styles.progressStatValue}>{versesLearned}</Text>
-                <Text style={styles.progressStatLabel}>Verses{'\n'}Memorized</Text>
-              </View>
-
-              {/* Current Streak */}
-              <View style={styles.progressStat}>
-                <View style={styles.progressStatIconContainer}>
-                  <Svg width="24" height="24" viewBox="0 0 24 24">
-                    <Path
-                      d="M12 2C12 2 8 6 8 10C8 13.31 10.69 16 14 16C17.31 16 20 13.31 20 10C20 6 16 2 16 2C16 2 14.5 4.5 14 7C13.5 4.5 12 2 12 2ZM14 14C11.79 14 10 12.21 10 10C10 8.5 10.67 7.25 11.5 6.25C11.5 9.25 13.25 11.5 15 13C14.67 13.66 14.37 14 14 14Z"
-                      fill={theme.colors.secondary.warmTerracotta}
-                    />
-                  </Svg>
-                </View>
-                <Text style={styles.progressStatValue}>{streak}</Text>
-                <Text style={styles.progressStatLabel}>Day{'\n'}Streak</Text>
-              </View>
-
-              {/* Total XP */}
-              <View style={styles.progressStat}>
-                <View style={styles.progressStatIconContainer}>
-                  <Svg width="24" height="24" viewBox="0 0 24 24">
-                    <Path
-                      d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
-                      fill={theme.colors.success.celebratoryGold}
-                    />
-                  </Svg>
-                </View>
-                <Text style={styles.progressStatValue}>{xp}</Text>
-                <Text style={styles.progressStatLabel}>Total{'\n'}XP</Text>
-              </View>
-            </View>
-
-            {/* Level Progress Bar */}
-            <View style={styles.levelProgressContainer}>
-              <View style={styles.levelProgressHeader}>
-                <Text style={styles.levelProgressLabel}>Level {currentLevel}</Text>
-                <Text style={styles.levelProgressXP}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
-              </View>
-              <View style={styles.levelProgressBar}>
-                <View style={[styles.levelProgressFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
-              </View>
-            </View>
-          </Card>
-        )}
-
         {/* Daily Checklist - Simple & Clean */}
         <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
           <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
@@ -557,6 +480,83 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
           </ImageBackground>
         </TouchableOpacity>
+
+        {/* Your Progress - Only visible when logged in - Moved to bottom */}
+        {user && (
+          <Card variant="parchment" outlined style={styles.progressCard}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressTitle}>Your Progress</Text>
+              <TouchableOpacity
+                onPress={() => setShowAchievementsModal(true)}
+                style={styles.achievementsButton}
+              >
+                <Svg width="20" height="20" viewBox="0 0 24 24">
+                  <Path
+                    d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
+                    fill={theme.colors.secondary.lightGold}
+                  />
+                </Svg>
+                <Text style={styles.achievementsButtonText}>
+                  {achievements.filter(a => a.unlocked).length}/{achievements.length}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.progressStatsRow}>
+              {/* Verses Memorized */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2ZM9 4H11V9L10 8.25L9 9V4ZM18 20H6V4H7V13L10 10.75L13 13V4H18V20Z"
+                      fill={theme.colors.secondary.lightGold}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{versesLearned}</Text>
+                <Text style={styles.progressStatLabel}>Verses{'\n'}Memorized</Text>
+              </View>
+
+              {/* Current Streak */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M12 2C12 2 8 6 8 10C8 13.31 10.69 16 14 16C17.31 16 20 13.31 20 10C20 6 16 2 16 2C16 2 14.5 4.5 14 7C13.5 4.5 12 2 12 2ZM14 14C11.79 14 10 12.21 10 10C10 8.5 10.67 7.25 11.5 6.25C11.5 9.25 13.25 11.5 15 13C14.67 13.66 14.37 14 14 14Z"
+                      fill={theme.colors.secondary.warmTerracotta}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{streak}</Text>
+                <Text style={styles.progressStatLabel}>Day{'\n'}Streak</Text>
+              </View>
+
+              {/* Total XP */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
+                      fill={theme.colors.success.celebratoryGold}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{xp}</Text>
+                <Text style={styles.progressStatLabel}>Total{'\n'}XP</Text>
+              </View>
+            </View>
+
+            {/* Level Progress Bar */}
+            <View style={styles.levelProgressContainer}>
+              <View style={styles.levelProgressHeader}>
+                <Text style={styles.levelProgressLabel}>Level {currentLevel}</Text>
+                <Text style={styles.levelProgressXP}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
+              </View>
+              <View style={styles.levelProgressBar}>
+                <View style={[styles.levelProgressFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
+              </View>
+            </View>
+          </Card>
+        )}
       </ScrollView>
 
       {/* Achievements Modal */}
