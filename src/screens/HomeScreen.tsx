@@ -384,6 +384,31 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </Card>
         </TouchableOpacity>
 
+        {/* Quick Actions - Full Width List (calmer vibe) */}
+        <View style={styles.actionsContainer}>
+          {actionButtons.map((action, index) => (
+            <TouchableOpacity
+              key={action.id}
+              style={[
+                styles.actionButton,
+                index === actionButtons.length - 1 && styles.actionButtonLast
+              ]}
+              onPress={action.onPress}
+              activeOpacity={0.8}
+            >
+              <View style={styles.actionButtonContent}>
+                <View style={[styles.actionIconContainer, { backgroundColor: getActionColor(action.id) }]}>
+                  {renderActionIcon(action.icon)}
+                </View>
+                <View style={styles.actionTextContainer}>
+                  <Text style={styles.actionTitle}>{action.title}</Text>
+                  <Text style={styles.actionDescription}>{action.description}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Daily Checklist - Simple & Clean */}
         <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
           <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
@@ -416,32 +441,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           ))}
         </Card>
-
-        {/* Quick Actions - Full Width List (calmer vibe) */}
-        <View style={styles.actionsContainer}>
-          {actionButtons.map((action, index) => (
-            <TouchableOpacity
-              key={action.id}
-              style={[
-                styles.actionButton,
-                index === actionButtons.length - 1 && styles.actionButtonLast
-              ]}
-              onPress={action.onPress}
-              activeOpacity={0.8}
-            >
-              <View style={styles.actionButtonContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: getActionColor(action.id) }]}>
-                  {renderActionIcon(action.icon)}
-                </View>
-                <View style={styles.actionTextContainer}>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
-                  <Text style={styles.actionDescription}>{action.description}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
 
         {/* Story Mode Teaser - Visual with Image Background (Moved to Bottom) */}
         <TouchableOpacity
