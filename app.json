@@ -63,11 +63,10 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static"
+            "useFrameworks": "dynamic"
           }
         }
-      ],
-      "./plugins/withFirebasePodfile.js"
+      ]
     ],
     "notification": {
       "icon": "./assets/icon.png",
