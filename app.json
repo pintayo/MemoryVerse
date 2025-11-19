@@ -35,10 +35,6 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "cocoapods": {
-        "useFrameworks": "static",
-        "useModularHeaders": true
-      },
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
@@ -62,7 +58,16 @@
           "color": "#D4AF37"
         }
       ],
-      "@react-native-firebase/app"
+      "@react-native-firebase/app",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      "./plugins/withFirebasePodfile.js"
     ],
     "notification": {
       "icon": "./assets/icon.png",
