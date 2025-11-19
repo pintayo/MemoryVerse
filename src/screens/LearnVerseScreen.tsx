@@ -90,10 +90,11 @@ export function LearnVerseScreen({ navigation, route }: Props) {
 
       // Mark "understand" task as complete
       await completeTask('understand');
+
+      // Note: Don't set isLoading(false) here - let loadCurrentVerse() handle it
     } catch (err) {
       logger.error('[LearnVerseScreen] Error initializing session:', err);
       setError(err instanceof Error ? err.message : 'Failed to load verses');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -108,9 +109,13 @@ export function LearnVerseScreen({ navigation, route }: Props) {
       setCurrentVerse(result.verse);
       setContext(result.context);
       setShowAiBadge(result.verse?.context_generated_by_ai || false);
+
+      // Clear main loading state after first verse loads
+      setIsLoading(false);
     } catch (err) {
       logger.error('[LearnVerseScreen] Error loading verse:', err);
       setError(err instanceof Error ? err.message : 'Failed to load verse');
+      setIsLoading(false);
     } finally {
       setIsLoadingContext(false);
     }
