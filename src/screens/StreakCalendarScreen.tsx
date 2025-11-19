@@ -52,6 +52,16 @@ const StreakCalendarScreen: React.FC<StreakCalendarScreenProps> = ({ navigation 
     try {
       setIsLoading(true);
       const data = await streakService.getStreakData(user.id, 90);
+
+      // If calculated streak is 0 but profile has a streak, use profile's value
+      // This handles cases where practice_sessions might not be populated yet
+      if (data.currentStreak === 0 && profile?.current_streak) {
+        data.currentStreak = profile.current_streak;
+      }
+      if (data.longestStreak === 0 && profile?.longest_streak) {
+        data.longestStreak = profile.longest_streak;
+      }
+
       setStreakData(data);
     } catch (error) {
       logger.error('[StreakCalendarScreen] Error loading streak data:', error);

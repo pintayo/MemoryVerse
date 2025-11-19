@@ -819,7 +819,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.offWhiteParchment,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
-    maxHeight: '80%',
+    height: '80%',
     paddingBottom: theme.spacing.xl,
   },
   modalHeader: {
@@ -840,9 +840,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xs,
   },
   modalScroll: {
-    flex: 1,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
+    flexGrow: 1,
   },
   translationSectionTitle: {
     fontSize: 12,

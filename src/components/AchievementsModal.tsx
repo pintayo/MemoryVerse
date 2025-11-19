@@ -273,13 +273,14 @@ const styles = StyleSheet.create({
   categoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: theme.borderRadius.full,
     backgroundColor: theme.colors.background.warmParchment,
     borderWidth: 1,
     borderColor: theme.colors.primary.oatmeal,
+    minWidth: 100,
   },
   categoryButtonActive: {
     backgroundColor: theme.colors.secondary.lightGold,

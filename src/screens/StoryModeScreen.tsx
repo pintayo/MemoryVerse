@@ -27,12 +27,8 @@ export const StoryModeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <TouchableOpacity
-        style={styles.imageContainer}
-        onPress={handleNotifyMe}
-        activeOpacity={0.95}
-      >
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <View style={styles.imageContainer}>
         {/* Full screen image with overlay */}
         <ImageBackground
           source={require('../../assets/images/story-mode-preview.png')}
@@ -78,7 +74,7 @@ export const StoryModeScreen = () => {
             <Text style={styles.launchInfo}>Launching in 4-6 weeks</Text>
           </View>
         </ImageBackground>
-      </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
