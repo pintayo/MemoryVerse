@@ -4,7 +4,7 @@
  * Displays user achievements with animated progress and unlock celebrations
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -30,18 +30,22 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
   achievements,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<AchievementCategory | 'all'>('all');
-  const [animatedValues] = useState(
-    achievements.reduce((acc, achievement) => {
-      acc[achievement.id] = new Animated.Value(0);
-      return acc;
-    }, {} as Record<string, Animated.Value>)
-  );
+  const animatedValuesRef = useRef<Record<string, Animated.Value>>({});
+
+  // Get or create animated value for achievement
+  const getAnimatedValue = (achievementId: string): Animated.Value => {
+    if (!animatedValuesRef.current[achievementId]) {
+      animatedValuesRef.current[achievementId] = new Animated.Value(0);
+    }
+    return animatedValuesRef.current[achievementId];
+  };
 
   useEffect(() => {
     if (visible) {
       // Animate achievements in when modal opens
       achievements.forEach((achievement, index) => {
-        Animated.timing(animatedValues[achievement.id], {
+        const animValue = getAnimatedValue(achievement.id);
+        Animated.timing(animValue, {
           toValue: 1,
           duration: 300,
           delay: index * 50,
@@ -50,7 +54,7 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
       });
     } else {
       // Reset animations when modal closes
-      Object.values(animatedValues).forEach((value) => {
+      Object.values(animatedValuesRef.current).forEach((value) => {
         value.setValue(0);
       });
     }
@@ -133,25 +137,27 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
 
         {/* Achievements List */}
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-          {filteredAchievements.map((achievement) => (
-            <Animated.View
-              key={achievement.id}
-              style={[
-                styles.achievementCard,
-                achievement.unlocked ? styles.achievementCardUnlocked : styles.achievementCardLocked,
-                {
-                  opacity: animatedValues[achievement.id],
-                  transform: [
-                    {
-                      translateY: animatedValues[achievement.id].interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [20, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
+          {filteredAchievements.map((achievement) => {
+            const animValue = getAnimatedValue(achievement.id);
+            return (
+              <Animated.View
+                key={achievement.id}
+                style={[
+                  styles.achievementCard,
+                  achievement.unlocked ? styles.achievementCardUnlocked : styles.achievementCardLocked,
+                  {
+                    opacity: animValue,
+                    transform: [
+                      {
+                        translateY: animValue.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
               {/* Achievement Icon */}
               <View
                 style={[
@@ -208,7 +214,8 @@ export const AchievementsModal: React.FC<AchievementsModalProps> = ({
                 </View>
               </View>
             </Animated.View>
-          ))}
+            );
+          })}
 
           {filteredAchievements.length === 0 && (
             <View style={styles.emptyState}>
