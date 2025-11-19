@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "275851174881",
+    "project_id": "memoryverse-7d9df",
+    "storage_bucket": "memoryverse-7d9df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:275851174881:android:a395eec3b7ca5f337528a0",
+        "android_client_info": {
+          "package_name": "com.memoryverse.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4ROW-YrRfTx4JwT4pQ1pjzIJpygK5i2g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

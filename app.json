@@ -13,7 +13,10 @@
       "backgroundColor": "#F5F0E8"
     },
     "privacy": "public",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "description": "Memorize Scripture like Duolingo. Build daily habits, track your progress, and hide God's Word in your heart with beautiful gamification and AI-powered prayer.",
     "primaryColor": "#D4C4A8",
     "assetBundlePatterns": [
@@ -31,6 +34,10 @@
       },
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "cocoapods": {
+        "useFrameworks": "static",
+        "useModularHeaders": true
       }
     },
     "android": {
@@ -52,7 +59,8 @@
           "icon": "./assets/icon.png",
           "color": "#D4AF37"
         }
-      ]
+      ],
+      "expo-firebase-core"
     ],
     "notification": {
       "icon": "./assets/icon.png",
@@ -65,7 +73,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id-here"
+        "projectId": "e8e25456-0a13-4f14-9963-788e6ec86241"
       },
       "privacyPolicyUrl": "https://pintayo.com/privacy.html",
       "termsOfServiceUrl": "https://pintayo.com/terms.html",
@@ -73,6 +81,7 @@
     },
     "hooks": {
       "postPublish": []
-    }
+    },
+    "owner": "pintayo"
   }
 }
