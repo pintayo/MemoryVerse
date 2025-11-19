@@ -25,13 +25,21 @@ $RNFirebaseAsStaticFramework = true
           podfileContent = firebaseConfig + podfileContent;
         }
 
-        // Add use_modular_headers! after the target declaration
-        if (!podfileContent.includes('use_modular_headers!')) {
-          // Find the target line and add use_modular_headers! after it
-          podfileContent = podfileContent.replace(
-            /(target\s+'[^']+'\s+do)/,
-            '$1\n  use_modular_headers!'
-          );
+        // Add post_install hook to fix non-modular header warnings
+        const postInstallHook = `
+  post_install do |installer|
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      end
+    end
+  end`;
+
+        // Add post_install hook if not already present
+        if (!podfileContent.includes('CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER')) {
+          // Find the end block and add the post_install hook before it
+          podfileContent = podfileContent.replace(/^end\s*$/m, postInstallHook + '\nend');
         }
 
         fs.writeFileSync(podfilePath, podfileContent);
