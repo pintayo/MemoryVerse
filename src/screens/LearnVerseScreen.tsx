@@ -104,15 +104,25 @@ export function LearnVerseScreen({ navigation, route }: Props) {
     if (!session) return;
 
     try {
+      // Get the verse from the session immediately
+      const verse = session.verses[session.currentIndex];
+      if (!verse) {
+        setError('No verse at current index');
+        setIsLoading(false);
+        return;
+      }
+
+      // Update the verse UI immediately - don't wait for context
+      setCurrentVerse(verse);
+      setIsLoading(false);
+
+      // Load context in the background
       setIsLoadingContext(true);
+      setContext(null); // Clear old context while loading new one
 
       const result = await verseSessionService.getCurrentVerse(session);
-      setCurrentVerse(result.verse);
       setContext(result.context);
       setShowAiBadge(result.verse?.context_generated_by_ai || false);
-
-      // Clear main loading state after first verse loads
-      setIsLoading(false);
     } catch (err) {
       logger.error('[LearnVerseScreen] Error loading verse:', err);
       setError(err instanceof Error ? err.message : 'Failed to load verse');
