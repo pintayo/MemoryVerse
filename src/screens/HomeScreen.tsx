@@ -409,6 +409,44 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           ))}
         </View>
 
+        {/* Story Mode Teaser - Compact version */}
+        <TouchableOpacity
+          style={styles.storyModeImageCard}
+          onPress={() => {
+            Alert.alert(
+              "Story Mode Coming Soon! 🎬",
+              "Walk in Jesus' footsteps through interactive stories.\n\nSeason 1 launches in 4-6 weeks with weekly episodes!",
+              [
+                { text: "Maybe Later", style: "cancel" },
+                { text: "Notify Me!", style: "default" }
+              ]
+            );
+            logger.log('[HomeScreen] User interested in Story Mode');
+          }}
+          activeOpacity={0.9}
+        >
+          {/* Image Background - Cropped to match spiritual goals height */}
+          <ImageBackground
+            source={require('../../assets/images/story-mode-preview.png')}
+            style={styles.storyModeImageBackground}
+            resizeMode="cover"
+          >
+            {/* Overlay with text */}
+            <View style={styles.storyModeOverlay}>
+              <View style={styles.comingSoonBadgeSmall}>
+                <Text style={styles.comingSoonTextSmall}>COMING SOON</Text>
+              </View>
+              <Text style={styles.storyModeOverlayTitle}>Story Mode</Text>
+              <Text style={styles.storyModeOverlaySubtitle}>Season 1: The Life of Jesus</Text>
+              <View style={styles.storyModeOverlayFeatures}>
+                <Text style={styles.storyModeOverlayFeature}>📖 Interactive Stories</Text>
+                <Text style={styles.storyModeOverlayFeature}>🎨 Animations</Text>
+                <Text style={styles.storyModeOverlayFeature}>❓ Quizzes</Text>
+              </View>
+            </View>
+          </ImageBackground>
+        </TouchableOpacity>
+
         {/* Daily Checklist - Simple & Clean */}
         <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
           <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
@@ -441,44 +479,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           ))}
         </Card>
-
-        {/* Story Mode Teaser - Visual with Image Background (Moved to Bottom) */}
-        <TouchableOpacity
-          style={styles.storyModeImageCard}
-          onPress={() => {
-            Alert.alert(
-              "Story Mode Coming Soon! 🎬",
-              "Walk in Jesus' footsteps through interactive stories.\n\nSeason 1 launches in 4-6 weeks with weekly episodes!",
-              [
-                { text: "Maybe Later", style: "cancel" },
-                { text: "Notify Me!", style: "default" }
-              ]
-            );
-            logger.log('[HomeScreen] User interested in Story Mode');
-          }}
-          activeOpacity={0.9}
-        >
-          {/* Image Background - 9:14 aspect ratio (900x1400px) */}
-          <ImageBackground
-            source={require('../../assets/images/story-mode-preview.png')}
-            style={styles.storyModeImageBackground}
-            resizeMode="cover"
-          >
-            {/* Overlay with text */}
-            <View style={styles.storyModeOverlay}>
-              <View style={styles.comingSoonBadgeSmall}>
-                <Text style={styles.comingSoonTextSmall}>COMING SOON</Text>
-              </View>
-              <Text style={styles.storyModeOverlayTitle}>Story Mode</Text>
-              <Text style={styles.storyModeOverlaySubtitle}>Season 1: The Life of Jesus</Text>
-              <View style={styles.storyModeOverlayFeatures}>
-                <Text style={styles.storyModeOverlayFeature}>📖 Interactive Stories</Text>
-                <Text style={styles.storyModeOverlayFeature}>🎨 Animations</Text>
-                <Text style={styles.storyModeOverlayFeature}>❓ Quizzes</Text>
-              </View>
-            </View>
-          </ImageBackground>
-        </TouchableOpacity>
 
         {/* Your Progress - Only visible when logged in - Moved to bottom */}
         {user && (
@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
   },
   storyModeImageBackground: {
     width: '100%',
-    aspectRatio: 9 / 14, // Slightly wider than 9:16 for better mobile display
+    height: 300, // Fixed height to match spiritual goals card size
     backgroundColor: theme.colors.primary.darkCharcoal, // Fallback if image fails to load
     justifyContent: 'flex-end', // Align overlay to bottom
     alignItems: 'center',
