@@ -11,6 +11,7 @@ import {
   Share,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
 import { theme } from '../theme';
 import { supabase } from '../lib/supabase';
@@ -59,7 +60,7 @@ const ALL_BOOKS = [...OLD_TESTAMENT, ...NEW_TESTAMENT];
 
 export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const isPremiumUser = profile?.is_premium || false;
 
   const [mode, setMode] = useState<ScreenMode>('books');
@@ -73,6 +74,41 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [bookmark, setBookmark] = useState<ReadingBookmark | null>(null);
   const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
+  const [selectedTranslation, setSelectedTranslation] = useState<string>('KJV');
+
+  // Load translation preference on mount and when screen comes into focus
+  useEffect(() => {
+    const loadTranslation = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('preferred_translation');
+        if (saved) {
+          setSelectedTranslation(saved);
+          logger.log(`[BibleScreen] Loaded translation: ${saved}`);
+        }
+      } catch (error) {
+        logger.error('[BibleScreen] Failed to load translation:', error);
+      }
+    };
+    loadTranslation();
+
+    // Listen for screen focus to reload translation (in case it was changed in Settings/Profile)
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadTranslation();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  // Reload current view when translation changes
+  useEffect(() => {
+    if (mode === 'verses' && selectedBook && selectedChapter) {
+      // Reload verses with new translation
+      handleChapterSelect(selectedChapter);
+    } else if (mode === 'chapters' && selectedBook) {
+      // Reload chapters with new translation
+      handleBookSelect(selectedBook);
+    }
+  }, [selectedTranslation]);
 
   // Load bookmark on mount
   useEffect(() => {
@@ -117,7 +153,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
         let query = supabase
           .from('verses')
           .select('id, book, chapter, verse_number, text')
-          .eq('translation', 'KJV')
+          .eq('translation', selectedTranslation)
           .ilike('text', `%${searchQuery}%`);
 
         // If in chapters mode (book selected), filter by that book
@@ -140,7 +176,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
 
     const debounce = setTimeout(searchVerses, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery, mode, selectedBook]);
+  }, [searchQuery, mode, selectedBook, selectedTranslation]);
 
   const handleBookSelect = async (book: string) => {
     setSelectedBook(book);
@@ -153,7 +189,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
         .from('verses')
         .select('chapter')
         .eq('book', book)
-        .eq('translation', 'KJV')
+        .eq('translation', selectedTranslation)
         .order('chapter');
 
       if (error) throw error;
@@ -181,7 +217,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
         .select('*')
         .eq('book', selectedBook)
         .eq('chapter', chapter)
-        .eq('translation', 'KJV')
+        .eq('translation', selectedTranslation)
         .order('verse_number');
 
       if (error) throw error;
@@ -193,8 +229,8 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
       await loadBookmark();
       await loadBookProgress(selectedBook);
 
-      // Complete the daily chapter task
-      await completeTask('chapter');
+      // Complete the daily chapter task (pass userId for streak tracking)
+      await completeTask('chapter', user?.id);
     } catch (error) {
       logger.error('[BibleScreen] Error loading verses:', error);
     } finally {
@@ -216,7 +252,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
         .select('*')
         .eq('book', verse.book)
         .eq('chapter', verse.chapter)
-        .eq('translation', 'KJV')
+        .eq('translation', selectedTranslation)
         .order('verse_number');
 
       if (error) throw error;
@@ -227,7 +263,7 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
         .from('verses')
         .select('chapter')
         .eq('book', verse.book)
-        .eq('translation', 'KJV')
+        .eq('translation', selectedTranslation)
         .order('chapter');
 
       if (!chaptersError && chaptersData) {
@@ -431,8 +467,8 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
       await loadBookmark();
       await loadBookProgress(bookmark.book);
 
-      // Complete the daily chapter task
-      await completeTask('chapter');
+      // Complete the daily chapter task (pass userId for streak tracking)
+      await completeTask('chapter', user?.id);
     } catch (error) {
       logger.error('[BibleScreen] Error in continue reading:', error);
     } finally {

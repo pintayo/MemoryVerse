@@ -102,12 +102,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         chaptersRead: readingStats.totalChaptersRead,
       };
 
-      // Load all achievements with current progress
-      const allAchievements = await achievementsService.getAchievements(stats);
+      // Load all achievements with current progress (pass userId for proper storage)
+      const allAchievements = await achievementsService.getAchievements(stats, user?.id);
       setAchievements(allAchievements);
 
       // Check for newly unlocked achievements
-      const newlyUnlocked = await achievementsService.checkForNewAchievements(stats);
+      const newlyUnlocked = await achievementsService.checkForNewAchievements(stats, user?.id);
       if (newlyUnlocked.length > 0) {
         // Show notification for the first newly unlocked achievement
         setUnlockedAchievement(newlyUnlocked[0]);
@@ -214,7 +214,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           Alert.alert(
             'Account Required',
             'This action requires an account to save your progress. Please sign in or create an account.',
-            [{ text: 'OK' }]
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Sign In', onPress: () => navigation.navigate('Login') }
+            ]
           );
           return;
         }
@@ -225,7 +228,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           Alert.alert(
             'Account Required',
             'This action requires an account to save your progress. Please sign in or create an account.',
-            [{ text: 'OK' }]
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Sign In', onPress: () => navigation.navigate('Login') }
+            ]
           );
           return;
         }
@@ -234,14 +240,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         }
       },
       chapter: () => {
-        if (!user) {
-          Alert.alert(
-            'Account Required',
-            'This action requires an account to save your reading progress. Please sign in or create an account.',
-            [{ text: 'OK' }]
-          );
-          return;
-        }
+        // No account required - Bible is free to read, progress tracked locally
         navigation.navigate('Bible');
       },
       review: () => {
@@ -249,7 +248,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           Alert.alert(
             'Account Required',
             'This action requires an account to save your progress. Please sign in or create an account.',
-            [{ text: 'OK' }]
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Sign In', onPress: () => navigation.navigate('Login') }
+            ]
           );
           return;
         }
@@ -278,7 +280,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       description: 'Learn the context',
       onPress: async () => {
         if (todayVerse?.id) {
-          await completeTask('understand');
+          await completeTask('understand', user?.id);
           await loadDailyTasks(); // Refresh the UI
           navigation.navigate('Understand', { verseId: todayVerse.id });
         }
@@ -290,7 +292,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       icon: 'refresh',
       description: 'Review learned verses',
       onPress: async () => {
-        await completeTask('review');
+        await completeTask('review', user?.id);
         await loadDailyTasks(); // Refresh the UI
         navigation.navigate('Review');
       },

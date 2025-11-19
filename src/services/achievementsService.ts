@@ -7,7 +7,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
 
-const ACHIEVEMENTS_KEY = 'user_achievements';
+const ACHIEVEMENTS_KEY_PREFIX = 'achievements_';
 
 export type AchievementCategory = 'learning' | 'streak' | 'reading' | 'practice' | 'level';
 
@@ -220,14 +220,17 @@ export const achievementsService = {
   /**
    * Get all achievements with current progress
    */
-  async getAchievements(stats: {
-    versesLearned: number;
-    currentStreak: number;
-    currentLevel: number;
-    practiceSessionsCompleted: number;
-    chaptersRead: number;
-  }): Promise<Achievement[]> {
-    const progress = await this.getAchievementProgress();
+  async getAchievements(
+    stats: {
+      versesLearned: number;
+      currentStreak: number;
+      currentLevel: number;
+      practiceSessionsCompleted: number;
+      chaptersRead: number;
+    },
+    userId?: string
+  ): Promise<Achievement[]> {
+    const progress = await this.getAchievementProgress(userId);
 
     return ALL_ACHIEVEMENTS.map((achievement) => {
       const savedProgress = progress[achievement.id];
@@ -266,15 +269,18 @@ export const achievementsService = {
   /**
    * Check for newly unlocked achievements
    */
-  async checkForNewAchievements(stats: {
-    versesLearned: number;
-    currentStreak: number;
-    currentLevel: number;
-    practiceSessionsCompleted: number;
-    chaptersRead: number;
-  }): Promise<Achievement[]> {
-    const achievements = await this.getAchievements(stats);
-    const progress = await this.getAchievementProgress();
+  async checkForNewAchievements(
+    stats: {
+      versesLearned: number;
+      currentStreak: number;
+      currentLevel: number;
+      practiceSessionsCompleted: number;
+      chaptersRead: number;
+    },
+    userId?: string
+  ): Promise<Achievement[]> {
+    const achievements = await this.getAchievements(stats, userId);
+    const progress = await this.getAchievementProgress(userId);
     const newlyUnlocked: Achievement[] = [];
 
     for (const achievement of achievements) {
@@ -283,7 +289,7 @@ export const achievementsService = {
 
       if (!wasUnlocked && isNowUnlocked) {
         // This is a newly unlocked achievement!
-        await this.unlockAchievement(achievement.id);
+        await this.unlockAchievement(achievement.id, userId);
         newlyUnlocked.push(achievement);
         logger.log('[Achievements] Unlocked:', achievement.title);
       }
@@ -295,15 +301,16 @@ export const achievementsService = {
   /**
    * Unlock an achievement
    */
-  async unlockAchievement(achievementId: string): Promise<void> {
+  async unlockAchievement(achievementId: string, userId?: string): Promise<void> {
     try {
-      const progress = await this.getAchievementProgress();
+      const progress = await this.getAchievementProgress(userId);
       progress[achievementId] = {
         progress: progress[achievementId]?.progress || 0,
         unlocked: true,
         unlockedAt: Date.now(),
       };
-      await AsyncStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(progress));
+      const key = userId ? `${ACHIEVEMENTS_KEY_PREFIX}${userId}` : 'achievements_guest';
+      await AsyncStorage.setItem(key, JSON.stringify(progress));
       logger.log('[Achievements] Achievement unlocked:', achievementId);
     } catch (error) {
       logger.error('[Achievements] Error unlocking achievement:', error);
@@ -313,9 +320,10 @@ export const achievementsService = {
   /**
    * Get achievement progress data
    */
-  async getAchievementProgress(): Promise<AchievementProgress> {
+  async getAchievementProgress(userId?: string): Promise<AchievementProgress> {
     try {
-      const data = await AsyncStorage.getItem(ACHIEVEMENTS_KEY);
+      const key = userId ? `${ACHIEVEMENTS_KEY_PREFIX}${userId}` : 'achievements_guest';
+      const data = await AsyncStorage.getItem(key);
       if (!data) return {};
       return JSON.parse(data);
     } catch (error) {
@@ -327,8 +335,8 @@ export const achievementsService = {
   /**
    * Get unlocked achievements count
    */
-  async getUnlockedCount(): Promise<number> {
-    const progress = await this.getAchievementProgress();
+  async getUnlockedCount(userId?: string): Promise<number> {
+    const progress = await this.getAchievementProgress(userId);
     return Object.values(progress).filter((p) => p.unlocked).length;
   },
 
@@ -343,23 +351,27 @@ export const achievementsService = {
       currentLevel: number;
       practiceSessionsCompleted: number;
       chaptersRead: number;
-    }
+    },
+    userId?: string
   ): Promise<Achievement[]> {
-    const achievements = await this.getAchievements(stats);
+    const achievements = await this.getAchievements(stats, userId);
     return achievements.filter((a) => a.category === category);
   },
 
   /**
    * Get recent achievements (last 5 unlocked)
    */
-  async getRecentAchievements(stats: {
-    versesLearned: number;
-    currentStreak: number;
-    currentLevel: number;
-    practiceSessionsCompleted: number;
-    chaptersRead: number;
-  }): Promise<Achievement[]> {
-    const achievements = await this.getAchievements(stats);
+  async getRecentAchievements(
+    stats: {
+      versesLearned: number;
+      currentStreak: number;
+      currentLevel: number;
+      practiceSessionsCompleted: number;
+      chaptersRead: number;
+    },
+    userId?: string
+  ): Promise<Achievement[]> {
+    const achievements = await this.getAchievements(stats, userId);
     const unlocked = achievements
       .filter((a) => a.unlocked && a.unlockedAt)
       .sort((a, b) => (b.unlockedAt || 0) - (a.unlockedAt || 0));
@@ -369,9 +381,10 @@ export const achievementsService = {
   /**
    * Clear all achievement progress (for testing)
    */
-  async clearProgress(): Promise<void> {
+  async clearProgress(userId?: string): Promise<void> {
     try {
-      await AsyncStorage.removeItem(ACHIEVEMENTS_KEY);
+      const key = userId ? `${ACHIEVEMENTS_KEY_PREFIX}${userId}` : 'achievements_guest';
+      await AsyncStorage.removeItem(key);
       logger.log('[Achievements] Progress cleared');
     } catch (error) {
       logger.error('[Achievements] Error clearing progress:', error);

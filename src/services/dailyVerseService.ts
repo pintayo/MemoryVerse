@@ -32,9 +32,11 @@ export async function getTodaysDailyVerse(translation: string = 'KJV'): Promise<
     logger.log('[dailyVerseService] Fetching daily verse for date:', localDate, 'translation:', translation);
 
     // Use the database function which handles creation with SECURITY DEFINER
+    // Pass the local date so users in all timezones see the correct verse for their date
     const { data, error } = await supabase
       .rpc('get_or_create_daily_verse', {
-        p_translation: translation
+        p_translation: translation,
+        p_local_date: localDate
       });
 
     if (error) {

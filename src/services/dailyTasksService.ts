@@ -4,6 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
 
 const DAILY_TASKS_KEY = 'daily_tasks_completion';
@@ -78,8 +79,9 @@ export async function loadTodaysTasks(): Promise<Record<DailyTaskId, boolean>> {
 
 /**
  * Mark a task as completed for today
+ * Also records to database for logged-in users to update streak
  */
-export async function completeTask(taskId: DailyTaskId): Promise<void> {
+export async function completeTask(taskId: DailyTaskId, userId?: string): Promise<void> {
   try {
     const today = getTodayDate();
     const currentTasks = await loadTodaysTasks();
@@ -94,8 +96,45 @@ export async function completeTask(taskId: DailyTaskId): Promise<void> {
 
     await AsyncStorage.setItem(DAILY_TASKS_KEY, JSON.stringify(updated));
     logger.log(`[DailyTasks] Completed task: ${taskId}`);
+
+    // If user is logged in, also record to database for streak tracking
+    if (userId) {
+      await recordDailyActivity(userId, taskId);
+    }
   } catch (error) {
     logger.error('[DailyTasks] Error completing task:', error);
+  }
+}
+
+/**
+ * Record daily activity to database and update streak (for logged-in users)
+ */
+export async function recordDailyActivity(userId: string, activityType: DailyTaskId): Promise<void> {
+  try {
+    // Call the database function to record activity
+    const { error: recordError } = await supabase.rpc('record_daily_activity', {
+      p_user_id: userId,
+      p_activity_type: activityType,
+    });
+
+    if (recordError) {
+      logger.error('[DailyTasks] Error recording activity:', recordError);
+      return;
+    }
+
+    // Update the profile streak
+    const { error: streakError } = await supabase.rpc('update_profile_streak', {
+      p_user_id: userId,
+    });
+
+    if (streakError) {
+      logger.error('[DailyTasks] Error updating streak:', streakError);
+      return;
+    }
+
+    logger.log(`[DailyTasks] Recorded activity and updated streak: ${activityType}`);
+  } catch (error) {
+    logger.error('[DailyTasks] Error in recordDailyActivity:', error);
   }
 }
 
