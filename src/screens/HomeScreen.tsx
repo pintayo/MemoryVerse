@@ -1,7 +1,7 @@
 logger.log('[HomeScreen] Module loading...');
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
 import { AchievementsModal } from '../components/AchievementsModal';
@@ -409,44 +409,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           ))}
         </View>
 
-        {/* Story Mode Teaser - Compact version */}
-        <TouchableOpacity
-          style={styles.storyModeImageCard}
-          onPress={() => {
-            Alert.alert(
-              "Story Mode Coming Soon! 🎬",
-              "Walk in Jesus' footsteps through interactive stories.\n\nSeason 1 launches in 4-6 weeks with weekly episodes!",
-              [
-                { text: "Maybe Later", style: "cancel" },
-                { text: "Notify Me!", style: "default" }
-              ]
-            );
-            logger.log('[HomeScreen] User interested in Story Mode');
-          }}
-          activeOpacity={0.9}
-        >
-          {/* Image Background - Cropped to match spiritual goals height */}
-          <ImageBackground
-            source={require('../../assets/images/story-mode-preview.png')}
-            style={styles.storyModeImageBackground}
-            resizeMode="cover"
-          >
-            {/* Overlay with text */}
-            <View style={styles.storyModeOverlay}>
-              <View style={styles.comingSoonBadgeSmall}>
-                <Text style={styles.comingSoonTextSmall}>COMING SOON</Text>
-              </View>
-              <Text style={styles.storyModeOverlayTitle}>Story Mode</Text>
-              <Text style={styles.storyModeOverlaySubtitle}>Season 1: The Life of Jesus</Text>
-              <View style={styles.storyModeOverlayFeatures}>
-                <Text style={styles.storyModeOverlayFeature}>📖 Interactive Stories</Text>
-                <Text style={styles.storyModeOverlayFeature}>🎨 Animations</Text>
-                <Text style={styles.storyModeOverlayFeature}>❓ Quizzes</Text>
-              </View>
-            </View>
-          </ImageBackground>
-        </TouchableOpacity>
-
         {/* Daily Checklist - Simple & Clean */}
         <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
           <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
@@ -723,66 +685,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: theme.spacing.md,
     fontStyle: 'italic',
-  },
-  // Story Mode Image Card
-  storyModeImageCard: {
-    marginBottom: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    overflow: 'hidden',
-    ...theme.shadows.md,
-  },
-  storyModeImageBackground: {
-    width: '100%',
-    height: 300, // Fixed height to match spiritual goals card size
-    backgroundColor: theme.colors.primary.darkCharcoal, // Fallback if image fails to load
-    justifyContent: 'flex-end', // Align overlay to bottom
-    alignItems: 'center',
-  },
-  storyModeOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    padding: theme.spacing.lg,
-    alignItems: 'center',
-  },
-  comingSoonBadgeSmall: {
-    backgroundColor: theme.colors.success.celebratoryGold,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 4,
-    borderRadius: theme.borderRadius.full,
-    marginBottom: theme.spacing.sm,
-  },
-  comingSoonTextSmall: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: 'white',
-    letterSpacing: 1,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  storyModeOverlayTitle: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: 'white',
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 4,
-  },
-  storyModeOverlaySubtitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.success.celebratoryGold,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.md,
-  },
-  storyModeOverlayFeatures: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
-  storyModeOverlayFeature: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontFamily: theme.typography.fonts.ui.default,
   },
   // Progress Card
   progressCard: {
