@@ -27,20 +27,22 @@ $RNFirebaseAsStaticFramework = true
         }
 
         // Add targeted fix for React Native Firebase header warnings
-        // Only disable the specific warning, don't change other build settings
+        // Disable the specific non-modular include warning for Firebase targets
         const buildSettingsCode = `
     # Fix for React Native Firebase non-modular header warnings
-    # Only disable the specific warning without affecting other build settings
     installer.pods_project.targets.each do |target|
       if target.name == 'RNFBApp' || target.name == 'RNFBAnalytics'
         target.build_configurations.each do |config|
+          # Disable non-modular include warnings for Firebase
           config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+          config.build_settings['WARNING_CFLAGS'] ||= ['$(inherited)']
+          config.build_settings['WARNING_CFLAGS'] << '-Wno-non-modular-include-in-framework-module'
         end
       end
     end`;
 
         // Merge with existing post_install hook
-        if (!podfileContent.includes('CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER')) {
+        if (!podfileContent.includes('Wno-non-modular-include-in-framework-module')) {
           const postInstallRegex = /(post_install do \|installer\|[\s\S]*?)(^  end$)/m;
 
           if (postInstallRegex.test(podfileContent)) {
@@ -64,3 +66,4 @@ $RNFirebaseAsStaticFramework = true
     },
   ]);
 };
+
