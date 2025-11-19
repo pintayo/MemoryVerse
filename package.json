@@ -29,6 +29,7 @@
     "expo-application": "~7.0.2",
     "expo-av": "~15.0.2",
     "expo-constants": "^18.0.10",
+    "expo-dev-client": "~6.0.18",
     "expo-linear-gradient": "~15.0.7",
     "expo-notifications": "~0.30.0",
     "expo-secure-store": "~15.0.7",
@@ -54,5 +55,6 @@
     "metro-minify-terser": "^0.83.0",
     "typescript": "^5.3.3"
   },
-  "private": true
+  "private": true,
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

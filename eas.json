@@ -33,9 +33,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@email.com",
-        "ascAppId": "your-asc-app-id",
-        "appleTeamId": "your-team-id"
+        "appleId": "pintayo.dev@email.com",
+        "ascAppId": "6755359874",
+        "appleTeamId": "R53ANU85UH"
       },
       "android": {
         "serviceAccountKeyPath": "./path/to/api-key.json",
