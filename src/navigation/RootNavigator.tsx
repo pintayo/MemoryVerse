@@ -200,7 +200,7 @@ const RootNavigator = () => {
         name="PremiumUpgrade"
         component={PremiumUpgradeScreen}
         options={{
-          title: 'Premium',
+          title: 'Pro',
           headerBackTitle: 'Back',
         }}
       />
