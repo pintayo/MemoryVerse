@@ -30,6 +30,7 @@ import { verseSessionService, VerseSession } from '../services/verseSessionServi
 import { Verse } from '../types/database';
 import { logger } from '../utils/logger';
 import { completeTask } from '../services/dailyTasksService';
+import { useAuth } from '../contexts/AuthContext';
 
 logger.log('[LearnVerseScreen] Module loaded');
 
@@ -42,6 +43,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Understand'>;
 
 export function LearnVerseScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [session, setSession] = useState<VerseSession | null>(null);
   const [currentVerse, setCurrentVerse] = useState<Verse | null>(null);
   const [context, setContext] = useState<string | null>(null);
@@ -89,8 +91,8 @@ export function LearnVerseScreen({ navigation, route }: Props) {
         setSession(newSession);
       }
 
-      // Mark "understand" task as complete
-      await completeTask('understand');
+      // Mark "understand" task as complete (pass userId for streak tracking)
+      await completeTask('understand', user?.id);
 
       // Note: Don't set isLoading(false) here - let loadCurrentVerse() handle it
     } catch (err) {

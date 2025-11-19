@@ -12,9 +12,6 @@ console.log('[screens/index] RecallScreen exported');
 export { default as PrayScreen } from './PrayScreen';
 console.log('[screens/index] PrayScreen exported');
 
-export { default as LeaderboardScreen } from './LeaderboardScreen';
-console.log('[screens/index] LeaderboardScreen exported');
-
 export { default as ProfileScreen } from './ProfileScreen';
 console.log('[screens/index] ProfileScreen exported');
 
@@ -30,20 +27,11 @@ console.log('[screens/index] DownloadsScreen exported');
 export { NotificationSettingsScreen } from './NotificationSettingsScreen';
 console.log('[screens/index] NotificationSettingsScreen exported');
 
-export { default as OnboardingScreen } from './OnboardingScreen';
-console.log('[screens/index] OnboardingScreen exported');
-
-export { default as SearchScreen } from './SearchScreen';
-console.log('[screens/index] SearchScreen exported');
-
 export { default as StreakCalendarScreen } from './StreakCalendarScreen';
 console.log('[screens/index] StreakCalendarScreen exported');
 
 export { default as ReviewScreen } from './ReviewScreen';
 console.log('[screens/index] ReviewScreen exported');
-
-export { default as NotesScreen } from './NotesScreen';
-console.log('[screens/index] NotesScreen exported');
 
 export { BibleScreen } from './BibleScreen';
 console.log('[screens/index] BibleScreen exported');

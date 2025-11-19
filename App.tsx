@@ -86,9 +86,6 @@ console.log('[App.tsx] LoginScreen loaded');
 import SignupScreen from './src/screens/SignupScreen';
 console.log('[App.tsx] SignupScreen loaded');
 
-import OnboardingScreen from './src/screens/OnboardingScreen';
-console.log('[App.tsx] OnboardingScreen loaded');
-
 import { ErrorBoundary } from './src/components';
 console.log('[App.tsx] ErrorBoundary loaded');
 
@@ -134,28 +131,10 @@ const AppNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
   console.log('[AppNavigator] useAuth called, isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
 
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
-
-  // Check if user has completed onboarding (both authenticated and guest users)
-  useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        const completed = await AsyncStorage.getItem('onboarding_completed');
-        setHasCompletedOnboarding(completed === 'true');
-      } catch (error) {
-        console.error('[AppNavigator] Error checking onboarding:', error);
-        setHasCompletedOnboarding(false);
-      }
-    };
-
-    // Check onboarding for all users (guest and authenticated)
-    checkOnboarding();
-  }, []);
-
   // Track app sessions for review prompt
   useEffect(() => {
     const trackSession = async () => {
-      if (isAuthenticated && hasCompletedOnboarding) {
+      if (isAuthenticated) {
         try {
           await appReviewService.incrementSessionCount();
           console.log('[AppNavigator] Session tracked for review prompt');
@@ -166,20 +145,15 @@ const AppNavigator = () => {
     };
 
     trackSession();
-  }, [isAuthenticated, hasCompletedOnboarding]);
+  }, [isAuthenticated]);
 
-  // Show loading spinner while checking authentication or onboarding
-  if (isLoading || hasCompletedOnboarding === null) {
+  // Show loading spinner while checking authentication
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
       </View>
     );
-  }
-
-  // Show onboarding for first-time users (both authenticated and guest users)
-  if (hasCompletedOnboarding === false) {
-    return <OnboardingScreen onComplete={() => setHasCompletedOnboarding(true)} />;
   }
 
   // Allow both authenticated and guest users to access main app

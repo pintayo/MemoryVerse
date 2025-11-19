@@ -49,13 +49,13 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
+          "icon": "./assets/icon.png",
           "color": "#D4AF37"
         }
       ]
     ],
     "notification": {
-      "icon": "./assets/notification-icon.png",
+      "icon": "./assets/icon.png",
       "color": "#D4AF37",
       "androidMode": "default",
       "androidCollapsedTitle": "MemoryVerse"
