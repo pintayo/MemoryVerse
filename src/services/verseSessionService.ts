@@ -28,7 +28,7 @@ class VerseSessionService {
 
   /**
    * Create a new 5-verse learning session starting with a specific verse
-   * Loads first verse immediately, then loads remaining verses in background
+   * Loads all 5 verses before returning to ensure proper progress display
    */
   async createSessionWithVerse(
     verseId: string,
@@ -57,10 +57,13 @@ class VerseSessionService {
       // Pre-load context for the first verse immediately
       this.preloadContextForVerse(specificVerse);
 
-      logger.log('[VerseSession] Session created with specific verse, loading remaining verses in background');
+      logger.log('[VerseSession] Session created with specific verse, loading remaining 4 verses...');
 
-      // Load remaining 4 verses in the background
-      this.loadRemainingVerses(session, translation, specificVerse.book, specificVerse.chapter);
+      // WAIT for remaining 4 verses to load before returning
+      // This ensures UI shows "1 of 5" instead of "1 of 1"
+      await this.loadRemainingVerses(session, translation, specificVerse.book, specificVerse.chapter);
+
+      logger.log('[VerseSession] All 5 verses loaded, session ready');
 
       return session;
     } catch (error) {
@@ -71,7 +74,7 @@ class VerseSessionService {
 
   /**
    * Create a new 5-verse learning session
-   * Loads first verse immediately, then loads remaining verses in background
+   * Loads all 5 verses before returning to ensure proper progress display
    */
   async createSession(
     translation: string = 'KJV',
@@ -102,10 +105,13 @@ class VerseSessionService {
       // Pre-load context for the first verse immediately
       this.preloadContextForVerse(firstVerse);
 
-      logger.log('[VerseSession] Session created with first verse, loading remaining verses in background');
+      logger.log('[VerseSession] Session created with first verse, loading remaining 4 verses...');
 
-      // Load remaining 4 verses in the background
-      this.loadRemainingVerses(session, translation, book ?? undefined, chapter ?? undefined);
+      // WAIT for remaining 4 verses to load before returning
+      // This ensures UI shows "1 of 5" instead of "1 of 1"
+      await this.loadRemainingVerses(session, translation, book ?? undefined, chapter ?? undefined);
+
+      logger.log('[VerseSession] All 5 verses loaded, session ready');
 
       return session;
     } catch (error) {
