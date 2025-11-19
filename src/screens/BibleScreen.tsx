@@ -376,30 +376,51 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
   };
 
   const handleContinueReading = async () => {
-    if (bookmark) {
-      // First load the chapters for this book so next/prev buttons work
-      setSelectedBook(bookmark.book);
-      setIsLoading(true);
+    if (!bookmark) return;
 
-      try {
-        const { data, error } = await supabase
-          .from('verses')
-          .select('chapter')
-          .eq('book', bookmark.book)
-          .eq('translation', 'KJV')
-          .order('chapter');
+    setIsLoading(true);
+    setSelectedBook(bookmark.book);
+    setSelectedChapter(bookmark.chapter);
+    setMode('verses');
 
-        if (error) throw error;
+    try {
+      // Load chapters for this book (for next/prev navigation)
+      const chaptersQuery = await supabase
+        .from('verses')
+        .select('chapter')
+        .eq('book', bookmark.book)
+        .eq('translation', 'KJV')
+        .order('chapter');
 
-        const uniqueChapters = [...new Set(data.map((v: any) => v.chapter))];
-        setChapters(uniqueChapters);
+      if (chaptersQuery.error) throw chaptersQuery.error;
 
-        // Now navigate to the chapter
-        await handleChapterSelect(bookmark.chapter);
-      } catch (error) {
-        logger.error('[BibleScreen] Error loading chapters:', error);
-        setIsLoading(false);
-      }
+      const uniqueChapters = [...new Set(chaptersQuery.data.map((v: any) => v.chapter))];
+      setChapters(uniqueChapters);
+
+      // Load verses for the bookmarked chapter
+      const versesQuery = await supabase
+        .from('verses')
+        .select('*')
+        .eq('book', bookmark.book)
+        .eq('chapter', bookmark.chapter)
+        .eq('translation', 'KJV')
+        .order('verse_number');
+
+      if (versesQuery.error) throw versesQuery.error;
+      setVerses(versesQuery.data || []);
+
+      // Save bookmark and mark as read
+      await readingProgressService.saveBookmark(bookmark.book, bookmark.chapter);
+      await readingProgressService.markChapterRead(bookmark.book, bookmark.chapter);
+      await loadBookmark();
+      await loadBookProgress(bookmark.book);
+
+      // Complete the daily chapter task
+      await completeTask('chapter');
+    } catch (error) {
+      logger.error('[BibleScreen] Error in continue reading:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
