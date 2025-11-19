@@ -18,6 +18,7 @@ import { speechRecognitionService } from '../services/speechRecognitionService';
 import { spacedRepetitionService } from '../services/spacedRepetitionService';
 import { streakService } from '../services/streakService';
 import { appReviewService } from '../services/appReviewService';
+import { practiceStatsService } from '../services/practiceStatsService';
 import { Audio } from 'expo-av';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Recall'>;
@@ -457,6 +458,9 @@ const RecallScreen: React.FC<Props> = ({ navigation, route }) => {
       xpForNextLevel,
     });
     setShowCompleteModal(true);
+
+    // Record practice session completion for achievements
+    await practiceStatsService.recordSessionCompleted();
 
     // Check if we should prompt for app review after successful practice
     if (correctCount > 0 && profile) {

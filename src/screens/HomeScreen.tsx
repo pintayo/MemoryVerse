@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
+import { AchievementsModal } from '../components/AchievementsModal';
+import { AchievementUnlockNotification } from '../components/AchievementUnlockNotification';
 import { theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
 import { verseService } from '../services/verseService';
@@ -12,6 +14,9 @@ import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 import { loadTodaysTasks, completeTask, DailyTaskId } from '../services/dailyTasksService';
+import { achievementsService, Achievement } from '../services/achievementsService';
+import { readingProgressService } from '../services/readingProgressService';
+import { practiceStatsService } from '../services/practiceStatsService';
 
 logger.log('[HomeScreen] All imports complete');
 
@@ -36,6 +41,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     chapter: false,
     review: false,
   });
+
+  // Achievements state
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
+  const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
 
   // Get real stats from profile
   const streak = profile?.current_streak || 0;
@@ -65,11 +75,41 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   useEffect(() => {
     loadTodayVerse();
     loadDailyTasks();
-  }, []);
+    loadAchievements();
+  }, [profile]);
 
   const loadDailyTasks = async () => {
     const tasks = await loadTodaysTasks();
     setDailyTasksCompletion(tasks);
+  };
+
+  const loadAchievements = async () => {
+    try {
+      // Get stats from various sources
+      const readingStats = await readingProgressService.getReadingStats();
+      const practiceStats = await practiceStatsService.getPracticeStats();
+
+      const stats = {
+        versesLearned: profile?.verses_memorized || 0,
+        currentStreak: profile?.current_streak || 0,
+        currentLevel: currentLevel,
+        practiceSessionsCompleted: practiceStats.totalSessionsCompleted,
+        chaptersRead: readingStats.totalChaptersRead,
+      };
+
+      // Load all achievements with current progress
+      const allAchievements = await achievementsService.getAchievements(stats);
+      setAchievements(allAchievements);
+
+      // Check for newly unlocked achievements
+      const newlyUnlocked = await achievementsService.checkForNewAchievements(stats);
+      if (newlyUnlocked.length > 0) {
+        // Show notification for the first newly unlocked achievement
+        setUnlockedAchievement(newlyUnlocked[0]);
+      }
+    } catch (error) {
+      logger.error('[HomeScreen] Error loading achievements:', error);
+    }
   };
 
   const loadTodayVerse = async () => {
@@ -278,7 +318,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         {/* Your Progress - Always Visible */}
         <Card variant="parchment" outlined style={styles.progressCard}>
-          <Text style={styles.progressTitle}>Your Progress</Text>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressTitle}>Your Progress</Text>
+            <TouchableOpacity
+              onPress={() => setShowAchievementsModal(true)}
+              style={styles.achievementsButton}
+            >
+              <Svg width="20" height="20" viewBox="0 0 24 24">
+                <Path
+                  d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
+                  fill={theme.colors.secondary.lightGold}
+                />
+              </Svg>
+              <Text style={styles.achievementsButtonText}>
+                {achievements.filter(a => a.unlocked).length}/{achievements.length}
+              </Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.progressStatsRow}>
             {/* Verses Memorized */}
             <View style={styles.progressStat}>
@@ -427,6 +483,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </ImageBackground>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Achievements Modal */}
+      <AchievementsModal
+        visible={showAchievementsModal}
+        onClose={() => setShowAchievementsModal(false)}
+        achievements={achievements}
+      />
+
+      {/* Achievement Unlock Notification */}
+      <AchievementUnlockNotification
+        achievement={unlockedAchievement}
+        onDismiss={() => setUnlockedAchievement(null)}
+      />
     </SafeAreaView>
   );
 };
@@ -646,13 +715,34 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     padding: theme.spacing.lg,
   },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
   progressTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.md,
-    textAlign: 'center',
+  },
+  achievementsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    backgroundColor: theme.colors.background.lightCream,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 2,
+    borderColor: theme.colors.secondary.lightGold,
+  },
+  achievementsButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
   },
   progressStatsRow: {
     flexDirection: 'row',
