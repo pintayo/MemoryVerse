@@ -67,7 +67,7 @@ export function LearnVerseScreen({ navigation, route }: Props) {
     if (session) {
       loadCurrentVerse();
     }
-  }, [session?.currentIndex]);
+  }, [session]);
 
   const initializeSession = async () => {
     try {
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.primary.softOlive,
+    backgroundColor: colors.success.mutedOlive,
     paddingVertical: spacing.md,
     borderRadius: 12,
     shadowColor: '#000',

@@ -239,8 +239,8 @@ class SpacedRepetitionService {
         intervalDays = SM2_INTERVALS.FIRST_REVIEW;
         newStatus = 'learning';
       } else {
-        // Failed first attempt, review tomorrow
-        intervalDays = SM2_INTERVALS.FIRST_REVIEW;
+        // Failed first attempt, make available for immediate re-review
+        intervalDays = 0;
         newStatus = 'learning';
       }
     }
@@ -250,8 +250,8 @@ class SpacedRepetitionService {
         intervalDays = SM2_INTERVALS.SECOND_REVIEW;
         newStatus = 'reviewing';
       } else {
-        // Failed, reset to first interval
-        intervalDays = SM2_INTERVALS.FIRST_REVIEW;
+        // Failed, make available for immediate re-review
+        intervalDays = 0;
         newStatus = 'learning';
       }
     }
@@ -270,8 +270,8 @@ class SpacedRepetitionService {
         // Hard - slower progression
         easeFactor = Math.max(SM2_INTERVALS.MIN_EASE, easeFactor - 0.15);
       } else {
-        // Failed - reset to learning
-        intervalDays = SM2_INTERVALS.FIRST_REVIEW;
+        // Failed - make available for immediate re-review
+        intervalDays = 0;
         newStatus = 'learning';
         easeFactor = SM2_INTERVALS.MIN_EASE;
       }
