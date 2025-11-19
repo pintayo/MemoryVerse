@@ -11,6 +11,8 @@ interface LessonCompleteModalProps {
   currentXP: number;
   currentLevel: number;
   xpForNextLevel: number;
+  correctVerseIds?: string[]; // List of verse IDs that were answered correctly
+  onMarkAsMemorized?: (verseIds: string[]) => void;
   onClose: () => void;
 }
 
@@ -22,10 +24,13 @@ export const LessonCompleteModal: React.FC<LessonCompleteModalProps> = ({
   currentXP,
   currentLevel,
   xpForNextLevel,
+  correctVerseIds = [],
+  onMarkAsMemorized,
   onClose,
 }) => {
   const xpBarAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const [hasMarkedMemorized, setHasMarkedMemorized] = React.useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -149,6 +154,34 @@ export const LessonCompleteModal: React.FC<LessonCompleteModalProps> = ({
             </View>
           </View>
 
+          {/* Mark as Memorized Button (only shown if there are correct verses and callback provided) */}
+          {correctVerseIds.length > 0 && onMarkAsMemorized && !hasMarkedMemorized && (
+            <TouchableOpacity
+              style={styles.memorizeButton}
+              onPress={() => {
+                onMarkAsMemorized(correctVerseIds);
+                setHasMarkedMemorized(true);
+              }}
+            >
+              <Svg width="20" height="20" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                <Path
+                  d="M17 3H7C5.9 3 5 3.9 5 5V21L12 18L19 21V5C19 3.9 18.1 3 17 3Z"
+                  fill={theme.colors.text.onDark}
+                />
+              </Svg>
+              <Text style={styles.memorizeButtonText}>
+                Mark {correctCount === 1 ? 'Verse' : 'Verses'} as Memorized
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Success message after marking */}
+          {hasMarkedMemorized && (
+            <View style={styles.successMessage}>
+              <Text style={styles.successText}>✓ Marked as memorized!</Text>
+            </View>
+          )}
+
           {/* Continue Button */}
           <TouchableOpacity style={styles.button} onPress={onClose}>
             <Text style={styles.buttonText}>Continue</Text>
@@ -263,6 +296,34 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: theme.colors.success.celebratoryGold,
     borderRadius: theme.borderRadius.full,
+  },
+  memorizeButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    width: '100%',
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  memorizeButtonText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    fontWeight: '600',
+    color: theme.colors.text.onDark,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  successMessage: {
+    paddingVertical: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  successText: {
+    fontSize: theme.typography.ui.bodySmall.fontSize,
+    color: theme.colors.success.mutedOlive,
+    fontFamily: theme.typography.fonts.ui.default,
+    fontWeight: '600',
   },
   button: {
     backgroundColor: theme.colors.success.mutedOlive,

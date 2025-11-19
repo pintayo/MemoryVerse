@@ -1,3 +1,9 @@
+/**
+ * Learn Verse Screen (formerly Understand Screen)
+ *
+ * 5-verse learning sessions with chapter selection and context pre-loading
+ */
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -15,137 +21,155 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
-import { shadows } from '../theme/shadows';
 import Card from '../components/Card';
-import VerseText from '../components/VerseText';
 import VerseReference from '../components/VerseReference';
 import BibleCompanion from '../components/BibleCompanion';
-import { BibleVersePicker } from '../components/BibleVersePicker';
+import { ChapterSelector } from '../components/ChapterSelector';
 import { StarButton } from '../components/StarButton';
-import { verseService } from '../services/verseService';
+import { verseSessionService, VerseSession } from '../services/verseSessionService';
 import { Verse } from '../types/database';
 import { logger } from '../utils/logger';
+import { completeTask } from '../services/dailyTasksService';
 
-logger.log('[UnderstandScreen] Module loaded');
+logger.log('[LearnVerseScreen] Module loaded');
 
 type RootStackParamList = {
-  Understand: { verseId: string };
+  Understand: { verseId?: string };
   Home: undefined;
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Understand'>;
 
-export function UnderstandScreen({ navigation, route }: Props) {
-  const { verseId } = route.params;
-
-  const [verse, setVerse] = useState<Verse | null>(null);
+export function LearnVerseScreen({ navigation, route }: Props) {
+  const [session, setSession] = useState<VerseSession | null>(null);
+  const [currentVerse, setCurrentVerse] = useState<Verse | null>(null);
   const [context, setContext] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingContext, setIsLoadingContext] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showChapterSelector, setShowChapterSelector] = useState(false);
   const [showAiBadge, setShowAiBadge] = useState(false);
-  const [showVersePicker, setShowVersePicker] = useState(false);
-  const [currentVerseId, setCurrentVerseId] = useState(verseId);
 
+  // Initialize session on mount
   useEffect(() => {
-    let isCancelled = false;
+    initializeSession();
 
-    const loadVerse = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        setIsGenerating(false);
-
-        const result = await verseService.getVerseWithContext(currentVerseId);
-
-        // Ignore results if component unmounted or verse changed
-        if (isCancelled) {
-          logger.log('[UnderstandScreen] Request cancelled, ignoring result');
-          return;
-        }
-
-        if (result.error) {
-          setError(result.error);
-          setVerse(result.verse);
-          setContext(null);
-          setIsGenerating(false);
-          return;
-        }
-
-        setVerse(result.verse);
-        setContext(result.context);
-        setIsGenerating(false);  // Context is already loaded at this point
-        setShowAiBadge(result.verse?.context_generated_by_ai || false);
-
-      } catch (err) {
-        if (!isCancelled) {
-          logger.error('[UnderstandScreen] Error loading verse:', err);
-          setError(err instanceof Error ? err.message : 'Failed to load verse');
-          setIsGenerating(false);
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false);
-        }
+    // Cleanup on unmount - reset session
+    return () => {
+      if (session) {
+        verseSessionService.clearSession(session.book, session.chapter);
       }
     };
+  }, []);
 
-    loadVerse();
+  // Load current verse when session or index changes
+  useEffect(() => {
+    if (session) {
+      loadCurrentVerse();
+    }
+  }, [session?.currentIndex]);
 
-    // Cleanup function to cancel pending requests
-    return () => {
-      isCancelled = true;
-      logger.log('[UnderstandScreen] Cleaning up verse load for', currentVerseId);
-    };
-  }, [currentVerseId]);
-
-  const loadVerseWithContext = async () => {
+  const initializeSession = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      setIsGenerating(false);
 
-      const result = await verseService.getVerseWithContext(currentVerseId);
+      // Check if a specific verseId was passed (e.g., from daily verse tap)
+      const { verseId } = route.params || {};
 
-      if (result.error) {
-        setError(result.error);
-        setVerse(result.verse);
-        setContext(null);
-        setIsGenerating(false);
-        return;
+      if (verseId) {
+        logger.log('[LearnVerseScreen] Creating session starting with verse:', verseId);
+        // Create a session starting with this specific verse
+        const newSession = await verseSessionService.createSessionWithVerse(verseId, 'KJV');
+        setSession(newSession);
+      } else {
+        // Create a new random session (all chapters)
+        const newSession = await verseSessionService.createSession('KJV', null, null);
+        setSession(newSession);
       }
 
-      setVerse(result.verse);
+      // Mark "understand" task as complete
+      await completeTask('understand');
+
+      // Note: Don't set isLoading(false) here - let loadCurrentVerse() handle it
+    } catch (err) {
+      logger.error('[LearnVerseScreen] Error initializing session:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load verses');
+      setIsLoading(false);
+    }
+  };
+
+  const loadCurrentVerse = async () => {
+    if (!session) return;
+
+    try {
+      setIsLoadingContext(true);
+
+      const result = await verseSessionService.getCurrentVerse(session);
+      setCurrentVerse(result.verse);
       setContext(result.context);
-      setIsGenerating(false);
       setShowAiBadge(result.verse?.context_generated_by_ai || false);
 
-    } catch (err) {
-      logger.error('[UnderstandScreen] Error loading verse:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load verse');
-      setIsGenerating(false);
-    } finally {
+      // Clear main loading state after first verse loads
       setIsLoading(false);
+    } catch (err) {
+      logger.error('[LearnVerseScreen] Error loading verse:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load verse');
+      setIsLoading(false);
+    } finally {
+      setIsLoadingContext(false);
+    }
+  };
+
+  const handleChapterSelect = async (book: string | null, chapter: number | null) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Create new session with selected chapter
+      const newSession = await verseSessionService.createSession('KJV', book, chapter);
+      setSession(newSession);
+    } catch (err) {
+      logger.error('[LearnVerseScreen] Error creating session:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load verses');
+      setIsLoading(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (session && verseSessionService.hasNext(session)) {
+      const success = verseSessionService.nextVerse(session);
+      if (success) {
+        setSession({ ...session }); // Trigger re-render
+      }
+    } else {
+      // Session complete - show completion message
+      Alert.alert(
+        'Session Complete! 🎉',
+        'You\'ve learned 5 verses! Would you like to start a new session?',
+        [
+          { text: 'Go Back', style: 'cancel', onPress: () => navigation.goBack() },
+          { text: 'New Session', onPress: () => setShowChapterSelector(true) },
+        ]
+      );
+    }
+  };
+
+  const handlePrevious = () => {
+    if (session && verseSessionService.hasPrevious(session)) {
+      const success = verseSessionService.previousVerse(session);
+      if (success) {
+        setSession({ ...session }); // Trigger re-render
+      }
     }
   };
 
   const handleRefreshContext = () => {
     Alert.alert(
       'Regenerate Context',
-      'This feature is coming soon in the premium version!',
+      'This feature is coming soon in the pro version!',
       [{ text: 'OK' }]
     );
-  };
-
-  const handleVerseSelect = (newVerseId: string) => {
-    setCurrentVerseId(newVerseId);
-  };
-
-  const handleRandomVerse = async (book?: string, chapter?: number) => {
-    const randomVerse = await verseService.getRandomVerse('KJV', book, chapter);
-    if (randomVerse?.id) {
-      setCurrentVerseId(randomVerse.id);
-    }
   };
 
   if (isLoading) {
@@ -158,19 +182,19 @@ export function UnderstandScreen({ navigation, route }: Props) {
           >
             <Ionicons name="arrow-back" size={24} color={colors.primary.mutedStone} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Understanding</Text>
+          <Text style={styles.headerTitle}>Learn Verses</Text>
           <View style={styles.placeholder} />
         </View>
 
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent.gold} />
-          <Text style={styles.loadingText}>Loading verse...</Text>
+          <Text style={styles.loadingText}>Loading verses...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (error || !verse) {
+  if (error || !session || !currentVerse) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
@@ -180,16 +204,16 @@ export function UnderstandScreen({ navigation, route }: Props) {
           >
             <Ionicons name="arrow-back" size={24} color={colors.primary.mutedStone} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Understanding</Text>
+          <Text style={styles.headerTitle}>Learn Verses</Text>
           <View style={styles.placeholder} />
         </View>
 
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={64} color={colors.error.main} />
-          <Text style={styles.errorText}>{error || 'Verse not found'}</Text>
+          <Text style={styles.errorText}>{error || 'Verses not found'}</Text>
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={loadVerseWithContext}
+            onPress={initializeSession}
           >
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
@@ -198,7 +222,10 @@ export function UnderstandScreen({ navigation, route }: Props) {
     );
   }
 
-  const reference = `${verse.book} ${verse.chapter}:${verse.verse_number}`;
+  const reference = `${currentVerse.book} ${currentVerse.chapter}:${currentVerse.verse_number}`;
+  const progress = verseSessionService.getProgress(session);
+  const hasNext = verseSessionService.hasNext(session);
+  const hasPrevious = verseSessionService.hasPrevious(session);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -209,14 +236,19 @@ export function UnderstandScreen({ navigation, route }: Props) {
         >
           <Ionicons name="arrow-back" size={24} color={colors.primary.mutedStone} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Understanding</Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Learn Verses</Text>
+          <Text style={styles.progressText}>
+            Verse {progress.current} of {progress.total}
+          </Text>
+        </View>
         <View style={styles.headerButtons}>
-          <StarButton verseId={currentVerseId} size={28} />
+          <StarButton verseId={currentVerse.id} size={28} />
           <TouchableOpacity
-            onPress={() => setShowVersePicker(true)}
-            style={styles.bibleButton}
+            onPress={() => setShowChapterSelector(true)}
+            style={styles.chapterButton}
           >
-            <Ionicons name="book" size={24} color={colors.accent.gold} />
+            <Ionicons name="library" size={24} color={colors.accent.gold} />
           </TouchableOpacity>
         </View>
       </View>
@@ -237,21 +269,14 @@ export function UnderstandScreen({ navigation, route }: Props) {
         {/* Verse Card */}
         <Card variant="parchment" style={styles.verseCard}>
           <VerseReference style={styles.reference}>{reference}</VerseReference>
-          <Text style={[styles.verseText, {
-            fontSize: 20,
-            lineHeight: 32,
-            color: '#2C1810',
-            fontFamily: typography.fonts.scripture.default,
-            textAlign: 'center',
-            marginBottom: spacing.lg,
-          }]}>
-            {verse.text}
+          <Text style={styles.verseText}>
+            {currentVerse.text}
           </Text>
 
-          {verse.category && (
+          {currentVerse.category && (
             <View style={styles.categoryBadge}>
               <Ionicons name="bookmark" size={14} color={colors.accent.gold} />
-              <Text style={styles.categoryText}>{verse.category}</Text>
+              <Text style={styles.categoryText}>{currentVerse.category}</Text>
             </View>
           )}
         </Card>
@@ -273,14 +298,11 @@ export function UnderstandScreen({ navigation, route }: Props) {
           </View>
 
           <Card variant="cream" style={styles.contextCard}>
-            {isGenerating && !context ? (
+            {isLoadingContext ? (
               <View style={styles.generatingContainer}>
                 <ActivityIndicator size="small" color={colors.accent.gold} />
                 <Text style={styles.generatingText}>
-                  Generating spiritual context for you...
-                </Text>
-                <Text style={styles.generatingSubtext}>
-                  This may take a few moments
+                  Loading context...
                 </Text>
               </View>
             ) : context ? (
@@ -301,67 +323,49 @@ export function UnderstandScreen({ navigation, route }: Props) {
               <View style={styles.noContextContainer}>
                 <Ionicons name="information-circle" size={32} color={colors.primary.mutedStone} />
                 <Text style={styles.noContextText}>
-                  Context could not be generated at this time.
+                  Context could not be loaded.
                 </Text>
-                <Text style={styles.noContextSubtext}>
-                  Please check your internet connection and try again.
-                </Text>
-                <TouchableOpacity
-                  style={styles.retryContextButton}
-                  onPress={loadVerseWithContext}
-                >
-                  <Text style={styles.retryContextButtonText}>Retry</Text>
-                </TouchableOpacity>
               </View>
             )}
           </Card>
         </View>
 
-        {/* Memory Tips */}
-        <Card variant="parchment" style={styles.tipsCard}>
-          <View style={styles.tipsHeader}>
-            <Ionicons name="star" size={20} color={colors.accent.gold} />
-            <Text style={styles.tipsTitle}>Memory Tips</Text>
-          </View>
-
-          <View style={styles.tipItem}>
-            <Text style={styles.tipBullet}>•</Text>
-            <Text style={styles.tipText}>
-              Read the verse aloud 3 times to engage auditory memory
+        {/* Navigation Buttons */}
+        <View style={styles.navigationContainer}>
+          <TouchableOpacity
+            style={[styles.navButton, !hasPrevious && styles.navButtonDisabled]}
+            onPress={handlePrevious}
+            disabled={!hasPrevious}
+          >
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              color={hasPrevious ? colors.accent.gold : colors.primary.mutedStone}
+            />
+            <Text style={[styles.navButtonText, !hasPrevious && styles.navButtonTextDisabled]}>
+              Previous
             </Text>
-          </View>
+          </TouchableOpacity>
 
-          <View style={styles.tipItem}>
-            <Text style={styles.tipBullet}>•</Text>
-            <Text style={styles.tipText}>
-              Break it into phrases and memorize one phrase at a time
+          <TouchableOpacity
+            style={styles.nextButton}
+            onPress={handleNext}
+          >
+            <Text style={styles.nextButtonText}>
+              {hasNext ? 'Next Verse' : 'Complete Session'}
             </Text>
-          </View>
-
-          <View style={styles.tipItem}>
-            <Text style={styles.tipBullet}>•</Text>
-            <Text style={styles.tipText}>
-              Visualize the meaning and create a mental picture
-            </Text>
-          </View>
-
-          <View style={styles.tipItem}>
-            <Text style={styles.tipBullet}>•</Text>
-            <Text style={styles.tipText}>
-              Practice reciting from memory without looking
-            </Text>
-          </View>
-        </Card>
+            <Ionicons name="chevron-forward" size={20} color="white" />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* Bible Verse Picker Modal */}
-      <BibleVersePicker
-        visible={showVersePicker}
-        onClose={() => setShowVersePicker(false)}
-        onVerseSelect={handleVerseSelect}
-        onRandomVerse={handleRandomVerse}
+      {/* Chapter Selector Modal */}
+      <ChapterSelector
+        visible={showChapterSelector}
+        onClose={() => setShowChapterSelector(false)}
+        onSelect={handleChapterSelect}
       />
     </SafeAreaView>
   );
@@ -384,17 +388,28 @@ const styles = StyleSheet.create({
   backButton: {
     padding: spacing.xs,
   },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: typography.fonts.scripture.default,
     color: colors.primary.mutedStone,
+    fontWeight: '600',
+  },
+  progressText: {
+    fontSize: 12,
+    fontFamily: typography.fonts.ui.default,
+    color: colors.text.secondary,
+    marginTop: 2,
   },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
   },
-  bibleButton: {
+  chapterButton: {
     padding: spacing.xs,
   },
   placeholder: {
@@ -455,7 +470,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   verseText: {
-    marginBottom: spacing.md,
+    fontSize: 20,
+    lineHeight: 32,
+    color: '#2C1810',
+    fontFamily: typography.fonts.scripture.default,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
   },
   categoryBadge: {
     flexDirection: 'row',
@@ -527,12 +547,6 @@ const styles = StyleSheet.create({
     color: colors.primary.mutedStone,
     textAlign: 'center',
   },
-  generatingSubtext: {
-    fontSize: 13,
-    fontFamily: typography.fonts.ui.default,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
   noContextContainer: {
     alignItems: 'center',
     paddingVertical: spacing.lg,
@@ -543,24 +557,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fonts.ui.default,
     color: colors.primary.mutedStone,
     textAlign: 'center',
-  },
-  noContextSubtext: {
-    fontSize: 13,
-    fontFamily: typography.fonts.ui.default,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
-  retryContextButton: {
-    backgroundColor: colors.accent.gold,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: 8,
-    marginTop: spacing.sm,
-  },
-  retryContextButtonText: {
-    fontSize: 14,
-    fontFamily: typography.fonts.ui.default,
-    color: colors.text.onDark,
   },
   refreshButton: {
     flexDirection: 'row',
@@ -574,39 +570,56 @@ const styles = StyleSheet.create({
     fontFamily: typography.fonts.ui.default,
     color: colors.accent.gold,
   },
-  tipsCard: {
-    padding: spacing.lg,
+  navigationContainer: {
+    flexDirection: 'row',
+    gap: spacing.md,
     marginBottom: spacing.lg,
   },
-  tipsHeader: {
+  navButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: 'white',
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.accent.gold,
   },
-  tipsTitle: {
+  navButtonDisabled: {
+    opacity: 0.3,
+    borderColor: colors.primary.mutedStone,
+  },
+  navButtonText: {
     fontSize: 16,
     fontFamily: typography.fonts.ui.default,
+    color: colors.accent.gold,
+    fontWeight: '600',
+  },
+  navButtonTextDisabled: {
     color: colors.primary.mutedStone,
   },
-  tipItem: {
+  nextButton: {
+    flex: 2,
     flexDirection: 'row',
-    marginBottom: spacing.sm,
-    paddingRight: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary.softOlive,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  tipBullet: {
-    fontSize: 14,
+  nextButtonText: {
+    fontSize: 16,
     fontFamily: typography.fonts.ui.default,
-    color: colors.accent.gold,
-    marginRight: spacing.sm,
-    width: 16,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: typography.fonts.ui.default,
-    color: colors.text.primary,
-    lineHeight: 20,
+    color: colors.background.lightCream,
+    fontWeight: '700',
   },
   bottomPadding: {
     height: spacing.xl,

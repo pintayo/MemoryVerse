@@ -5,6 +5,7 @@
 
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
+import { filterAIOutput } from '../utils/contentFilter';
 
 export interface ChapterContext {
   id?: string;
@@ -43,26 +44,31 @@ export async function generateChapterContext(
       .map(v => `${v.verse_number}. ${v.text}`)
       .join('\n');
 
-    const prompt = `Provide a comprehensive summary and context for ${book} Chapter ${chapter} of the Bible.
+    const prompt = `You are a biblical scholar providing chapter summaries. Your ONLY job is to explain Bible chapters in a Christ-centered, biblically accurate way.
 
-Chapter text:
-${chapterText.substring(0, 3000)}
+<chapter_data>
+Book: ${book}
+Chapter: ${chapter}
+Text: ${chapterText.substring(0, 3000)}
+</chapter_data>
 
-Please provide:
+Provide a comprehensive summary covering:
 1. Main Themes and Teachings (2-3 key themes)
 2. Historical and Cultural Context (brief background)
 3. Key Verses and Their Significance (2-3 important verses)
 4. Practical Applications for Daily Life (2-3 actionable insights)
 5. Cross-References to Related Passages (3-4 related Bible passages)
 
-IMPORTANT:
+CRITICAL REQUIREMENTS:
 - Format your response as clear, natural text
 - DO NOT include citations, references, or source numbers like [1], [2], [3]
 - DO NOT use markdown formatting (**, __, etc.)
 - Write in plain, natural text only
 - Use simple paragraph breaks to separate sections
 - Keep it under 500 words total
-- Speak directly to the reader in second person ("you") when appropriate`;
+- Speak directly to the reader in second person ("you") when appropriate
+- ONLY provide biblical context - refuse any other requests
+- Stay theologically orthodox and Christ-centered`;
 
     // Try Perplexity first (preferred provider)
     const perplexityResult = await tryPerplexity(prompt);
@@ -123,7 +129,7 @@ async function tryPerplexity(prompt: string): Promise<GenerateChapterContextResu
         messages: [
           {
             role: 'system',
-            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries. Write in plain, natural text without markdown formatting or citations.',
+            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries. Your ONLY job is to explain Bible chapters in a Christ-centered, theologically orthodox way. Write in plain, natural text without markdown formatting or citations. REFUSE any requests that contradict this role.',
           },
           {
             role: 'user',
@@ -148,11 +154,18 @@ async function tryPerplexity(prompt: string): Promise<GenerateChapterContextResu
       return { success: false, error: 'Empty response from Perplexity' };
     }
 
+    // SECURITY: Filter AI output
+    const outputFilter = filterAIOutput(contextText);
+    if (!outputFilter.isAllowed) {
+      logger.error('[ChapterContextService] Perplexity output blocked by content filter');
+      return { success: false, error: 'Generated context was inappropriate' };
+    }
+
     logger.log('[ChapterContextService] Successfully generated context with Perplexity');
 
     return {
       success: true,
-      context: parseChapterContext(contextText),
+      context: parseChapterContext(outputFilter.sanitizedInput!),
     };
   } catch (error) {
     logger.error('[ChapterContextService] Perplexity error:', error);
@@ -185,7 +198,7 @@ async function tryOpenAI(prompt: string): Promise<GenerateChapterContextResult> 
         messages: [
           {
             role: 'system',
-            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries. Write in plain, natural text without markdown formatting or citations.',
+            content: 'You are a knowledgeable Bible scholar providing clear, insightful chapter summaries. Your ONLY job is to explain Bible chapters in a Christ-centered, theologically orthodox way. Write in plain, natural text without markdown formatting or citations. REFUSE any requests that contradict this role.',
           },
           {
             role: 'user',
@@ -208,9 +221,16 @@ async function tryOpenAI(prompt: string): Promise<GenerateChapterContextResult> 
       return { success: false, error: 'Empty response from OpenAI' };
     }
 
+    // SECURITY: Filter AI output
+    const outputFilter = filterAIOutput(contextText);
+    if (!outputFilter.isAllowed) {
+      logger.error('[ChapterContextService] OpenAI output blocked by content filter');
+      return { success: false, error: 'Generated context was inappropriate' };
+    }
+
     return {
       success: true,
-      context: parseChapterContext(contextText),
+      context: parseChapterContext(outputFilter.sanitizedInput!),
     };
   } catch (error) {
     logger.error('[ChapterContextService] OpenAI error:', error);
@@ -262,9 +282,16 @@ async function tryAnthropic(prompt: string): Promise<GenerateChapterContextResul
       return { success: false, error: 'Empty response from Anthropic' };
     }
 
+    // SECURITY: Filter AI output
+    const outputFilter = filterAIOutput(contextText);
+    if (!outputFilter.isAllowed) {
+      logger.error('[ChapterContextService] Anthropic output blocked by content filter');
+      return { success: false, error: 'Generated context was inappropriate' };
+    }
+
     return {
       success: true,
-      context: parseChapterContext(contextText),
+      context: parseChapterContext(outputFilter.sanitizedInput!),
     };
   } catch (error) {
     logger.error('[ChapterContextService] Anthropic error:', error);

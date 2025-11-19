@@ -1,9 +1,11 @@
 logger.log('[HomeScreen] Module loading...');
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
+import { AchievementsModal } from '../components/AchievementsModal';
+import { AchievementUnlockNotification } from '../components/AchievementUnlockNotification';
 import { theme } from '../theme';
 import Svg, { Path } from 'react-native-svg';
 import { verseService } from '../services/verseService';
@@ -11,6 +13,11 @@ import { getTodaysDailyVerse } from '../services/dailyVerseService';
 import { Verse } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
+import { loadTodaysTasks, completeTask, DailyTaskId } from '../services/dailyTasksService';
+import { achievementsService, Achievement } from '../services/achievementsService';
+import { readingProgressService } from '../services/readingProgressService';
+import { practiceStatsService } from '../services/practiceStatsService';
+import { memorizationService } from '../services/memorizationService';
 
 logger.log('[HomeScreen] All imports complete');
 
@@ -28,11 +35,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [todayVerse, setTodayVerse] = useState<Verse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dailyTasksCompletion, setDailyTasksCompletion] = useState<Record<DailyTaskId, boolean>>({
+    verse: false,
+    practice: false,
+    understand: false,
+    chapter: false,
+    review: false,
+  });
+
+  // Achievements state
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
+  const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
 
   // Get real stats from profile
   const streak = profile?.current_streak || 0;
   const xp = profile?.total_xp || 0;
-  const versesLearned = profile?.verses_memorized || 0;
+  const [versesLearned, setVersesLearned] = useState(0);
 
   // Calculate level and XP progress
   const currentLevel = Math.floor(Math.sqrt(xp / 100)) + 1;
@@ -53,10 +72,50 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const today = new Date().toDateString();
   const practicedToday = lastPracticeDate && new Date(lastPracticeDate).toDateString() === today;
 
-  // Load today's verse on mount
+  // Load today's verse and daily tasks on mount
   useEffect(() => {
     loadTodayVerse();
-  }, []);
+    loadDailyTasks();
+    loadAchievements();
+  }, [profile]);
+
+  const loadDailyTasks = async () => {
+    const tasks = await loadTodaysTasks();
+    setDailyTasksCompletion(tasks);
+  };
+
+  const loadAchievements = async () => {
+    try {
+      // Get stats from various sources
+      const readingStats = await readingProgressService.getReadingStats();
+      const practiceStats = await practiceStatsService.getPracticeStats();
+      const memorizedCount = await memorizationService.getMemorizedCount(user?.id || null);
+
+      // Update verses learned state
+      setVersesLearned(memorizedCount);
+
+      const stats = {
+        versesLearned: memorizedCount,
+        currentStreak: profile?.current_streak || 0,
+        currentLevel: currentLevel,
+        practiceSessionsCompleted: practiceStats.totalSessionsCompleted,
+        chaptersRead: readingStats.totalChaptersRead,
+      };
+
+      // Load all achievements with current progress
+      const allAchievements = await achievementsService.getAchievements(stats);
+      setAchievements(allAchievements);
+
+      // Check for newly unlocked achievements
+      const newlyUnlocked = await achievementsService.checkForNewAchievements(stats);
+      if (newlyUnlocked.length > 0) {
+        // Show notification for the first newly unlocked achievement
+        setUnlockedAchievement(newlyUnlocked[0]);
+      }
+    } catch (error) {
+      logger.error('[HomeScreen] Error loading achievements:', error);
+    }
+  };
 
   const loadTodayVerse = async () => {
     try {
@@ -116,16 +175,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     );
   };
 
+  // Daily checklist tasks (free user-friendly, no premium features)
+  const dailyTasks = [
+    { id: 'verse' as DailyTaskId, icon: '📖', label: 'Read today\'s verse', completed: dailyTasksCompletion.verse },
+    { id: 'practice' as DailyTaskId, icon: '🎯', label: 'Practice a verse', completed: dailyTasksCompletion.practice },
+    { id: 'understand' as DailyTaskId, icon: '💡', label: 'Understand a verse', completed: dailyTasksCompletion.understand },
+    { id: 'chapter' as DailyTaskId, icon: '📚', label: 'Read 1 Bible chapter', completed: dailyTasksCompletion.chapter },
+    { id: 'review' as DailyTaskId, icon: '🔄', label: 'Review learned verses', completed: dailyTasksCompletion.review },
+  ];
+
   const actionButtons = [
     {
       id: 'read',
       title: 'Read',
       icon: 'book',
-      description: 'Read today\'s verse',
+      description: 'Read the Bible',
       onPress: () => {
-        if (todayVerse) {
-          navigation.navigate('VerseCard');
-        }
+        navigation.navigate('Bible');
       },
     },
     {
@@ -133,8 +199,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Understand',
       icon: 'lightbulb',
       description: 'Learn the context',
-      onPress: () => {
+      onPress: async () => {
         if (todayVerse?.id) {
+          await completeTask('understand');
+          await loadDailyTasks(); // Refresh the UI
           navigation.navigate('Understand', { verseId: todayVerse.id });
         }
       },
@@ -144,7 +212,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Review',
       icon: 'refresh',
       description: 'Review learned verses',
-      onPress: () => {
+      onPress: async () => {
+        await completeTask('review');
+        await loadDailyTasks(); // Refresh the UI
         navigation.navigate('Review');
       },
     },
@@ -153,7 +223,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       title: 'Practice',
       icon: 'brain',
       description: 'Recall & recite verses',
-      onPress: () => {
+      onPress: async () => {
+        await completeTask('practice');
+        await loadDailyTasks(); // Refresh the UI
         navigation.navigate('Practice');
       },
     },
@@ -163,6 +235,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       icon: 'heart',
       description: 'Prayer training',
       onPress: () => {
+        // Note: Pray is not tracked in daily tasks for free users
         if (todayVerse?.id) {
           navigation.navigate('Pray', { verseId: todayVerse.id });
         }
@@ -177,251 +250,257 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with Bible Companion */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
+        {/* Simple Header */}
+        <View style={styles.simpleHeader}>
+          <View>
             <Text style={styles.greeting}>Good morning!</Text>
-            <View style={styles.statsRow}>
-              <TouchableOpacity
-                style={styles.statItem}
-                onPress={() => navigation.navigate('StreakCalendar')}
-                activeOpacity={0.7}
-              >
-                <Svg width="20" height="24" viewBox="0 0 16 20">
+            {streak > 0 && (
+              <View style={styles.miniStats}>
+                <Svg width="14" height="14" viewBox="0 0 16 20">
                   <Path
                     d="M8 0 C8 0 4 5 4 9 C4 12.3 5.8 15 8 15 C10.2 15 12 12.3 12 9 C12 5 8 0 8 0 Z"
                     fill={theme.colors.secondary.warmTerracotta}
                   />
-                  <Path
-                    d="M8 4 C8 4 6 7 6 9 C6 10.7 7 12 8 12 C9 12 10 10.7 10 9 C10 7 8 4 8 4 Z"
-                    fill={theme.colors.success.celebratoryGold}
-                  />
                 </Svg>
-                <Text style={styles.statText}>{streak} day streak</Text>
-              </TouchableOpacity>
-              <View style={styles.statItem}>
-                <Svg width="20" height="20" viewBox="0 0 20 20">
-                  <Path
-                    d="M10 2 L12 8 L18 8 L13 12 L15 18 L10 14 L5 18 L7 12 L2 8 L8 8 Z"
-                    fill={theme.colors.success.celebratoryGold}
-                  />
-                </Svg>
-                <Text style={styles.statText}>{xp} XP</Text>
+                <Text style={styles.miniStatText}>{streak} day streak · Level {currentLevel}</Text>
               </View>
-            </View>
+            )}
           </View>
-          <View style={styles.companionContainer}>
+          <TouchableOpacity onPress={handleCompanionPress}>
             <BibleCompanion
               streak={streak}
               xp={xp}
               isCelebrating={isCelebrating}
-              onPress={handleCompanionPress}
+              onPress={() => {}}
+              size={50}
             />
-          </View>
+          </TouchableOpacity>
         </View>
 
-        {/* Streak Urgency Banner - Show if haven't practiced today */}
-        {!practicedToday && streak > 0 && (
-          <TouchableOpacity
-            style={styles.streakUrgencyBanner}
-            onPress={() => navigation.navigate('Practice')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.streakUrgencyContent}>
-              <View style={styles.streakUrgencyLeft}>
-                <Svg width="32" height="32" viewBox="0 0 24 24">
+        {/* TODAY'S VERSE - Hero Position - Tap to see context */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={async () => {
+            if (todayVerse?.id) {
+              await completeTask('verse');
+              await loadDailyTasks();
+              navigation.navigate('Understand', { verseId: todayVerse.id });
+            }
+          }}
+          disabled={isLoading || !!error || !todayVerse}
+        >
+          <Card variant="cream" outlined style={styles.heroVerseCard}>
+            <Text style={styles.verseLabel}>Today's Verse</Text>
+
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
+                <Text style={styles.loadingText}>Loading verse...</Text>
+              </View>
+            ) : error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={loadTodayVerse}
+                >
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : todayVerse ? (
+              <>
+                <VerseText size="large" style={styles.verseText}>
+                  {todayVerse.text}
+                </VerseText>
+                <VerseReference style={styles.verseReference}>
+                  {`${todayVerse.book} ${todayVerse.chapter}:${todayVerse.verse_number}`}
+                </VerseReference>
+                <Text style={styles.tapHint}>Tap to understand this verse</Text>
+              </>
+            ) : null}
+          </Card>
+        </TouchableOpacity>
+
+        {/* Your Progress - Always Visible */}
+        <Card variant="parchment" outlined style={styles.progressCard}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressTitle}>Your Progress</Text>
+            <TouchableOpacity
+              onPress={() => setShowAchievementsModal(true)}
+              style={styles.achievementsButton}
+            >
+              <Svg width="20" height="20" viewBox="0 0 24 24">
+                <Path
+                  d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
+                  fill={theme.colors.secondary.lightGold}
+                />
+              </Svg>
+              <Text style={styles.achievementsButtonText}>
+                {achievements.filter(a => a.unlocked).length}/{achievements.length}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.progressStatsRow}>
+            {/* Verses Memorized */}
+            <View style={styles.progressStat}>
+              <View style={styles.progressStatIconContainer}>
+                <Svg width="24" height="24" viewBox="0 0 24 24">
                   <Path
-                    d="M12 2C12 2 7 8 7 13C7 17.42 9.58 21 12 21C14.42 21 17 17.42 17 13C17 8 12 2 12 2Z"
+                    d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2ZM9 4H11V9L10 8.25L9 9V4ZM18 20H6V4H7V13L10 10.75L13 13V4H18V20Z"
+                    fill={theme.colors.secondary.lightGold}
+                  />
+                </Svg>
+              </View>
+              <Text style={styles.progressStatValue}>{versesLearned}</Text>
+              <Text style={styles.progressStatLabel}>Verses{'\n'}Memorized</Text>
+            </View>
+
+            {/* Current Streak */}
+            <View style={styles.progressStat}>
+              <View style={styles.progressStatIconContainer}>
+                <Svg width="24" height="24" viewBox="0 0 24 24">
+                  <Path
+                    d="M12 2C12 2 8 6 8 10C8 13.31 10.69 16 14 16C17.31 16 20 13.31 20 10C20 6 16 2 16 2C16 2 14.5 4.5 14 7C13.5 4.5 12 2 12 2ZM14 14C11.79 14 10 12.21 10 10C10 8.5 10.67 7.25 11.5 6.25C11.5 9.25 13.25 11.5 15 13C14.67 13.66 14.37 14 14 14Z"
                     fill={theme.colors.secondary.warmTerracotta}
                   />
+                </Svg>
+              </View>
+              <Text style={styles.progressStatValue}>{streak}</Text>
+              <Text style={styles.progressStatLabel}>Day{'\n'}Streak</Text>
+            </View>
+
+            {/* Total XP */}
+            <View style={styles.progressStat}>
+              <View style={styles.progressStatIconContainer}>
+                <Svg width="24" height="24" viewBox="0 0 24 24">
                   <Path
-                    d="M12 6C12 6 9 10 9 13C9 15.21 10.34 17 12 17C13.66 17 15 15.21 15 13C15 10 12 6 12 6Z"
+                    d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
                     fill={theme.colors.success.celebratoryGold}
                   />
                 </Svg>
-                <View style={styles.streakUrgencyText}>
-                  <Text style={styles.streakUrgencyTitle}>Protect Your {streak}-Day Streak! 🔥</Text>
-                  <Text style={styles.streakUrgencySubtitle}>
-                    "Train yourself to be godly" - 1 Timothy 4:7
-                  </Text>
-                </View>
               </View>
-              <Svg width="24" height="24" viewBox="0 0 24 24">
-                <Path
-                  d="M9 6 L15 12 L9 18"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
+              <Text style={styles.progressStatValue}>{xp}</Text>
+              <Text style={styles.progressStatLabel}>Total{'\n'}XP</Text>
             </View>
-          </TouchableOpacity>
-        )}
+          </View>
 
-        {/* XP Progress to Next Level */}
-        <Card variant="warm" style={styles.xpProgressCard}>
-          <View style={styles.xpProgressHeader}>
-            <View style={styles.xpProgressInfo}>
-              <Text style={styles.xpProgressLevel}>LEVEL {currentLevel}</Text>
-              <Text style={styles.xpProgressNext}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
+          {/* Level Progress Bar */}
+          <View style={styles.levelProgressContainer}>
+            <View style={styles.levelProgressHeader}>
+              <Text style={styles.levelProgressLabel}>Level {currentLevel}</Text>
+              <Text style={styles.levelProgressXP}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
             </View>
-            <View style={styles.levelBadge}>
-              <Svg width="28" height="28" viewBox="0 0 24 24">
-                <Path
-                  d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
-                  fill={theme.colors.success.celebratoryGold}
-                />
-              </Svg>
+            <View style={styles.levelProgressBar}>
+              <View style={[styles.levelProgressFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
             </View>
           </View>
-          <View style={styles.xpProgressBarContainer}>
-            <View style={[styles.xpProgressBarFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
-          </View>
-          <Text style={styles.xpProgressText}>
-            Keep going! Every verse brings you closer to spiritual mastery 📖
-          </Text>
         </Card>
 
-        {/* Daily Goal Widget */}
-        <Card variant="parchment" outlined style={styles.dailyGoalCard}>
-          <View style={styles.dailyGoalHeader}>
-            <Svg width="24" height="24" viewBox="0 0 24 24">
-              <Path
-                d="M12 2C12 2 4 6 4 12C4 18 12 22 12 22C12 22 20 18 20 12C20 6 12 2 12 2Z"
-                fill={theme.colors.accent.burnishedGold}
-              />
-              <Path
-                d="M9 12L11 14L15 10"
-                stroke="white"
-                strokeWidth="2"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-            <Text style={styles.dailyGoalTitle}>Today's Spiritual Goal</Text>
-          </View>
-          <View style={styles.dailyGoalContent}>
-            <View style={styles.dailyGoalCircle}>
-              <Svg width="80" height="80" viewBox="0 0 100 100">
-                {/* Background circle */}
-                <Path
-                  d="M 50 10 A 40 40 0 1 1 49.99 10"
-                  stroke={theme.colors.primary.oatmeal}
-                  strokeWidth="8"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                {/* Progress circle */}
-                <Path
-                  d={`M 50 10 A 40 40 0 ${dailyGoalProgress > 50 ? 1 : 0} 1 ${
-                    50 + 40 * Math.sin((dailyGoalProgress / 100) * 2 * Math.PI)
-                  } ${
-                    50 - 40 * Math.cos((dailyGoalProgress / 100) * 2 * Math.PI)
-                  }`}
-                  stroke={theme.colors.success.celebratoryGold}
-                  strokeWidth="8"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              </Svg>
-              <View style={styles.dailyGoalCircleText}>
-                <Text style={styles.dailyGoalCount}>{versesToday}/{DAILY_GOAL}</Text>
+        {/* Daily Checklist - Simple & Clean */}
+        <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
+          <Text style={styles.checklistTitle}>Today's Spiritual Goals</Text>
+          <Text style={styles.checklistSubtitle}>Complete these to build your faith daily</Text>
+
+          {dailyTasks.map((task) => (
+            <View key={task.id} style={styles.checklistItem}>
+              <View style={[styles.checkbox, task.completed && styles.checkboxCompleted]}>
+                {task.completed && (
+                  <Svg width="12" height="12" viewBox="0 0 12 12">
+                    <Path
+                      d="M2 6 L5 9 L10 3"
+                      stroke="white"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                )}
               </View>
-            </View>
-            <View style={styles.dailyGoalRight}>
-              <Text style={styles.dailyGoalVersesText}>
-                {versesToday === 0 ? "Let's hide God's Word in your heart today! 💪" :
-                 versesToday < DAILY_GOAL ? `Only ${DAILY_GOAL - versesToday} more verse${DAILY_GOAL - versesToday === 1 ? '' : 's'} to reach your goal! 🎯` :
-                 "Goal crushed! You're building spiritual discipline! 🎉"}
-              </Text>
-              <Text style={styles.dailyGoalScripture}>
-                "I have hidden your word in my heart" - Psalm 119:11
+              <Text style={styles.checklistLabel}>
+                {task.icon} {task.label}
               </Text>
             </View>
-          </View>
+          ))}
         </Card>
 
-        {/* Today's Verse Card */}
-        <Card variant="cream" outlined style={styles.verseCard}>
-          <Text style={styles.verseLabel}>Today's Verse</Text>
-
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.secondary.lightGold} />
-              <Text style={styles.loadingText}>Loading verse...</Text>
-            </View>
-          ) : error ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={loadTodayVerse}
-              >
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : todayVerse ? (
-            <>
-              <VerseText size="large" style={styles.verseText}>
-                {todayVerse.text}
-              </VerseText>
-              <VerseReference style={styles.verseReference}>
-                {`${todayVerse.book} ${todayVerse.chapter}:${todayVerse.verse_number}`}
-              </VerseReference>
-            </>
-          ) : null}
-        </Card>
-
-        {/* Action Buttons */}
+        {/* Quick Actions - Full Width List (calmer vibe) */}
         <View style={styles.actionsContainer}>
           {actionButtons.map((action, index) => (
             <TouchableOpacity
               key={action.id}
               style={[
                 styles.actionButton,
-                index === actionButtons.length - 1 && styles.actionButtonLast,
+                index === actionButtons.length - 1 && styles.actionButtonLast
               ]}
               onPress={action.onPress}
               activeOpacity={0.8}
             >
               <View style={styles.actionButtonContent}>
-                <View style={[
-                  styles.actionIconContainer,
-                  { backgroundColor: getActionColor(action.id) },
-                ]}>
+                <View style={[styles.actionIconContainer, { backgroundColor: getActionColor(action.id) }]}>
                   {renderActionIcon(action.icon)}
                 </View>
                 <View style={styles.actionTextContainer}>
                   <Text style={styles.actionTitle}>{action.title}</Text>
                   <Text style={styles.actionDescription}>{action.description}</Text>
                 </View>
-                <Svg width="24" height="24" viewBox="0 0 24 24">
-                  <Path
-                    d="M9 6 L15 12 L9 18"
-                    stroke={theme.colors.text.tertiary}
-                    strokeWidth="2"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Daily Progress */}
-        <View style={styles.progressSection}>
-          <Text style={styles.progressTitle}>Your Progress</Text>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${Math.min((versesLearned / 10) * 100, 100)}%` }]} />
-          </View>
-          <Text style={styles.progressText}>{versesLearned} verses memorized</Text>
-        </View>
+
+        {/* Story Mode Teaser - Visual with Image Background (Moved to Bottom) */}
+        <TouchableOpacity
+          style={styles.storyModeImageCard}
+          onPress={() => {
+            Alert.alert(
+              "Story Mode Coming Soon! 🎬",
+              "Walk in Jesus' footsteps through interactive stories.\n\nSeason 1 launches in 4-6 weeks with weekly episodes!",
+              [
+                { text: "Maybe Later", style: "cancel" },
+                { text: "Notify Me!", style: "default" }
+              ]
+            );
+            logger.log('[HomeScreen] User interested in Story Mode');
+          }}
+          activeOpacity={0.9}
+        >
+          {/* Image Background - 9:14 aspect ratio (900x1400px) */}
+          <ImageBackground
+            source={require('../../assets/images/story-mode-preview.png')}
+            style={styles.storyModeImageBackground}
+            resizeMode="cover"
+          >
+            {/* Overlay with text */}
+            <View style={styles.storyModeOverlay}>
+              <View style={styles.comingSoonBadgeSmall}>
+                <Text style={styles.comingSoonTextSmall}>COMING SOON</Text>
+              </View>
+              <Text style={styles.storyModeOverlayTitle}>Story Mode</Text>
+              <Text style={styles.storyModeOverlaySubtitle}>Season 1: The Life of Jesus</Text>
+              <View style={styles.storyModeOverlayFeatures}>
+                <Text style={styles.storyModeOverlayFeature}>📖 Interactive Stories</Text>
+                <Text style={styles.storyModeOverlayFeature}>🎨 Animations</Text>
+                <Text style={styles.storyModeOverlayFeature}>❓ Quizzes</Text>
+              </View>
+            </View>
+          </ImageBackground>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* Achievements Modal */}
+      <AchievementsModal
+        visible={showAchievementsModal}
+        onClose={() => setShowAchievementsModal(false)}
+        achievements={achievements}
+      />
+
+      {/* Achievement Unlock Notification */}
+      <AchievementUnlockNotification
+        achievement={unlockedAchievement}
+        onDismiss={() => setUnlockedAchievement(null)}
+      />
     </SafeAreaView>
   );
 };
@@ -520,51 +599,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.screen.horizontal,
     paddingBottom: theme.spacing.xxl,
   },
-  header: {
+  // NEW: Simple Header
+  simpleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
-  },
-  headerLeft: {
-    flex: 1,
+    marginBottom: theme.spacing.lg,
   },
   greeting: {
-    fontSize: theme.typography.ui.title.fontSize,
-    lineHeight: theme.typography.ui.title.lineHeight,
-    fontWeight: theme.typography.ui.title.fontWeight,
+    fontSize: 24,
+    fontWeight: '700',
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  statItem: {
+  miniStats: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
   },
-  statText: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
+  miniStatText: {
+    fontSize: 13,
     color: theme.colors.text.secondary,
-    fontWeight: '600',
     fontFamily: theme.typography.fonts.ui.default,
   },
-  companionContainer: {
-    marginLeft: theme.spacing.md,
-  },
-  verseCard: {
-    marginBottom: theme.spacing.xl,
+  // Hero Verse Card
+  heroVerseCard: {
+    marginBottom: theme.spacing.md,
     paddingVertical: theme.spacing.xl,
-    minHeight: 200,
+    minHeight: 180,
   },
   verseLabel: {
-    fontSize: theme.typography.ui.caption.fontSize,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: theme.colors.secondary.lightGold,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -579,45 +647,218 @@ const styles = StyleSheet.create({
   verseReference: {
     marginTop: theme.spacing.sm,
   },
-  loadingContainer: {
+  tapHint: {
+    fontSize: 12,
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    marginTop: theme.spacing.md,
+    fontStyle: 'italic',
+  },
+  // Story Mode Image Card
+  storyModeImageCard: {
+    marginBottom: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+    ...theme.shadows.md,
+  },
+  storyModeImageBackground: {
+    width: '100%',
+    aspectRatio: 9 / 14, // Slightly wider than 9:16 for better mobile display
+    backgroundColor: theme.colors.primary.darkCharcoal, // Fallback if image fails to load
+    justifyContent: 'flex-end', // Align overlay to bottom
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.xl,
+  },
+  storyModeOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+  },
+  comingSoonBadgeSmall: {
+    backgroundColor: theme.colors.success.celebratoryGold,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.full,
+    marginBottom: theme.spacing.sm,
+  },
+  comingSoonTextSmall: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: 'white',
+    letterSpacing: 1,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  storyModeOverlayTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: 'white',
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 4,
+  },
+  storyModeOverlaySubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.success.celebratoryGold,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.md,
+  },
+  storyModeOverlayFeatures: {
+    flexDirection: 'row',
     gap: theme.spacing.md,
   },
-  loadingText: {
-    fontSize: theme.typography.ui.body.fontSize,
+  storyModeOverlayFeature: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  // Progress Card
+  progressCard: {
+    marginBottom: theme.spacing.md,
+    padding: theme.spacing.lg,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  progressTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  achievementsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    backgroundColor: theme.colors.background.lightCream,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 2,
+    borderColor: theme.colors.secondary.lightGold,
+  },
+  achievementsButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  progressStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: theme.spacing.lg,
+  },
+  progressStat: {
+    alignItems: 'center',
+  },
+  progressStatIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.background.lightCream,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  progressStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 2,
+  },
+  progressStatLabel: {
+    fontSize: 11,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+  levelProgressContainer: {
+    marginTop: theme.spacing.sm,
+  },
+  levelProgressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  levelProgressLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  levelProgressXP: {
+    fontSize: 11,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
   },
-  errorContainer: {
+  levelProgressBar: {
+    height: 8,
+    backgroundColor: theme.colors.background.lightCream,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  levelProgressFill: {
+    height: '100%',
+    backgroundColor: theme.colors.success.celebratoryGold,
+    borderRadius: 4,
+  },
+  // Daily Checklist
+  dailyChecklistCard: {
+    marginBottom: theme.spacing.md,
+    padding: theme.spacing.lg,
+  },
+  checklistTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 4,
+  },
+  checklistSubtitle: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: theme.spacing.md,
+  },
+  checklistItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.xl,
-    gap: theme.spacing.md,
-  },
-  errorText: {
-    fontSize: theme.typography.ui.body.fontSize,
-    color: theme.colors.error.main,
-    textAlign: 'center',
-    fontFamily: theme.typography.fonts.ui.default,
-    paddingHorizontal: theme.spacing.md,
-  },
-  retryButton: {
-    backgroundColor: theme.colors.secondary.lightGold,
-    paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    marginTop: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.primary.oatmeal,
   },
-  retryButtonText: {
-    fontSize: theme.typography.ui.body.fontSize,
-    fontWeight: '600',
-    color: theme.colors.text.onDark,
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: theme.colors.primary.mutedStone,
+    marginRight: theme.spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxCompleted: {
+    backgroundColor: theme.colors.success.celebratoryGold,
+    borderColor: theme.colors.success.celebratoryGold,
+  },
+  checklistLabel: {
+    fontSize: 15,
+    color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
+    flex: 1,
   },
+  // Quick Actions - Full Width List
   actionsContainer: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   actionButton: {
     backgroundColor: theme.colors.background.lightCream,
@@ -645,191 +886,54 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionTitle: {
-    fontSize: theme.typography.ui.subheading.fontSize,
-    fontWeight: theme.typography.ui.subheading.fontWeight,
+    fontSize: 16,
+    fontWeight: '600',
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
     fontFamily: theme.typography.fonts.ui.default,
   },
   actionDescription: {
-    fontSize: theme.typography.ui.caption.fontSize,
+    fontSize: 13,
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fonts.ui.default,
   },
-  progressSection: {
-    marginTop: theme.spacing.lg,
-  },
-  progressTitle: {
-    fontSize: theme.typography.ui.subheading.fontSize,
-    fontWeight: theme.typography.ui.subheading.fontWeight,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: theme.colors.primary.oatmeal,
-    borderRadius: theme.borderRadius.sm,
-    overflow: 'hidden',
-    marginBottom: theme.spacing.sm,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: theme.colors.success.mutedOlive,
-    borderRadius: theme.borderRadius.sm,
-  },
-  progressText: {
-    fontSize: theme.typography.ui.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  // Streak Urgency Banner
-  streakUrgencyBanner: {
-    backgroundColor: theme.colors.secondary.warmTerracotta,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-    ...theme.shadows.md,
-  },
-  streakUrgencyContent: {
-    flexDirection: 'row',
+  // Loading & Error States
+  loadingContainer: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  streakUrgencyLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: theme.spacing.sm,
-  },
-  streakUrgencyText: {
-    flex: 1,
-  },
-  streakUrgencyTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: 'white',
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 2,
-  },
-  streakUrgencySubtitle: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontFamily: theme.typography.fonts.ui.default,
-    fontStyle: 'italic',
-  },
-  // XP Progress Card
-  xpProgressCard: {
-    marginBottom: theme.spacing.md,
-  },
-  xpProgressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  xpProgressInfo: {
-    flex: 1,
-  },
-  xpProgressLevel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: 2,
-    letterSpacing: 1,
-  },
-  xpProgressNext: {
-    fontSize: 12,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  levelBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.success.celebratoryGold + '20',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  xpProgressBarContainer: {
-    height: 10,
-    backgroundColor: theme.colors.primary.oatmeal,
-    borderRadius: theme.borderRadius.full,
-    overflow: 'hidden',
-    marginBottom: theme.spacing.sm,
-  },
-  xpProgressBarFill: {
-    height: '100%',
-    backgroundColor: theme.colors.success.celebratoryGold,
-    borderRadius: theme.borderRadius.full,
-  },
-  xpProgressText: {
-    fontSize: 12,
-    color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.ui.default,
-    fontStyle: 'italic',
-  },
-  // Daily Goal Card
-  dailyGoalCard: {
-    marginBottom: theme.spacing.lg,
-  },
-  dailyGoalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  },
-  dailyGoalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  dailyGoalContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingVertical: theme.spacing.xl,
     gap: theme.spacing.md,
   },
-  dailyGoalCircle: {
-    position: 'relative',
-    width: 80,
-    height: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dailyGoalCircleText: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dailyGoalCount: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-  },
-  dailyGoalRight: {
-    flex: 1,
-  },
-  dailyGoalVersesText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui.default,
-    marginBottom: theme.spacing.xs,
-    lineHeight: 18,
-  },
-  dailyGoalScripture: {
-    fontSize: 11,
+  loadingText: {
+    fontSize: 16,
     color: theme.colors.text.secondary,
-    fontFamily: theme.typography.fonts.scripture.default,
-    fontStyle: 'italic',
-    lineHeight: 16,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  errorText: {
+    fontSize: 16,
+    color: theme.colors.error.main,
+    textAlign: 'center',
+    fontFamily: theme.typography.fonts.ui.default,
+    paddingHorizontal: theme.spacing.md,
+  },
+  retryButton: {
+    backgroundColor: theme.colors.secondary.lightGold,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.sm,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text.onDark,
+    fontFamily: theme.typography.fonts.ui.default,
   },
 });
 
