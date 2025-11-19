@@ -3,7 +3,7 @@
  * Coming soon placeholder for interactive Bible stories feature
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,19 +11,110 @@ import {
   ImageBackground,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import { logger } from '../utils/logger';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export const StoryModeScreen = () => {
-  const handleNotifyMe = () => {
-    Alert.alert(
-      "Thanks for Your Interest! 🙏",
-      "We'll notify you when Story Mode launches. Season 1 coming in 4-6 weeks!",
-      [{ text: "Awesome!", style: "default" }]
-    );
-    logger.log('[StoryModeScreen] User interested in Story Mode notifications');
+  const { user, profile } = useAuth();
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Check if user is already registered for notifications
+  useEffect(() => {
+    checkRegistrationStatus();
+  }, [user?.id]);
+
+  const checkRegistrationStatus = async () => {
+    if (!user?.id) {
+      setIsChecking(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('story_mode_notifications')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!error && data) {
+        setIsRegistered(true);
+      }
+    } catch (error) {
+      logger.error('[StoryModeScreen] Error checking registration:', error);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  const handleNotifyMe = async () => {
+    if (!user?.id) {
+      Alert.alert(
+        "Sign In Required",
+        "Please sign in or create an account to get notified when Story Mode launches!",
+        [{ text: "OK", style: "default" }]
+      );
+      return;
+    }
+
+    if (isRegistered) {
+      Alert.alert(
+        "Already Registered! ✓",
+        "You're already on the list! We'll notify you when Story Mode launches.",
+        [{ text: "Awesome!", style: "default" }]
+      );
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const { error } = await supabase
+        .from('story_mode_notifications')
+        .insert({
+          user_id: user.id,
+          email: profile?.email || user.email,
+          notified: false,
+        });
+
+      if (error) throw error;
+
+      setIsRegistered(true);
+
+      Alert.alert(
+        "Thanks for Your Interest! 🙏",
+        "You're now on the list! We'll notify you when Story Mode launches. Season 1 coming in 4-6 weeks!",
+        [{ text: "Awesome!", style: "default" }]
+      );
+
+      logger.log('[StoryModeScreen] User registered for Story Mode notifications');
+    } catch (error: any) {
+      logger.error('[StoryModeScreen] Error registering notification:', error);
+
+      // Check if it's a duplicate key error (user already registered)
+      if (error.code === '23505') {
+        setIsRegistered(true);
+        Alert.alert(
+          "Already Registered! ✓",
+          "You're already on the list! We'll notify you when Story Mode launches.",
+          [{ text: "Awesome!", style: "default" }]
+        );
+      } else {
+        Alert.alert(
+          "Oops!",
+          "Something went wrong. Please try again later.",
+          [{ text: "OK", style: "default" }]
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -64,11 +155,18 @@ export const StoryModeScreen = () => {
             </View>
 
             <TouchableOpacity
-              style={styles.notifyButton}
+              style={[styles.notifyButton, (isLoading || isChecking) && styles.notifyButtonDisabled]}
               onPress={handleNotifyMe}
               activeOpacity={0.8}
+              disabled={isLoading || isChecking}
             >
-              <Text style={styles.notifyButtonText}>Notify Me When It Launches</Text>
+              {isLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.notifyButtonText}>
+                  {isRegistered ? "✓ You're on the List!" : "Notify Me When It Launches"}
+                </Text>
+              )}
             </TouchableOpacity>
 
             <Text style={styles.launchInfo}>Launching in 4-6 weeks</Text>
@@ -156,6 +254,12 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.full,
     marginBottom: theme.spacing.lg,
     ...theme.shadows.lg,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notifyButtonDisabled: {
+    opacity: 0.6,
   },
   notifyButtonText: {
     fontSize: 16,
