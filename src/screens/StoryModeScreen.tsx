@@ -8,12 +8,12 @@ import {
   View,
   Text,
   StyleSheet,
-  ImageBackground,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../theme';
 import { logger } from '../utils/logger';
 import { useAuth } from '../contexts/AuthContext';
@@ -120,13 +120,14 @@ export const StoryModeScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.imageContainer}>
-        {/* Full screen image with overlay */}
-        <ImageBackground
-          source={require('../../assets/images/story-mode-preview.png')}
-          style={styles.imageBackground}
-          resizeMode="cover"
+        {/* Gradient background */}
+        <LinearGradient
+          colors={['#1a1a2e', '#16213e', '#0f3460']}
+          style={styles.gradientBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
         >
-          {/* Dark overlay for better text readability */}
+          {/* Content overlay */}
           <View style={styles.overlay}>
             <View style={styles.comingSoonBadge}>
               <Text style={styles.comingSoonText}>COMING SOON</Text>
@@ -171,7 +172,7 @@ export const StoryModeScreen = () => {
 
             <Text style={styles.launchInfo}>Launching in 4-6 weeks</Text>
           </View>
-        </ImageBackground>
+        </LinearGradient>
       </View>
     </SafeAreaView>
   );
@@ -185,14 +186,13 @@ const styles = StyleSheet.create({
   imageContainer: {
     flex: 1,
   },
-  imageBackground: {
+  gradientBackground: {
     flex: 1,
     width: '100%',
     height: '100%',
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
