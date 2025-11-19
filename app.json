@@ -58,16 +58,7 @@
           "color": "#D4AF37"
         }
       ],
-      "@react-native-firebase/app",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          }
-        }
-      ],
-      "./plugins/withIosPostInstall.js"
+      "@react-native-firebase/app"
     ],
     "notification": {
       "icon": "./assets/icon.png",
