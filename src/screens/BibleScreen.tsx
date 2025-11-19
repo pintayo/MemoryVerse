@@ -1044,7 +1044,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: theme.colors.primary.softOlive,
+    backgroundColor: theme.colors.success.mutedOlive,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,

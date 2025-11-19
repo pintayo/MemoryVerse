@@ -28,6 +28,7 @@ class VerseSessionService {
 
   /**
    * Create a new 5-verse learning session starting with a specific verse
+   * Loads first verse immediately, then loads remaining verses in background
    */
   async createSessionWithVerse(
     verseId: string,
@@ -42,22 +43,9 @@ class VerseSessionService {
         throw new Error('Verse not found');
       }
 
-      const verses: Verse[] = [specificVerse];
-
-      // Load 4 more random verses from the same book/chapter
-      for (let i = 0; i < 4; i++) {
-        const verse = await verseService.getRandomVerse(
-          translation,
-          specificVerse.book,
-          specificVerse.chapter
-        );
-        if (verse && verse.id !== specificVerse.id) {
-          verses.push(verse);
-        }
-      }
-
+      // Create session with just the specific verse
       const session: VerseSession = {
-        verses,
+        verses: [specificVerse],
         currentIndex: 0,
         book: specificVerse.book,
         chapter: specificVerse.chapter,
@@ -66,10 +54,14 @@ class VerseSessionService {
       const sessionId = this.generateSessionId(specificVerse.book, specificVerse.chapter);
       this.sessions.set(sessionId, session);
 
-      // Start pre-loading context for all verses
-      this.preloadContextForSession(session);
+      // Pre-load context for the first verse immediately
+      this.preloadContextForVerse(specificVerse);
 
-      logger.log('[VerseSession] Session created with specific verse, total:', verses.length, 'verses');
+      logger.log('[VerseSession] Session created with specific verse, loading remaining verses in background');
+
+      // Load remaining 4 verses in the background
+      this.loadRemainingVerses(session, translation, specificVerse.book, specificVerse.chapter);
+
       return session;
     } catch (error) {
       logger.error('[VerseSession] Error creating session with verse:', error);
@@ -79,6 +71,7 @@ class VerseSessionService {
 
   /**
    * Create a new 5-verse learning session
+   * Loads first verse immediately, then loads remaining verses in background
    */
   async createSession(
     translation: string = 'KJV',
@@ -88,22 +81,16 @@ class VerseSessionService {
     try {
       logger.log('[VerseSession] Creating session:', { book, chapter });
 
-      const verses: Verse[] = [];
+      // Load first verse immediately
+      const firstVerse = await verseService.getRandomVerse(translation, book ?? undefined, chapter ?? undefined);
 
-      // Load 5 random verses from the specified chapter/book or all
-      for (let i = 0; i < 5; i++) {
-        const verse = await verseService.getRandomVerse(translation, book ?? undefined, chapter ?? undefined);
-        if (verse) {
-          verses.push(verse);
-        }
-      }
-
-      if (verses.length === 0) {
+      if (!firstVerse) {
         throw new Error('No verses found');
       }
 
+      // Create session with just the first verse
       const session: VerseSession = {
-        verses,
+        verses: [firstVerse],
         currentIndex: 0,
         book: book || null,
         chapter: chapter || null,
@@ -112,15 +99,63 @@ class VerseSessionService {
       const sessionId = this.generateSessionId(book, chapter);
       this.sessions.set(sessionId, session);
 
-      // Start pre-loading context for all verses
-      this.preloadContextForSession(session);
+      // Pre-load context for the first verse immediately
+      this.preloadContextForVerse(firstVerse);
 
-      logger.log('[VerseSession] Session created with', verses.length, 'verses');
+      logger.log('[VerseSession] Session created with first verse, loading remaining verses in background');
+
+      // Load remaining 4 verses in the background
+      this.loadRemainingVerses(session, translation, book ?? undefined, chapter ?? undefined);
+
       return session;
     } catch (error) {
       logger.error('[VerseSession] Error creating session:', error);
       throw error;
     }
+  }
+
+  /**
+   * Load remaining verses in the background and update the session
+   */
+  private async loadRemainingVerses(
+    session: VerseSession,
+    translation: string,
+    book?: string,
+    chapter?: number
+  ): Promise<void> {
+    try {
+      const remainingVerses: Verse[] = [];
+
+      // Load 4 more verses
+      for (let i = 0; i < 4; i++) {
+        const verse = await verseService.getRandomVerse(translation, book, chapter);
+        if (verse && !session.verses.some(v => v.id === verse.id)) {
+          remainingVerses.push(verse);
+          // Pre-load context for each verse as it's loaded
+          this.preloadContextForVerse(verse);
+        }
+      }
+
+      // Update the session with all verses
+      session.verses.push(...remainingVerses);
+
+      logger.log('[VerseSession] Background loading complete. Total verses:', session.verses.length);
+    } catch (error) {
+      logger.error('[VerseSession] Error loading remaining verses:', error);
+      // Don't throw - first verse is already loaded
+    }
+  }
+
+  /**
+   * Pre-load context for a single verse
+   */
+  private preloadContextForVerse(verse: Verse): void {
+    // Don't await - let it run in background
+    import('./contextGenerator').then(module => {
+      module.getOrGenerateContext(verse.id).catch(err => {
+        logger.error('[VerseSession] Error pre-loading context for verse:', err);
+      });
+    });
   }
 
   /**
