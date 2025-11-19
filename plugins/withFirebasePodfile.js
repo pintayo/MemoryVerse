@@ -25,21 +25,34 @@ $RNFirebaseAsStaticFramework = true
           podfileContent = firebaseConfig + podfileContent;
         }
 
-        // Add post_install hook to fix non-modular header warnings
-        const postInstallHook = `
-  post_install do |installer|
+        // Add build settings inside existing post_install hook
+        const buildSettingsCode = `
+    # Fix for React Native Firebase with static frameworks
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
         config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
       end
-    end
-  end`;
+    end`;
 
-        // Add post_install hook if not already present
+        // Find the post_install hook and add our code inside it
         if (!podfileContent.includes('CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER')) {
-          // Find the end block and add the post_install hook before it
-          podfileContent = podfileContent.replace(/^end\s*$/m, postInstallHook + '\nend');
+          // Look for the post_install block and insert our code before the last 'end'
+          const postInstallRegex = /(post_install do \|installer\|[\s\S]*?)(^  end$)/m;
+
+          if (postInstallRegex.test(podfileContent)) {
+            // Insert before the closing 'end' of post_install
+            podfileContent = podfileContent.replace(
+              postInstallRegex,
+              `$1${buildSettingsCode}\n$2`
+            );
+          } else {
+            // If no post_install exists, create one (shouldn't happen with Expo)
+            podfileContent = podfileContent.replace(
+              /^end\s*$/m,
+              `  post_install do |installer|${buildSettingsCode}\n  end\nend`
+            );
+          }
         }
 
         fs.writeFileSync(podfilePath, podfileContent);
