@@ -375,14 +375,31 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
     );
   };
 
-  const handleContinueReading = () => {
+  const handleContinueReading = async () => {
     if (bookmark) {
-      // Set the book and navigate directly to reading the chapter
+      // First load the chapters for this book so next/prev buttons work
       setSelectedBook(bookmark.book);
-      // Small delay to ensure state is updated before loading chapter
-      setTimeout(() => {
-        handleChapterSelect(bookmark.chapter);
-      }, 50);
+      setIsLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from('verses')
+          .select('chapter')
+          .eq('book', bookmark.book)
+          .eq('translation', 'KJV')
+          .order('chapter');
+
+        if (error) throw error;
+
+        const uniqueChapters = [...new Set(data.map((v: any) => v.chapter))];
+        setChapters(uniqueChapters);
+
+        // Now navigate to the chapter
+        await handleChapterSelect(bookmark.chapter);
+      } catch (error) {
+        logger.error('[BibleScreen] Error loading chapters:', error);
+        setIsLoading(false);
+      }
     }
   };
 

@@ -184,6 +184,69 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     { id: 'review' as DailyTaskId, icon: '🔄', label: 'Review learned verses', completed: dailyTasksCompletion.review },
   ];
 
+  // Handle clicking on a daily task goal
+  const handleTaskClick = async (taskId: DailyTaskId, isCompleted: boolean) => {
+    // Don't do anything if already completed
+    if (isCompleted) return;
+
+    // Map task IDs to navigation actions
+    const taskActions: Record<DailyTaskId, () => void> = {
+      verse: () => {
+        // Scroll to today's verse (already visible on this screen)
+        // Or navigate to daily verse if on different screen
+      },
+      practice: () => {
+        if (!user) {
+          Alert.alert(
+            'Account Required',
+            'This action requires an account to save your progress. Please sign in or create an account.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        navigation.navigate('Practice');
+      },
+      understand: () => {
+        if (!user) {
+          Alert.alert(
+            'Account Required',
+            'This action requires an account to save your progress. Please sign in or create an account.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        if (todayVerse?.id) {
+          navigation.navigate('Understand', { verseId: todayVerse.id });
+        }
+      },
+      chapter: () => {
+        if (!user) {
+          Alert.alert(
+            'Account Required',
+            'This action requires an account to save your reading progress. Please sign in or create an account.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        navigation.navigate('Bible');
+      },
+      review: () => {
+        if (!user) {
+          Alert.alert(
+            'Account Required',
+            'This action requires an account to save your progress. Please sign in or create an account.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        navigation.navigate('Review');
+      },
+    };
+
+    // Execute the action for this task
+    taskActions[taskId]();
+  };
+
   const actionButtons = [
     {
       id: 'read',
@@ -321,80 +384,82 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </Card>
         </TouchableOpacity>
 
-        {/* Your Progress - Always Visible */}
-        <Card variant="parchment" outlined style={styles.progressCard}>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Your Progress</Text>
-            <TouchableOpacity
-              onPress={() => setShowAchievementsModal(true)}
-              style={styles.achievementsButton}
-            >
-              <Svg width="20" height="20" viewBox="0 0 24 24">
-                <Path
-                  d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
-                  fill={theme.colors.secondary.lightGold}
-                />
-              </Svg>
-              <Text style={styles.achievementsButtonText}>
-                {achievements.filter(a => a.unlocked).length}/{achievements.length}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.progressStatsRow}>
-            {/* Verses Memorized */}
-            <View style={styles.progressStat}>
-              <View style={styles.progressStatIconContainer}>
-                <Svg width="24" height="24" viewBox="0 0 24 24">
+        {/* Your Progress - Only visible when logged in */}
+        {user && (
+          <Card variant="parchment" outlined style={styles.progressCard}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressTitle}>Your Progress</Text>
+              <TouchableOpacity
+                onPress={() => setShowAchievementsModal(true)}
+                style={styles.achievementsButton}
+              >
+                <Svg width="20" height="20" viewBox="0 0 24 24">
                   <Path
-                    d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2ZM9 4H11V9L10 8.25L9 9V4ZM18 20H6V4H7V13L10 10.75L13 13V4H18V20Z"
+                    d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
                     fill={theme.colors.secondary.lightGold}
                   />
                 </Svg>
+                <Text style={styles.achievementsButtonText}>
+                  {achievements.filter(a => a.unlocked).length}/{achievements.length}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.progressStatsRow}>
+              {/* Verses Memorized */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2ZM9 4H11V9L10 8.25L9 9V4ZM18 20H6V4H7V13L10 10.75L13 13V4H18V20Z"
+                      fill={theme.colors.secondary.lightGold}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{versesLearned}</Text>
+                <Text style={styles.progressStatLabel}>Verses{'\n'}Memorized</Text>
               </View>
-              <Text style={styles.progressStatValue}>{versesLearned}</Text>
-              <Text style={styles.progressStatLabel}>Verses{'\n'}Memorized</Text>
+
+              {/* Current Streak */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M12 2C12 2 8 6 8 10C8 13.31 10.69 16 14 16C17.31 16 20 13.31 20 10C20 6 16 2 16 2C16 2 14.5 4.5 14 7C13.5 4.5 12 2 12 2ZM14 14C11.79 14 10 12.21 10 10C10 8.5 10.67 7.25 11.5 6.25C11.5 9.25 13.25 11.5 15 13C14.67 13.66 14.37 14 14 14Z"
+                      fill={theme.colors.secondary.warmTerracotta}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{streak}</Text>
+                <Text style={styles.progressStatLabel}>Day{'\n'}Streak</Text>
+              </View>
+
+              {/* Total XP */}
+              <View style={styles.progressStat}>
+                <View style={styles.progressStatIconContainer}>
+                  <Svg width="24" height="24" viewBox="0 0 24 24">
+                    <Path
+                      d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
+                      fill={theme.colors.success.celebratoryGold}
+                    />
+                  </Svg>
+                </View>
+                <Text style={styles.progressStatValue}>{xp}</Text>
+                <Text style={styles.progressStatLabel}>Total{'\n'}XP</Text>
+              </View>
             </View>
 
-            {/* Current Streak */}
-            <View style={styles.progressStat}>
-              <View style={styles.progressStatIconContainer}>
-                <Svg width="24" height="24" viewBox="0 0 24 24">
-                  <Path
-                    d="M12 2C12 2 8 6 8 10C8 13.31 10.69 16 14 16C17.31 16 20 13.31 20 10C20 6 16 2 16 2C16 2 14.5 4.5 14 7C13.5 4.5 12 2 12 2ZM14 14C11.79 14 10 12.21 10 10C10 8.5 10.67 7.25 11.5 6.25C11.5 9.25 13.25 11.5 15 13C14.67 13.66 14.37 14 14 14Z"
-                    fill={theme.colors.secondary.warmTerracotta}
-                  />
-                </Svg>
+            {/* Level Progress Bar */}
+            <View style={styles.levelProgressContainer}>
+              <View style={styles.levelProgressHeader}>
+                <Text style={styles.levelProgressLabel}>Level {currentLevel}</Text>
+                <Text style={styles.levelProgressXP}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
               </View>
-              <Text style={styles.progressStatValue}>{streak}</Text>
-              <Text style={styles.progressStatLabel}>Day{'\n'}Streak</Text>
-            </View>
-
-            {/* Total XP */}
-            <View style={styles.progressStat}>
-              <View style={styles.progressStatIconContainer}>
-                <Svg width="24" height="24" viewBox="0 0 24 24">
-                  <Path
-                    d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9Z"
-                    fill={theme.colors.success.celebratoryGold}
-                  />
-                </Svg>
+              <View style={styles.levelProgressBar}>
+                <View style={[styles.levelProgressFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
               </View>
-              <Text style={styles.progressStatValue}>{xp}</Text>
-              <Text style={styles.progressStatLabel}>Total{'\n'}XP</Text>
             </View>
-          </View>
-
-          {/* Level Progress Bar */}
-          <View style={styles.levelProgressContainer}>
-            <View style={styles.levelProgressHeader}>
-              <Text style={styles.levelProgressLabel}>Level {currentLevel}</Text>
-              <Text style={styles.levelProgressXP}>{xpToNextLevel} XP to Level {currentLevel + 1}</Text>
-            </View>
-            <View style={styles.levelProgressBar}>
-              <View style={[styles.levelProgressFill, { width: `${Math.min(levelProgress, 100)}%` }]} />
-            </View>
-          </View>
-        </Card>
+          </Card>
+        )}
 
         {/* Daily Checklist - Simple & Clean */}
         <Card variant="parchment" outlined style={styles.dailyChecklistCard}>
@@ -402,7 +467,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <Text style={styles.checklistSubtitle}>Complete these to build your faith daily</Text>
 
           {dailyTasks.map((task) => (
-            <View key={task.id} style={styles.checklistItem}>
+            <TouchableOpacity
+              key={task.id}
+              style={styles.checklistItem}
+              onPress={() => handleTaskClick(task.id, task.completed)}
+              disabled={task.completed}
+            >
               <View style={[styles.checkbox, task.completed && styles.checkboxCompleted]}>
                 {task.completed && (
                   <Svg width="12" height="12" viewBox="0 0 12 12">
@@ -417,10 +487,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   </Svg>
                 )}
               </View>
-              <Text style={styles.checklistLabel}>
+              <Text style={[styles.checklistLabel, task.completed && styles.checklistLabelCompleted]}>
                 {task.icon} {task.label}
               </Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </Card>
 
@@ -855,6 +925,10 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontFamily: theme.typography.fonts.ui.default,
     flex: 1,
+  },
+  checklistLabelCompleted: {
+    color: theme.colors.text.tertiary,
+    textDecorationLine: 'line-through' as const,
   },
   // Quick Actions - Full Width List
   actionsContainer: {
