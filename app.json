@@ -34,6 +34,10 @@
       },
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "cocoapods": {
+        "useFrameworks": "static",
+        "useModularHeaders": true
       }
     },
     "android": {
@@ -55,7 +59,8 @@
           "icon": "./assets/icon.png",
           "color": "#D4AF37"
         }
-      ]
+      ],
+      "expo-firebase-core"
     ],
     "notification": {
       "icon": "./assets/icon.png",
