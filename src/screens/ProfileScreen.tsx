@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Card, Button } from '../components';
 import { theme } from '../theme';
 import Svg, { Path, Circle, Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
@@ -31,9 +32,25 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editedName, setEditedName] = useState(profile?.full_name || '');
+  const [selectedTranslation, setSelectedTranslation] = useState<string>('KJV');
+  const [showTranslationModal, setShowTranslationModal] = useState(false);
 
   // Check premium status from profile
   const isPremiumUser = profile?.is_premium || false;
+
+  // Translation options
+  const freeTranslations = [
+    { id: 'KJV', name: 'King James Version', subtitle: 'Classic, poetic, 1611' },
+    { id: 'WEB', name: 'World English Bible', subtitle: 'Modern, accurate' },
+    { id: 'BBE', name: 'Bible in Basic English', subtitle: 'Simple, clear' },
+  ];
+
+  const premiumTranslations = [
+    { id: 'ASV', name: 'American Standard', subtitle: 'Revised, literal, 1901' },
+    { id: 'YLT', name: "Young's Literal", subtitle: 'Word-for-word translation' },
+    { id: 'DBY', name: "Darby Bible", subtitle: 'Formal equivalence, 1890' },
+    { id: 'WBT', name: "Webster's Bible", subtitle: 'American English, 1833' },
+  ];
 
   // Update edited values when profile changes
   useEffect(() => {
@@ -46,6 +63,21 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   useEffect(() => {
     loadAchievements();
   }, [user?.id]);
+
+  // Load translation preference
+  useEffect(() => {
+    const loadTranslation = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('preferred_translation');
+        if (saved) {
+          setSelectedTranslation(saved);
+        }
+      } catch (error) {
+        logger.error('[ProfileScreen] Failed to load translation:', error);
+      }
+    };
+    loadTranslation();
+  }, []);
 
   const loadAchievements = async () => {
     if (!user?.id) {
@@ -63,6 +95,27 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       logger.error('[ProfileScreen] Error loading achievements:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTranslationPress = async (translationId: string, isPremium: boolean) => {
+    if (isPremium && !isPremiumUser) {
+      Alert.alert(
+        'Premium Translation',
+        'This translation is only available for premium members. Upgrade to unlock all translations!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    setSelectedTranslation(translationId);
+    try {
+      await AsyncStorage.setItem('preferred_translation', translationId);
+      logger.log(`[ProfileScreen] Translation changed to ${translationId}`);
+      setShowTranslationModal(false);
+      Alert.alert('Success', `Bible translation changed to ${translationId}`);
+    } catch (error) {
+      logger.error('[ProfileScreen] Failed to save translation:', error);
     }
   };
 
@@ -627,6 +680,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 style={styles.actionButton}
               />
               <Button
+                title={`Bible Translation (${selectedTranslation})`}
+                onPress={() => setShowTranslationModal(true)}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <Button
                 title="Settings"
                 onPress={() => navigation.navigate('Settings')}
                 variant="secondary"
@@ -649,6 +708,118 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           )}
         </View>
       </ScrollView>
+
+      {/* Translation Selector Modal */}
+      <Modal
+        visible={showTranslationModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTranslationModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Bible Translation</Text>
+              <TouchableOpacity
+                onPress={() => setShowTranslationModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Svg width="24" height="24" viewBox="0 0 24 24">
+                  <Path
+                    d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
+                    fill={theme.colors.text.primary}
+                  />
+                </Svg>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {/* Free Translations */}
+              <Text style={styles.translationSectionTitle}>Popular Translations (Free)</Text>
+              {freeTranslations.map((trans) => (
+                <TouchableOpacity
+                  key={trans.id}
+                  style={[
+                    styles.translationOption,
+                    selectedTranslation === trans.id && styles.translationOptionSelected
+                  ]}
+                  onPress={() => handleTranslationPress(trans.id, false)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.translationRadio}>
+                    {selectedTranslation === trans.id && (
+                      <View style={styles.translationRadioInner} />
+                    )}
+                  </View>
+                  <View style={styles.translationInfo}>
+                    <Text style={styles.translationName}>{trans.name}</Text>
+                    <Text style={styles.translationSubtitle}>{trans.subtitle}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+
+              {/* Premium Translations */}
+              <View style={styles.premiumDivider}>
+                <View style={styles.premiumDividerLine} />
+                <View style={styles.premiumBadge}>
+                  <Svg width="12" height="12" viewBox="0 0 12 12">
+                    <Path
+                      d="M6 1 L7.5 4.5 L11 5 L8.5 7.5 L9 11 L6 9 L3 11 L3.5 7.5 L1 5 L4.5 4.5 Z"
+                      fill={theme.colors.success.celebratoryGold}
+                    />
+                  </Svg>
+                  <Text style={styles.premiumBadgeText}>PREMIUM</Text>
+                </View>
+                <View style={styles.premiumDividerLine} />
+              </View>
+
+              {premiumTranslations.map((trans) => (
+                <TouchableOpacity
+                  key={trans.id}
+                  style={[
+                    styles.translationOption,
+                    isPremiumUser && selectedTranslation === trans.id && styles.translationOptionSelected,
+                    !isPremiumUser && styles.translationOptionLocked
+                  ]}
+                  onPress={() => handleTranslationPress(trans.id, true)}
+                  activeOpacity={0.7}
+                >
+                  {isPremiumUser ? (
+                    <>
+                      <View style={styles.translationRadio}>
+                        {selectedTranslation === trans.id && (
+                          <View style={styles.translationRadioInner} />
+                        )}
+                      </View>
+                      <View style={styles.translationInfo}>
+                        <Text style={styles.translationName}>{trans.name}</Text>
+                        <Text style={styles.translationSubtitle}>{trans.subtitle}</Text>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <Svg width="16" height="16" viewBox="0 0 16 16">
+                        <Path
+                          d="M12 7 L12 5 C12 2.8 10.2 1 8 1 C5.8 1 4 2.8 4 5 L4 7 L3 7 L3 15 L13 15 L13 7 Z M6 5 C6 3.9 6.9 3 8 3 C9.1 3 10 3.9 10 5 L10 7 L6 7 Z"
+                          fill={theme.colors.text.tertiary}
+                        />
+                      </Svg>
+                      <Text style={styles.translationNameLocked}>{trans.name}</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              ))}
+
+              {!isPremiumUser && (
+                <Text style={styles.premiumTeaseText}>
+                  🔓 Unlock 4 more translations with Premium
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -976,6 +1147,138 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.ui.body.fontSize,
     color: theme.colors.text.tertiary,
     fontFamily: theme.typography.fonts.ui.default,
+    fontStyle: 'italic',
+  },
+  // Translation Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: theme.colors.background.offWhiteParchment,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+    height: '80%',
+    paddingBottom: theme.spacing.xl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.primary.mutedStone,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  modalCloseButton: {
+    padding: theme.spacing.xs,
+  },
+  modalScroll: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    flexGrow: 1,
+  },
+  translationSectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  translationOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.sm,
+    backgroundColor: theme.colors.background.warmParchment,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  translationOptionSelected: {
+    borderColor: theme.colors.secondary.lightGold,
+    backgroundColor: theme.colors.background.lightCream,
+  },
+  translationOptionLocked: {
+    opacity: 0.6,
+  },
+  translationRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: theme.colors.primary.mutedStone,
+    marginRight: theme.spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  translationRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.colors.secondary.lightGold,
+  },
+  translationInfo: {
+    flex: 1,
+  },
+  translationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.ui.default,
+    marginBottom: 2,
+  },
+  translationSubtitle: {
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  translationNameLocked: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text.tertiary,
+    fontFamily: theme.typography.fonts.ui.default,
+  },
+  premiumDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: theme.spacing.lg,
+  },
+  premiumDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.primary.mutedStone,
+  },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.background.offWhiteParchment,
+  },
+  premiumBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: theme.colors.success.celebratoryGold,
+    fontFamily: theme.typography.fonts.ui.default,
+    letterSpacing: 0.5,
+  },
+  premiumTeaseText: {
+    fontSize: 14,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fonts.ui.default,
+    textAlign: 'center',
+    marginTop: theme.spacing.lg,
     fontStyle: 'italic',
   },
 });
