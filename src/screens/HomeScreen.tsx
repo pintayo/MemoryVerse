@@ -1,7 +1,7 @@
 logger.log('[HomeScreen] Module loading...');
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BibleCompanion, Button, Card, VerseText, VerseReference } from '../components';
 import { AchievementsModal } from '../components/AchievementsModal';
@@ -173,6 +173,20 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       randomMessage.message,
       [{ text: "Amen!", style: "default" }]
     );
+  };
+
+  const handleShareVerse = async (verse: Verse) => {
+    try {
+      const shareMessage = `"${verse.text}"\n\n— ${verse.book} ${verse.chapter}:${verse.verse_number} (KJV)`;
+
+      await Share.share({
+        message: shareMessage,
+      });
+
+      logger.log('[HomeScreen] Verse shared successfully');
+    } catch (error) {
+      logger.error('[HomeScreen] Error sharing verse:', error);
+    }
   };
 
   // Daily checklist tasks (free user-friendly, no premium features)
@@ -378,7 +392,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <VerseReference style={styles.verseReference}>
                   {`${todayVerse.book} ${todayVerse.chapter}:${todayVerse.verse_number}`}
                 </VerseReference>
-                <Text style={styles.tapHint}>Tap to understand this verse</Text>
+                <View style={styles.verseCardFooter}>
+                  <Text style={styles.tapHint}>Tap to understand this verse</Text>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleShareVerse(todayVerse);
+                    }}
+                    style={styles.shareButton}
+                  >
+                    <Svg width={20} height={20} viewBox="0 0 24 24">
+                      <Path
+                        d="M18 16.08C17.24 16.08 16.56 16.38 16.04 16.85L8.91 12.7C8.96 12.47 9 12.24 9 12C9 11.76 8.96 11.53 8.91 11.3L15.96 7.19C16.5 7.69 17.21 8 18 8C19.66 8 21 6.66 21 5C21 3.34 19.66 2 18 2C16.34 2 15 3.34 15 5C15 5.24 15.04 5.47 15.09 5.7L8.04 9.81C7.5 9.31 6.79 9 6 9C4.34 9 3 10.34 3 12C3 13.66 4.34 15 6 15C6.79 15 7.5 14.69 8.04 14.19L15.16 18.35C15.11 18.56 15.08 18.78 15.08 19C15.08 20.61 16.39 21.92 18 21.92C19.61 21.92 20.92 20.61 20.92 19C20.92 17.39 19.61 16.08 18 16.08Z"
+                        fill={theme.colors.secondary.lightGold}
+                      />
+                    </Svg>
+                  </TouchableOpacity>
+                </View>
               </>
             ) : null}
           </Card>
@@ -683,8 +713,18 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     fontFamily: theme.typography.fonts.ui.default,
     textAlign: 'center',
-    marginTop: theme.spacing.md,
     fontStyle: 'italic',
+    flex: 1,
+  },
+  verseCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  shareButton: {
+    padding: theme.spacing.xs,
   },
   // Progress Card
   progressCard: {
