@@ -284,10 +284,10 @@ export const BibleScreen: React.FC<BibleScreenProps> = ({ navigation }) => {
       // Non-premium users see value-driven upgrade prompt
       Alert.alert(
         '📖 Unlock Chapter Context',
-        `Get AI-powered insights for the entire ${selectedBook} ${selectedChapter}!\n\n💎 Premium Features:\n• Deep chapter analysis\n• Historical context\n• Theological insights\n• Cross-references\n• Plus unlimited AI prayers & more`,
+        `Get AI-powered insights for the entire ${selectedBook} ${selectedChapter}!\n\n💎 Pro Features:\n• Deep chapter analysis\n• Historical context\n• Theological insights\n• Cross-references\n• 1-10 AI prayers per day (based on tier)`,
         [
           { text: 'Not Now', style: 'cancel' },
-          { text: 'See Premium', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'chapter_context' }) },
+          { text: 'See Pro Plans', onPress: () => navigation.navigate('PremiumUpgrade', { source: 'chapter_context' }) },
         ]
       );
     }
