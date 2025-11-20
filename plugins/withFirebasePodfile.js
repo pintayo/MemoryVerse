@@ -4,7 +4,7 @@ const path = require('path');
 
 /**
  * Expo config plugin to fix Firebase with static frameworks
- * Adds use_modular_headers! and suppresses non-modular warnings for Firebase targets
+ * Adds use_modular_headers! and sets modular_headers for GoogleUtilities
  */
 const withFirebaseModularHeaders = (config) => {
   return withDangerousMod(config, [
@@ -24,19 +24,46 @@ $RNFirebaseAsStaticFramework = true
           podfileContent = firebaseFlag + podfileContent;
         }
 
-        // Add use_modular_headers! after the target declaration
+        // Add use_modular_headers! in the target block - try multiple patterns
         if (!podfileContent.includes('use_modular_headers!')) {
-          // Find the target line and add use_modular_headers! after it
-          podfileContent = podfileContent.replace(
-            /(target ['"]MemoryVerse['"] do)/,
-            '$1\n  use_modular_headers!'
-          );
+          // Try with double quotes
+          if (podfileContent.includes('target "MemoryVerse" do')) {
+            podfileContent = podfileContent.replace(
+              /target "MemoryVerse" do/,
+              'target "MemoryVerse" do\n  use_modular_headers!'
+            );
+          }
+          // Try with single quotes
+          else if (podfileContent.includes("target 'MemoryVerse' do")) {
+            podfileContent = podfileContent.replace(
+              /target 'MemoryVerse' do/,
+              "target 'MemoryVerse' do\n  use_modular_headers!"
+            );
+          }
         }
 
-        // Add post_install hook to suppress non-modular warnings for Firebase
+        // Add post_install hook to:
+        // 1. Enable modular headers for GoogleUtilities specifically
+        // 2. Suppress warnings for Firebase targets
         const postInstallCode = `
-    # Suppress non-modular header warnings for Firebase targets
+    # Enable modular headers for GoogleUtilities (required by FirebaseCoreInternal)
+    installer.pod_targets.each do |pod|
+      if pod.name == 'GoogleUtilities'
+        pod.send(:define_method, :build_type) do
+          Pod::BuildType.static_library
+        end
+      end
+    end
+
+    # Set modular headers for GoogleUtilities
     installer.pods_project.targets.each do |target|
+      if target.name == 'GoogleUtilities'
+        target.build_configurations.each do |config|
+          config.build_settings['DEFINES_MODULE'] = 'YES'
+        end
+      end
+
+      # Suppress non-modular warnings for Firebase targets
       if target.name.start_with?('RNFB')
         target.build_configurations.each do |config|
           config.build_settings['WARNING_CFLAGS'] ||= ['$(inherited)']
@@ -46,7 +73,7 @@ $RNFirebaseAsStaticFramework = true
     end`;
 
         // Merge with existing post_install hook
-        if (!podfileContent.includes('Wno-non-modular-include-in-framework-module')) {
+        if (!podfileContent.includes('DEFINES_MODULE')) {
           const postInstallRegex = /(post_install do \|installer\|[\s\S]*?)(^  end$)/m;
 
           if (postInstallRegex.test(podfileContent)) {
