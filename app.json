@@ -35,7 +35,6 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
@@ -47,8 +46,7 @@
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "RECORD_AUDIO"
-      ],
-      "googleServicesFile": "./google-services.json"
+      ]
     },
     "plugins": [
       [
@@ -57,17 +55,7 @@
           "icon": "./assets/icon.png",
           "color": "#D4AF37"
         }
-      ],
-      "@react-native-firebase/app",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          }
-        }
-      ],
-      "./plugins/withFirebasePodfile.js"
+      ]
     ],
     "notification": {
       "icon": "./assets/icon.png",
